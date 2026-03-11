@@ -37,7 +37,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+html { height: 100%; }
 
 body {
   background: var(--bg);
@@ -45,9 +45,9 @@ body {
   color: var(--text);
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
   background-image: radial-gradient(circle at 20% 20%, rgba(0,200,83,0.06) 0%, transparent 50%),
                     radial-gradient(circle at 80% 80%, rgba(26,122,58,0.04) 0%, transparent 50%);
 }
@@ -62,7 +62,6 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 620px;
 }
 
 /* ── Top bar ── */
@@ -160,7 +159,8 @@ body {
 .content {
   flex: 1;
   display: flex;
-  overflow: hidden;
+  overflow: auto;
+  min-height: 0;
 }
 
 /* ── Left panel (inputs) ── */
@@ -535,6 +535,60 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .tab-panel.active { animation: fadeSlideIn 0.25s ease; }
+
+/* ── RESPONSIVE ─────────────────────────────────── */
+@media (max-width: 900px) {
+  body { padding: 0; align-items: flex-start; }
+  .shell { border-radius: 0; min-height: 100vh; }
+  .topbar-path { display: none; }
+  .nav { overflow-x: auto; padding: 0 12px; gap: 0; }
+  .nav-tab { padding: 12px 12px 10px; font-size: 12px; gap: 5px; }
+  .content { flex-direction: column; overflow: visible; }
+  .left-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 16px 16px 12px; gap: 12px; }
+  .input-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .scenario-pills { flex-direction: row; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
+  .scenario-pill { flex-shrink: 0; min-width: 140px; }
+  .right-panel { padding: 16px; gap: 14px; overflow: visible; }
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .kpi-row .kpi-card:last-child { grid-column: 1 / -1; }
+  .two-col { grid-template-columns: 1fr; }
+  .credits-grid { grid-template-columns: 1fr 1fr; }
+  .pwc-grid { grid-template-columns: repeat(2, 1fr); }
+  .dial-row { gap: 12px; }
+}
+
+@media (max-width: 540px) {
+  .topbar { padding: 0 14px; height: 46px; }
+  .app-name { font-size: 13px; }
+  .live-badge { display: none; }
+  .nav-tab .tab-icon { display: none; }
+  .nav-tab { font-size: 11px; padding: 11px 10px 9px; }
+  .left-panel { padding: 14px 14px 10px; }
+  .input-group { grid-template-columns: 1fr; }
+  .input-row { grid-template-columns: 1fr 1fr; }
+  .right-panel { padding: 14px; gap: 12px; }
+  .kpi-row { grid-template-columns: 1fr; }
+  .kpi-row .kpi-card:last-child { grid-column: auto; }
+  .kpi-value { font-size: 26px; }
+  .chart-card { padding: 16px; }
+  .bar-label { width: 90px; font-size: 10px; }
+  .bar-fill-h { font-size: 10px; }
+  .bar-val { font-size: 10px; width: 50px; }
+  .credits-grid { grid-template-columns: 1fr; }
+  .credit-card { padding: 12px; }
+  .dial-row { flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .dial { width: 85px; height: 85px; }
+  .dial-num { font-size: 15px; }
+  .pwc-grid { grid-template-columns: 1fr 1fr; }
+  .pwc-value { font-size: 18px; }
+  .wind-rose-wrap { flex-direction: column; align-items: center; }
+  .wind-rose { width: 160px; height: 160px; }
+  .export-row { flex-direction: column; }
+  .btn { justify-content: center; }
+  .analysis-hero { padding: 16px; }
+  .analysis-title { font-size: 14px; }
+  .risk-table th, .risk-table td { padding: 7px 8px; font-size: 11px; }
+}
 </style>
 </head>
 <body>
@@ -548,7 +602,7 @@ body {
         <div class="app-name-dot"></div>
         Carbon Scout
       </div>
-      <div class="topbar-path">Het Patel  /  Sustainability Intelligence Dashboard</div>
+      <div class="topbar-path">Autodesk Forma  /  Massing Study 01  /  Sustainability Analysis</div>
     </div>
     <div class="topbar-right">
       <div class="topbar-tag">EN 15978 · A1–A5</div>
