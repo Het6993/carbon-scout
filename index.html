@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carbon Scout — Embodied Carbon Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0a0e0d;
+      --surface:   #111714;
+      --surface2:  #182018;
+      --border:    #243024;
+      --green:     #4ade80;
+      --green-dim: #166534;
+      --yellow:    #fbbf24;
+      --red:       #f87171;
+      --text:      #e2fce8;
+      --muted:     #6b7f6e;
+      --accent:    #00ff88;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ─────────────────────────────────── */
+    .header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .logo-text {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+    .logo-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Section headings ────────────────────────── */
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 12px 16px 6px;
+    }
+
+    /* ── Carbon Meter ────────────────────────────── */
+    .meter-card {
+      margin: 0 12px 4px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .meter-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .meter-value {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1;
+      transition: color 0.4s;
+    }
+    .meter-value.green  { color: var(--green); }
+    .meter-value.yellow { color: var(--yellow); }
+    .meter-value.red    { color: var(--red); }
+
+    .meter-unit {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .meter-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+    .badge-green  { background: #14532d; color: var(--green); }
+    .badge-yellow { background: #451a03; color: var(--yellow); }
+    .badge-red    { background: #450a0a; color: var(--red); }
+
+    /* progress bar */
+    .bar-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.6s cubic-bezier(0.4,0,0.2,1), background 0.4s;
+    }
+    .bar-fill.green  { background: linear-gradient(90deg, var(--green-dim), var(--green)); }
+    .bar-fill.yellow { background: linear-gradient(90deg, #713f12, var(--yellow)); }
+    .bar-fill.red    { background: linear-gradient(90deg, #7f1d1d, var(--red)); }
+
+    .bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+    }
+    .bar-labels span { position: relative; }
+    /* LEED threshold tick */
+    .leed-tick {
+      position: relative;
+      display: inline-block;
+    }
+    .leed-tick::before {
+      content: '▼';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--yellow);
+      font-size: 8px;
+    }
+
+    /* ── Inputs ──────────────────────────────────── */
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 0 12px 4px;
+    }
+    .input-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .input-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .input-block input,
+    .input-block select {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+    }
+    .input-block select option { background: #111714; }
+
+    /* full-width select */
+    .input-block.full {
+      grid-column: 1 / -1;
+    }
+
+    /* ── Scenario comparisons ────────────────────── */
+    .scenarios {
+      padding: 0 12px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .scenario-row {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .scenario-row:hover { border-color: var(--muted); }
+    .scenario-row.active { border-color: var(--accent); }
+    .scenario-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .scenario-name { flex: 1; font-size: 12px; font-weight: 600; }
+    .scenario-val {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+    }
+    .scenario-delta {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      min-width: 46px;
+      text-align: right;
+    }
+
+    /* ── LEED credits ────────────────────────────── */
+    .credits-grid {
+      padding: 0 12px 4px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .credit-chip {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .credit-icon { font-size: 16px; }
+    .credit-name { font-size: 11px; font-weight: 600; }
+    .credit-status {
+      margin-left: auto;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .credit-ok  { background: #14532d; color: var(--green); }
+    .credit-no  { background: #450a0a; color: var(--red); }
+    .credit-warn{ background: #451a03; color: var(--yellow); }
+
+    /* ── Narrative AI block ──────────────────────── */
+    .narrative-card {
+      margin: 0 12px 4px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .narrative-card p {
+      font-size: 11px;
+      color: #a5c8aa;
+      line-height: 1.7;
+    }
+    .narrative-card strong { color: var(--text); }
+
+    /* ── Export row ──────────────────────────────── */
+    .export-row {
+      padding: 0 12px 16px;
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      flex: 1;
+      padding: 9px 0;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--accent); color: #0a0e0d; }
+    .btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+    /* ── Scrollbar ───────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Fade-in animation ───────────────────────── */
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .spacer { height: 6px; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🌿</div>
+      <div>
+        <div class="logo-text">Carbon Scout</div>
+        <div class="logo-sub">Embodied Carbon · AEC</div>
+      </div>
+    </div>
+    <div class="status-dot" title="Live calculation"></div>
+  </div>
+
+  <!-- CARBON METER -->
+  <div class="section-label">Carbon Intensity</div>
+  <div class="meter-card fade-in">
+    <div class="meter-top">
+      <div>
+        <div class="meter-value green" id="main-value">—</div>
+        <div class="meter-unit">kg CO₂e / m²  ·  A1–A5</div>
+      </div>
+      <div class="meter-badge badge-green" id="main-badge">CALCULATING…</div>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill green" id="bar" style="width:0%"></div>
+    </div>
+    <div class="bar-labels">
+      <span>0</span>
+      <span class="leed-tick" title="LEED MRc1 threshold">300</span>
+      <span>600+</span>
+    </div>
+  </div>
+
+  <!-- INPUTS -->
+  <div class="section-label">Building Parameters</div>
+  <div class="inputs-grid fade-in">
+    <div class="input-block">
+      <div class="input-label">GFA (m²)</div>
+      <input type="number" id="gfa" value="5000" min="100" max="200000" />
+    </div>
+    <div class="input-block">
+      <div class="input-label">Floors</div>
+      <input type="number" id="floors" value="8" min="1" max="80" />
+    </div>
+    <div class="input-block full">
+      <div class="input-label">Structural System</div>
+      <select id="structure">
+        <option value="concrete_cast">Concrete (Cast-in-place)</option>
+        <option value="concrete_precast">Concrete (Precast)</option>
+        <option value="steel_composite" selected>Steel (Composite)</option>
+        <option value="steel_light">Steel (Light Frame)</option>
+        <option value="timber_clt">Mass Timber (CLT)</option>
+        <option value="timber_glulam">Mass Timber (Glulam)</option>
+        <option value="masonry">Masonry</option>
+      </select>
+    </div>
+    <div class="input-block full">
+      <div class="input-label">Building Use</div>
+      <select id="use">
+        <option value="office" selected>Office</option>
+        <option value="residential">Residential</option>
+        <option value="mixed">Mixed-Use</option>
+        <option value="retail">Retail</option>
+        <option value="education">Education</option>
+        <option value="healthcare">Healthcare</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- SCENARIO COMPARISON -->
+  <div class="section-label">Scenario Comparison</div>
+  <div class="scenarios fade-in" id="scenarios-list"></div>
+
+  <div class="spacer"></div>
+
+  <!-- LEED CREDITS -->
+  <div class="section-label">Sustainability Compliance</div>
+  <div class="credits-grid fade-in" id="credits-grid"></div>
+
+  <div class="spacer"></div>
+
+  <!-- AI NARRATIVE -->
+  <div class="section-label">AI Insight</div>
+  <div class="narrative-card fade-in">
+    <p id="narrative-text">Enter your building parameters above to generate a carbon analysis and sustainability narrative.</p>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- EXPORT -->
+  <div class="export-row fade-in">
+    <button class="btn btn-primary" onclick="exportReport()">⬇ Export Report</button>
+    <button class="btn btn-ghost" onclick="copyData()">⎘ Copy CSV</button>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

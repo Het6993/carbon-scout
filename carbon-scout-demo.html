@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carbon Scout — Embodied Carbon Dashboard for Autodesk Forma</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0a0e0d;
+      --surface:   #111714;
+      --surface2:  #182018;
+      --border:    #243024;
+      --green:     #4ade80;
+      --green-dim: #166534;
+      --yellow:    #fbbf24;
+      --red:       #f87171;
+      --text:      #e2fce8;
+      --muted:     #6b7f6e;
+      --accent:    #00ff88;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: #0d1117;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+      font-family: 'Syne', sans-serif;
+    }
+
+    /* ── Outer shell (simulates Forma side panel) ── */
+    .forma-shell {
+      display: flex;
+      gap: 0;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px #21262d;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    /* ── Left: Forma toolbar mockup ── */
+    .forma-toolbar {
+      width: 48px;
+      background: #0d1117;
+      border-right: 1px solid #21262d;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 0;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .tb-btn {
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      color: #6b7f6e;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tb-btn:hover { background: #21262d; color: #e2fce8; }
+    .tb-btn.active { background: #1a3a20; color: var(--accent); }
+    .tb-sep { width: 20px; height: 1px; background: #21262d; margin: 2px 0; }
+
+    /* ── Center: 3D viewport ── */
+    .forma-viewport {
+      flex: 1;
+      background: linear-gradient(160deg, #1a2332 0%, #0f1a1f 40%, #0a1a14 100%);
+      position: relative;
+      min-height: 520px;
+      overflow: hidden;
+    }
+
+    /* Subtle grid overlay */
+    .forma-viewport::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Building 3D mockup */
+    .building-scene {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      perspective: 600px;
+    }
+    .building {
+      width: 120px;
+      height: 200px;
+      background: linear-gradient(180deg, #1e3a2f 0%, #0f2318 100%);
+      border: 1px solid rgba(0,255,136,0.3);
+      transform: rotateX(15deg) rotateY(-25deg);
+      transform-style: preserve-3d;
+      position: relative;
+      transition: border-color 0.4s;
+    }
+    .building.yellow { border-color: rgba(251,191,36,0.5); }
+    .building.red    { border-color: rgba(248,113,113,0.5); }
+
+    /* Building right face */
+    .building::after {
+      content: '';
+      position: absolute;
+      right: -30px; top: 4px;
+      width: 30px; height: 100%;
+      background: linear-gradient(180deg, #142b1e 0%, #0a1a10 100%);
+      border: 1px solid rgba(0,255,136,0.15);
+      transform: skewY(-5deg);
+    }
+
+    /* Windows */
+    .building-windows {
+      position: absolute;
+      inset: 12px 10px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .win {
+      background: rgba(0,255,136,0.12);
+      border-radius: 1px;
+      border: 1px solid rgba(0,255,136,0.2);
+      transition: background 0.4s;
+    }
+    .win.lit { background: rgba(0,255,136,0.3); }
+    .win.warn { background: rgba(251,191,36,0.2); }
+    .win.hot  { background: rgba(248,113,113,0.2); }
+
+    /* Carbon halo */
+    .carbon-halo {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 160px; height: 30px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, rgba(0,255,136,0.25) 0%, transparent 70%);
+      transition: background 0.4s;
+    }
+    .carbon-halo.yellow { background: radial-gradient(ellipse at center, rgba(251,191,36,0.25) 0%, transparent 70%); }
+    .carbon-halo.red    { background: radial-gradient(ellipse at center, rgba(248,113,113,0.25) 0%, transparent 70%); }
+
+    /* Ground plane */
+    .ground {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 80px;
+      background: linear-gradient(0deg, rgba(0,255,136,0.05) 0%, transparent 100%);
+    }
+
+    /* Viewport labels */
+    .vp-label {
+      position: absolute;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: rgba(0,255,136,0.4);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .vp-label.tl { top: 14px; left: 16px; }
+    .vp-label.tr { top: 14px; right: 16px; text-align: right; }
+    .vp-label.br { bottom: 14px; right: 16px; }
+
+    /* Floating carbon badge on viewport */
+    .vp-badge {
+      position: absolute;
+      top: 42px;
+      left: 16px;
+      background: rgba(10,14,13,0.85);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 8px 12px;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.4s;
+    }
+    .vp-badge.yellow { border-left-color: var(--yellow); }
+    .vp-badge.red    { border-left-color: var(--red); }
+    .vp-badge-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -1px;
+      transition: color 0.4s;
+    }
+    .vp-badge-val.yellow { color: var(--yellow); }
+    .vp-badge-val.red    { color: var(--red); }
+    .vp-badge-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* ── Right: Extension panel ── */
+    .extension-panel {
+      width: 300px;
+      flex-shrink: 0;
+      background: var(--bg);
+      color: var(--text);
+      overflow-y: auto;
+      font-size: 13px;
+      border-left: 1px solid #21262d;
+    }
+
+    .header {
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo-icon {
+      width: 26px; height: 26px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+    }
+    .logo-text { font-size: 13px; font-weight: 800; letter-spacing: -0.3px; }
+    .logo-sub { font-family: 'Space Mono', monospace; font-size: 8px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 14px 5px;
+    }
+
+    /* meter */
+    .meter-card { margin: 0 10px 4px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+    .meter-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .meter-value { font-size: 32px; font-weight: 800; letter-spacing: -2px; line-height: 1; transition: color .4s; }
+    .meter-value.green  { color: var(--green); }
+    .meter-value.yellow { color: var(--yellow); }
+    .meter-value.red    { color: var(--red); }
+    .meter-unit { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); margin-top: 3px; }
+    .meter-badge { font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px; letter-spacing: .5px; }
+    .badge-green  { background: #14532d; color: var(--green); }
+    .badge-yellow { background: #451a03; color: var(--yellow); }
+    .badge-red    { background: #450a0a; color: var(--red); }
+    .bar-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width .6s cubic-bezier(.4,0,.2,1), background .4s; }
+    .bar-fill.green  { background: linear-gradient(90deg,var(--green-dim),var(--green)); }
+    .bar-fill.yellow { background: linear-gradient(90deg,#713f12,var(--yellow)); }
+    .bar-fill.red    { background: linear-gradient(90deg,#7f1d1d,var(--red)); }
+    .bar-labels { display: flex; justify-content: space-between; font-family:'Space Mono',monospace; font-size: 8px; color: var(--muted); }
+
+    /* inputs */
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 10px 4px; }
+    .input-block { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; }
+    .input-block.full { grid-column: 1/-1; }
+    .input-label { font-family:'Space Mono',monospace; font-size: 8px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+    .input-block input, .input-block select { width:100%; background:transparent; border:none; color:var(--text); font-family:'Syne',sans-serif; font-size: 13px; font-weight: 700; outline: none; cursor: pointer; }
+    .input-block select option { background: #111714; }
+
+    /* scenarios */
+    .scenarios { padding: 0 10px 4px; display: flex; flex-direction: column; gap: 5px; }
+    .scenario-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: border-color .2s; }
+    .scenario-row:hover { border-color: var(--muted); }
+    .scenario-row.active { border-color: var(--accent); }
+    .scenario-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .scenario-name { flex:1; font-size: 11px; font-weight: 600; }
+    .scenario-val { font-family:'Space Mono',monospace; font-size: 10px; }
+    .scenario-delta { font-family:'Space Mono',monospace; font-size: 9px; min-width: 40px; text-align: right; }
+
+    /* credits */
+    .credits-grid { padding: 0 10px 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .credit-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 7px 8px; display: flex; align-items: center; gap: 6px; }
+    .credit-icon { font-size: 14px; }
+    .credit-name { font-size: 10px; font-weight: 600; line-height: 1.3; }
+    .credit-status { font-family:'Space Mono',monospace; font-size: 8px; padding: 1px 5px; border-radius: 3px; margin-top: 2px; display: inline-block; }
+    .credit-ok  { background: #14532d; color: var(--green); }
+    .credit-no  { background: #450a0a; color: var(--red); }
+    .credit-warn{ background: #451a03; color: var(--yellow); }
+
+    /* narrative */
+    .narrative-card { margin: 0 10px 4px; background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 7px; padding: 10px 12px; transition: border-color .4s; }
+    .narrative-card.yellow { border-left-color: var(--yellow); }
+    .narrative-card.red    { border-left-color: var(--red); }
+    .narrative-card p { font-size: 10px; color: #a5c8aa; line-height: 1.7; }
+    .narrative-card strong { color: var(--text); }
+
+    /* export */
+    .export-row { padding: 0 10px 14px; display: flex; gap: 6px; }
+    .btn { flex:1; padding: 8px 0; border-radius: 7px; font-family:'Syne',sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; border: none; transition: opacity .2s; }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: var(--accent); color: #0a0e0d; }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+    /* bottom bar */
+    .forma-bottom {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 40px;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid #21262d;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 16px;
+    }
+    .forma-bottom-btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: rgba(0,255,136,0.5);
+      letter-spacing: 1px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .forma-bottom-btn.active { color: var(--accent); }
+
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .spacer { height: 5px; }
+  </style>
+</head>
+<body>
+
+<div class="forma-shell">
+
+  <!-- Forma sidebar toolbar -->
+  <div class="forma-toolbar">
+    <div class="tb-btn">⌂</div>
+    <div class="tb-btn">◻</div>
+    <div class="tb-btn">⊕</div>
+    <div class="tb-sep"></div>
+    <div class="tb-btn">☀</div>
+    <div class="tb-btn">💨</div>
+    <div class="tb-btn active">🌿</div>
+    <div class="tb-sep"></div>
+    <div class="tb-btn">⚙</div>
+  </div>
+
+  <!-- 3D Viewport -->
+  <div class="forma-viewport">
+    <div class="vp-label tl">FORMA — MASSING STUDY 01</div>
+    <div class="vp-label tr" id="vp-total">TOTAL: — tCO₂e</div>
+    <div class="vp-label br">PERSPECTIVE · NORTH ↑</div>
+
+    <!-- Floating badge -->
+    <div class="vp-badge" id="vp-badge">
+      <div class="vp-badge-val green" id="vp-val">—</div>
+      <div class="vp-badge-label">kg CO₂e / m²</div>
+    </div>
+
+    <!-- 3D Building -->
+    <div class="building-scene">
+      <div class="building" id="building-3d">
+        <div class="building-windows" id="building-windows"></div>
+      </div>
+      <div class="carbon-halo green" id="carbon-halo"></div>
+    </div>
+
+    <div class="ground"></div>
+
+    <!-- Bottom toolbar -->
+    <div class="forma-bottom">
+      <div class="forma-bottom-btn active">Carbon</div>
+      <div class="forma-bottom-btn">Daylight</div>
+      <div class="forma-bottom-btn">Wind</div>
+      <div class="forma-bottom-btn">Glare</div>
+      <div class="forma-bottom-btn">PWC</div>
+    </div>
+  </div>
+
+  <!-- Carbon Scout Extension Panel -->
+  <div class="extension-panel">
+    <div class="header">
+      <div class="logo">
+        <div class="logo-icon">🌿</div>
+        <div>
+          <div class="logo-text">Carbon Scout</div>
+          <div class="logo-sub">Embodied Carbon · A1–A5</div>
+        </div>
+      </div>
+      <div class="status-dot"></div>
+    </div>
+
+    <div class="section-label">Carbon Intensity</div>
+    <div class="meter-card">
+      <div class="meter-top">
+        <div>
+          <div class="meter-value green" id="main-value">—</div>
+          <div class="meter-unit">kg CO₂e / m²  ·  A1–A5</div>
+        </div>
+        <div class="meter-badge badge-green" id="main-badge">LOADING</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill green" id="bar" style="width:0%"></div></div>
+      <div class="bar-labels"><span>0</span><span title="LEED threshold">300 ▾</span><span>600+</span></div>
+    </div>
+
+    <div class="section-label">Building Parameters</div>
+    <div class="inputs-grid">
+      <div class="input-block">
+        <div class="input-label">GFA (m²)</div>
+        <input type="number" id="gfa" value="5000" min="100" max="200000" oninput="recalculate()" onchange="recalculate()" />
+      </div>
+      <div class="input-block">
+        <div class="input-label">Floors</div>
+        <input type="number" id="floors" value="8" min="1" max="80" oninput="recalculate()" onchange="recalculate()" />
+      </div>
+      <div class="input-block full">
+        <div class="input-label">Structural System</div>
+        <select id="structure" onchange="recalculate()">
+          <option value="concrete_cast">Concrete (Cast-in-place)</option>
+          <option value="concrete_precast">Concrete (Precast)</option>
+          <option value="steel_composite" selected>Steel (Composite)</option>
+          <option value="steel_light">Steel (Light Frame)</option>
+          <option value="timber_clt">Mass Timber (CLT)</option>
+          <option value="timber_glulam">Mass Timber (Glulam)</option>
+          <option value="masonry">Masonry</option>
+        </select>
+      </div>
+      <div class="input-block full">
+        <div class="input-label">Building Use</div>
+        <select id="use" onchange="recalculate()">
+          <option value="office" selected>Office</option>
+          <option value="residential">Residential</option>
+          <option value="mixed">Mixed-Use</option>
+          <option value="retail">Retail</option>
+          <option value="education">Education</option>
+          <option value="healthcare">Healthcare</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label">Scenario Comparison</div>
+    <div class="scenarios" id="scenarios-list"></div>
+    <div class="spacer"></div>
+
+    <div class="section-label">Sustainability Compliance</div>
+    <div class="credits-grid" id="credits-grid"></div>
+    <div class="spacer"></div>
+
+    <div class="section-label">AI Insight</div>
+    <div class="narrative-card" id="narrative-card">
+      <p id="narrative-text">Initializing carbon analysis…</p>
+    </div>
+    <div class="spacer"></div>
+
+    <div class="export-row">
+      <button class="btn btn-primary" onclick="exportReport()">⬇ Export Report</button>
+      <button class="btn btn-ghost" id="copy-btn" onclick="copyData()">⎘ Copy CSV</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Carbon data ──────────────────────────────────────────────────────────────
+const STRUCTURE_FACTORS = {
+  concrete_cast:    { base: 290, label: "Concrete CIP",      color: "#f87171" },
+  concrete_precast: { base: 260, label: "Concrete Precast",  color: "#fb923c" },
+  steel_composite:  { base: 245, label: "Steel Composite",   color: "#fbbf24" },
+  steel_light:      { base: 210, label: "Steel Light Frame", color: "#facc15" },
+  timber_clt:       { base: 115, label: "Mass Timber CLT",   color: "#4ade80" },
+  timber_glulam:    { base: 100, label: "Mass Timber Glulam",color: "#34d399" },
+  masonry:          { base: 230, label: "Masonry",           color: "#fb923c" },
+};
+const USE_ADDITIONS = { office:85, residential:65, mixed:75, retail:60, education:70, healthcare:110 };
+
+function floorMod(f) {
+  if(f<=3)return 0.85; if(f<=6)return 0.95; if(f<=12)return 1; if(f<=20)return 1.08; if(f<=40)return 1.18; return 1.3;
+}
+
+function calculate() {
+  const gfa       = parseFloat(document.getElementById("gfa").value)||5000;
+  const floors    = parseInt(document.getElementById("floors").value)||8;
+  const structure = document.getElementById("structure").value;
+  const use       = document.getElementById("use").value;
+  const strF      = STRUCTURE_FACTORS[structure];
+  const mod       = floorMod(floors);
+  const intensity = Math.round(strF.base*mod + USE_ADDITIONS[use]);
+  const total     = Math.round(intensity*gfa/1000);
+  return {intensity,total,gfa,floors,structure,use,strF};
+}
+
+function getTier(v){ return v<=300?"green":v<=400?"yellow":"red"; }
+
+function recalculate() {
+  const d = calculate();
+  const {intensity,total,structure,use,gfa,floors,strF} = d;
+  const tier = getTier(intensity);
+
+  // bar
+  const pct = Math.min(100, tier==="green"?intensity/6:tier==="yellow"?50+(intensity-300)/2:80+(intensity-400)/10);
+
+  document.getElementById("main-value").textContent = intensity;
+  document.getElementById("main-value").className = `meter-value ${tier}`;
+  const badgeText = tier==="green"?(intensity<=200?"EXCELLENT":"LEED ELIGIBLE"):tier==="yellow"?"REVIEW NEEDED":"HIGH CARBON";
+  document.getElementById("main-badge").textContent = badgeText;
+  document.getElementById("main-badge").className = `meter-badge badge-${tier}`;
+  document.getElementById("bar").style.width = Math.min(100,intensity/6)+"%";
+  document.getElementById("bar").className = `bar-fill ${tier}`;
+
+  // Viewport updates
+  document.getElementById("vp-val").textContent = intensity;
+  document.getElementById("vp-val").className = `vp-badge-val ${tier}`;
+  document.getElementById("vp-badge").className = `vp-badge ${tier}`;
+  document.getElementById("vp-total").textContent = `TOTAL: ${total} tCO₂e`;
+  document.getElementById("building-3d").className = `building ${tier==="green"?"":""+tier}`;
+  document.getElementById("carbon-halo").className = `carbon-halo ${tier==="green"?"green":tier}`;
+
+  // Windows
+  const wins = document.getElementById("building-windows");
+  wins.innerHTML = "";
+  for(let i=0;i<24;i++){
+    const w=document.createElement("div");
+    const lit=Math.random()>0.35;
+    w.className=`win ${lit?(tier==="green"?"lit":tier==="yellow"?"warn":"hot"):""}`;
+    wins.appendChild(w);
+  }
+
+  // Scenarios
+  const mod = floorMod(floors);
+  const uAdd = USE_ADDITIONS[use];
+  const scenarios = Object.entries(STRUCTURE_FACTORS).map(([k,v])=>({
+    key:k, label:v.label, color:v.color, val:Math.round(v.base*mod+uAdd)
+  })).sort((a,b)=>a.val-b.val);
+  const sl = document.getElementById("scenarios-list");
+  sl.innerHTML="";
+  scenarios.forEach(s=>{
+    const delta=s.val-intensity;
+    const dStr=delta===0?"current":(delta>0?"+":"")+delta+" kg";
+    const dCol=delta<0?"#4ade80":delta===0?"#6b7f6e":"#f87171";
+    const row=document.createElement("div");
+    row.className="scenario-row"+(s.key===structure?" active":"");
+    row.innerHTML=`<div class="scenario-dot" style="background:${s.color}"></div><div class="scenario-name">${s.label}</div><div class="scenario-val" style="color:${s.color}">${s.val}</div><div class="scenario-delta" style="color:${dCol}">${dStr}</div>`;
+    row.onclick=()=>{ document.getElementById("structure").value=s.key; recalculate(); };
+    sl.appendChild(row);
+  });
+
+  // Credits
+  const isCLT=structure.includes("timber");
+  const credits=[
+    {icon:"🏗",name:"MRc1 Whole Building LCA",ok:intensity<=300,warn:intensity>300&&intensity<=400},
+    {icon:"🪵",name:"MRc2 Low Carbon Materials",ok:isCLT,warn:structure.includes("steel")},
+    {icon:"📊",name:"EA Carbon Reporting",ok:gfa>=1000,warn:false},
+    {icon:"🌍",name:"LETI Embodied Target",ok:intensity<=250,warn:intensity>250&&intensity<=350},
+  ];
+  const cg=document.getElementById("credits-grid");
+  cg.innerHTML="";
+  credits.forEach(c=>{
+    const sc=c.ok?"credit-ok":c.warn?"credit-warn":"credit-no";
+    const st=c.ok?"✓ ON TRACK":c.warn?"⚠ REVIEW":"✗ AT RISK";
+    const chip=document.createElement("div");
+    chip.className="credit-chip";
+    chip.innerHTML=`<div class="credit-icon">${c.icon}</div><div><div class="credit-name">${c.name}</div><div class="credit-status ${sc}">${st}</div></div>`;
+    cg.appendChild(chip);
+  });
+
+  // Narrative
+  const nc=document.getElementById("narrative-card");
+  nc.className=`narrative-card ${tier==="green"?"":tier}`;
+  const saving=STRUCTURE_FACTORS.concrete_cast.base+USE_ADDITIONS[use];
+  const vs=saving-intensity;
+  let msg="";
+  if(tier==="green"&&intensity<=200)msg=`<strong>Outstanding performance.</strong> At ${intensity} kg CO₂e/m², this scheme is in the global top 10% — tracking for <strong>LEED Platinum</strong>. Switching to ${strF.label} saves ~<strong>${vs} kg CO₂e/m²</strong> vs concrete baseline: <strong>${Math.round(vs*gfa/1000)} tCO₂</strong> avoided. Submit A1–A5 LCA via EC3 for LEED MRc1.`;
+  else if(tier==="green")msg=`<strong>LEED Eligible.</strong> ${intensity} kg CO₂e/m² meets the MRc1 300 kg/m² threshold. Total: <strong>${total} tCO₂e</strong>. To reach LETI target of 250 kg/m², consider low-carbon EPD concrete mixes or increase recycled steel content. Pair with daylight optimization to strengthen ESG reporting.`;
+  else if(tier==="yellow")msg=`<strong>Review Required.</strong> ${intensity} kg CO₂e/m² exceeds LEED MRc1 by <strong>${intensity-300} kg/m²</strong>. Switching to Mass Timber (CLT) reduces intensity to ~${Math.round(STRUCTURE_FACTORS.timber_clt.base*mod+uAdd)} kg/m²,  unlocking LEED credits and aligning with LETI 2030 targets.`;
+  else msg=`<strong>High Carbon — Intervention Needed.</strong> ${intensity} kg CO₂e/m² = <strong>${total} tCO₂e</strong> total. This is ${intensity-300} kg/m² above LEED eligibility. CLT substitution could reduce by <strong>${intensity-Math.round(STRUCTURE_FACTORS.timber_clt.base*mod+uAdd)} kg/m²</strong>. Embodied carbon set at this stage is locked for the building's lifetime.`;
+  document.getElementById("narrative-text").innerHTML=msg;
+}
+
+window.exportReport = function() {
+  const d=calculate();
+  const lines=["Carbon Scout — Embodied Carbon Report",`Generated: ${new Date().toLocaleString()}`,"",
+    `GFA: ${d.gfa} m²`,`Floors: ${d.floors}`,`Structure: ${d.strF.label}`,`Use: ${d.use}`,
+    `Carbon Intensity: ${d.intensity} kg CO₂e/m² (A1–A5)`,`Total Embodied Carbon: ${d.total} tCO₂e`,
+    `LEED MRc1 Status: ${d.intensity<=300?"ELIGIBLE":"AT RISK"}`];
+  const a=Object.assign(document.createElement("a"),{href:URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/plain"})),download:"carbon-scout-report.txt"});
+  a.click();
+};
+
+window.copyData = function() {
+  const d=calculate();
+  navigator.clipboard.writeText(`GFA,Floors,Structure,Use,Intensity_kgCO2em2,Total_tCO2e\n${d.gfa},${d.floors},${d.strF.label},${d.use},${d.intensity},${d.total}`)
+    .then(()=>{ const b=document.getElementById("copy-btn"); b.textContent="✓ Copied!"; setTimeout(()=>b.textContent="⎘ Copy CSV",2000); });
+};
+
+recalculate();
+</script>
+</body>
+</html>
