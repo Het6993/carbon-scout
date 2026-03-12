@@ -90,7 +90,7 @@ body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);min-
 /* Right panel */
 .right{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
 .tab-panel{display:none;flex-direction:column;gap:14px;}
-.tab-panel.active{display:flex;animation:fi .22s ease;}
+.tab-panel.active{display:flex!important;animation:fi .22s ease;}
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
 /* KPI row */
@@ -619,16 +619,17 @@ let units = 'metric';
 let windData = null;
 let currentCity = 'nyc';
 
-function getCity(){ return CITIES[document.getElementById('city').value]; }
+function getCity(){ const v=document.getElementById('city')?.value||'nyc'; return CITIES[v]||CITIES['nyc']; }
 
 function onCityChange(){
-  currentCity = document.getElementById('city').value;
+  currentCity = document.getElementById('city').value||'nyc';
   const c = CITIES[currentCity];
+  if(!c) return;
   document.getElementById('chip-zone').textContent = 'Zone ' + c.zone;
   document.getElementById('chip-climate').textContent = c.climate;
   document.getElementById('chip-sun').textContent = c.psh + ' PSH';
-  fetchWindData(c.lat, c.lon, c.name);
   recalc();
+  fetchWindData(c.lat, c.lon, c.name);
 }
 
 function setUnits(u){
@@ -654,8 +655,11 @@ function switchTab(name){
     t.classList.toggle('active',names[i]===name);
   });
   document.querySelectorAll('.tab-panel').forEach(p=>{
-    p.classList.toggle('active',p.id==='tab-'+name);
+    p.style.display='none';
+    p.classList.remove('active');
   });
+  const panel=document.getElementById('tab-'+name);
+  if(panel){panel.style.display='flex';panel.classList.add('active');}
 }
 
 // ═══════════════════════════════════════════════════
@@ -1200,9 +1204,19 @@ window.printSummary=function(){window.print();};
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
-(async()=>{
-  onCityChange(); // sets chips, fetches wind, calls recalc
-})();
+document.addEventListener('DOMContentLoaded', function() {
+  // Set default city select to nyc
+  document.getElementById('city').value = 'nyc';
+  currentCity = 'nyc';
+  const c = CITIES['nyc'];
+  document.getElementById('chip-zone').textContent = 'Zone ' + c.zone;
+  document.getElementById('chip-climate').textContent = c.climate;
+  document.getElementById('chip-sun').textContent = c.psh + ' PSH';
+  // Run recalc first so all panels render immediately
+  recalc();
+  // Then fetch wind async
+  fetchWindData(c.lat, c.lon, c.name);
+});
 </script>
 </body>
 </html>
