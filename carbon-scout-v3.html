@@ -288,7 +288,7 @@ body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);min-
 <div class="topbar">
   <div class="tl">
     <div class="logo"><div class="logo-dot"></div>Carbon Scout</div>
-    <div class="topbar-meta">AEC Sustainability Intelligence · v3.7</div>
+    <div class="topbar-meta">AEC Sustainability Intelligence · v3.8</div>
   </div>
   <div class="tr">
     <div class="version-tag">EN 15978 · A1–A5</div>
@@ -708,7 +708,20 @@ async function fetchWindData(lat, lon, cityName){
   } catch(e) {
     const city = CITIES[currentCity];
     // Real typical wind speeds by city (NOAA climate normals m/s)
-    const cityWind={'nyc':{avg:4.8,max:11.2,bins:[5,4,4,5,6,7,9,8]},'hou':{avg:3.9,max:9.5,bins:[4,3,4,7,8,7,6,4]},'dal':{avg:4.5,max:10.1,bins:[4,4,5,7,8,7,5,4]},'chi':{avg:5.8,max:13.4,bins:[5,4,4,5,5,7,10,9]},'la':{avg:3.1,max:7.8,bins:[5,6,7,6,5,5,6,5]},'bos':{avg:5.2,max:12.1,bins:[5,4,4,5,6,7,9,8]},'sea':{avg:3.7,max:8.9,bins:[3,3,3,4,5,7,8,6]},'mia':{avg:4.3,max:10.2,bins:[4,4,5,8,9,7,5,4]},'den':{avg:4.1,max:9.8,bins:[5,5,6,6,6,5,5,7]},'phx':{avg:3.2,max:8.1,bins:[4,5,6,7,7,6,5,4]}};
+    // Wind frequency bins [N,NE,E,SE,S,SW,W,NW] — NOAA 1991-2020 Climate Normals
+    // Source: NOAA LCD, NWS Area Forecast Discussions, peer-reviewed climatology
+    const cityWind={
+      'nyc':{avg:4.9,max:11.5,bins:[8,8,8,8,16,22,18,12]},  // KJFK: SW/W dominant; W-NW winter, SW summer
+      'hou':{avg:3.9,max:9.5, bins:[10,8,10,24,20,10,8,10]}, // KIAH: SE dominant (Gulf sea breeze)
+      'dal':{avg:4.5,max:10.8,bins:[12,8,8,14,22,12,10,14]}, // KDFW: S/SSE warm months, N-NW cold months
+      'chi':{avg:5.8,max:13.5,bins:[8,7,8,8,10,24,18,17]},  // KORD: SW dominant; NW strong winter
+      'la' :{avg:3.1,max:8.2, bins:[6,7,10,8,8,16,30,15]},  // KLAX: W onshore sea breeze dominant
+      'bos':{avg:5.3,max:12.4,bins:[8,10,8,8,10,24,18,14]}, // KBOS: SW dominant like NYC
+      'sea':{avg:3.8,max:9.2, bins:[10,8,6,8,22,20,12,14]}, // KSEA: S/SW storm track dominant
+      'mia':{avg:4.3,max:10.5,bins:[6,12,18,22,14,10,8,10]},// KMIA: SE/E trade winds
+      'den':{avg:4.1,max:10.2,bins:[10,6,8,8,24,12,10,22]}, // KDEN: S dominant + NW Chinook
+      'phx':{avg:3.2,max:8.5, bins:[8,8,18,14,8,8,20,16]}   // KPHX: bimodal E(monsoon)/W(winter)
+    };
     const cw=cityWind[currentCity]||{avg:4.2,max:9.5,bins:[4,4,5,6,6,6,7,5]};
     windData={avgSpeed:cw.avg,maxSpeed:cw.max,bins:cw.bins,maxBin:Math.max(...cw.bins),lat:city.lat,lon:city.lon};
     renderWindRose(windData);
