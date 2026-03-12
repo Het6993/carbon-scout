@@ -288,7 +288,7 @@ body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);min-
 <div class="topbar">
   <div class="tl">
     <div class="logo"><div class="logo-dot"></div>Carbon Scout</div>
-    <div class="topbar-meta">AEC Sustainability Intelligence · v3.6</div>
+    <div class="topbar-meta">AEC Sustainability Intelligence · v3.7</div>
   </div>
   <div class="tr">
     <div class="version-tag">EN 15978 · A1–A5</div>
@@ -413,7 +413,7 @@ body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);min-
         <div class="ct">Structural System Carbon Comparison</div>
         <div class="cs">A1–A5 embodied carbon intensity · LEED MRc1 eligibility threshold: 300 kg CO₂e/m²</div>
         <div class="bc-wrap" id="bc-carbon"></div>
-        <div class="source-tag">Sources: EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023 · IStructE How to Calculate Embodied Carbon 2022 · LETI CEDGv2 2020 · Values = structure + envelope A1–A5 per m² GFA</div>
+        <div class="source-tag">Sources: EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023 · IStructE How to Calculate Embodied Carbon 2022 · Values = structure + envelope A1–A5 per m² GFA · Carbon intensity (kg/m²) is independent of GFA — Total carbon (tCO₂e) scales with GFA</div>
       </div>
 
       <div class="twocol">
@@ -842,15 +842,19 @@ function renderCarbon(d){
   const concreteIntensity=Math.round(STRUCT.concrete_cast.base*mod+uAdd);
   const saving=(concreteIntensity-intensity)*gfa/1000;
   const trees=Math.max(0,Math.round(saving/0.022));
-  document.getElementById('tree-num').textContent=trees>0?trees.toLocaleString():'0';
-  document.getElementById('tree-sub').textContent=saving>0?`${Math.round(saving)} tCO₂ vs concrete baseline`:'Current = baseline';
+  document.getElementById('tree-num').textContent=trees>0?trees.toLocaleString():'—';
+  document.getElementById('tree-sub').textContent=saving>0
+    ?`${Math.round(saving).toLocaleString()} tCO₂e saved vs concrete`
+    :str.includes('concrete_cast')
+      ?'Select a lower-carbon system to see savings'
+      :`${Math.abs(Math.round(saving)).toLocaleString()} tCO₂e more than concrete`;
 
   // KPIs
   const areaLabel=displayArea(gfa);
   document.getElementById('krow-carbon').innerHTML=[
-    {label:'Carbon Intensity',val:intensity,unit:'kg CO₂e/m² · A1–A5',sub:`${areaLabel} GFA`,t,badge:t==='green'?(intensity<=200?'EXCELLENT':'LEED ELIGIBLE'):t==='amber'?'REVIEW NEEDED':'HIGH CARBON'},
+    {label:'Carbon Intensity',val:intensity,unit:'kg CO₂e/m² · A1–A5 lifecycle',sub:`${floors} floors · ${areaLabel} GFA`,t,badge:t==='green'?(intensity<=200?'EXCELLENT':'LEED ELIGIBLE'):t==='amber'?'REVIEW NEEDED':'HIGH CARBON'},
     {label:'Total Embodied Carbon',val:total.toLocaleString(),unit:'tCO₂e',sub:`${floors} floors · ${displayArea(gfa)}`,t,badge:city.zone},
-    {label:'Saved vs Concrete',val:Math.max(0,concreteIntensity-intensity),unit:'kg CO₂e/m²',sub:`≈ ${trees.toLocaleString()} trees`,t:'blue',badge:'REDUCTION'},
+    {label:saving>0?'Saved vs Concrete':'Carbon vs Baseline',val:Math.abs(concreteIntensity-intensity),unit:'kg CO₂e/m²',sub:saving>0?`≈ ${trees.toLocaleString()} trees planted`:str==='concrete_cast'?'This IS the baseline':'Switch to timber to save',t:saving>0?'blue':saving===0?'teal':'amber',badge:saving>0?'REDUCTION':saving===0?'BASELINE':'ABOVE BASELINE'},
   ].map(k=>`<div class="kcard ${k.t}">
     <div class="klabel">${k.label}</div>
     <div class="kval ${k.t}">${k.val}</div>
