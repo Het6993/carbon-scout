@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Carbon Scout V3 — AEC Sustainability Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f6f4; --white:#fff; --panel:#f9fbf9; --border:#e4ebe4; --border2:#cdd8cd;
+  --text:#0c1a0c; --muted:#5a6e5a; --faint:#94a894;
+  --green:#166534; --green-l:#dcfce7; --green-m:#22c55e; --green-b:#16a34a;
+  --amber:#92400e; --amber-l:#fef3c7; --amber-m:#f59e0b;
+  --red:#991b1b; --red-l:#fee2e2; --red-m:#ef4444;
+  --blue:#1e3a8a; --blue-l:#dbeafe; --blue-m:#3b82f6;
+  --purple:#581c87; --purple-l:#f3e8ff;
+  --teal:#134e4a; --teal-l:#ccfbf1; --teal-m:#14b8a6;
+  --accent:#16a34a;
+  --sh1:0 1px 3px rgba(0,0,0,.05),0 1px 2px rgba(0,0,0,.03);
+  --sh2:0 4px 16px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.04);
+  --sh3:0 12px 40px rgba(0,0,0,.1),0 4px 12px rgba(0,0,0,.05);
+  --r:14px; --rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background-image:radial-gradient(circle at 15% 15%,rgba(22,163,74,.05) 0%,transparent 50%),radial-gradient(circle at 85% 85%,rgba(20,184,166,.04) 0%,transparent 50%);}
+
+/* Shell */
+.shell{width:100%;max-width:1140px;background:var(--white);border-radius:20px;box-shadow:var(--sh3),0 0 0 1px rgba(0,0,0,.04);overflow:hidden;display:flex;flex-direction:column;}
+
+/* Topbar */
+.topbar{background:var(--text);padding:0 20px;height:50px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.tl{display:flex;align-items:center;gap:14px;min-width:0;}
+.logo{font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;display:flex;align-items:center;gap:8px;}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--green-m);box-shadow:0 0 8px var(--green-m);animation:blink 2.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar-meta{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px;}
+.tr{display:flex;align-items:center;gap:10px;}
+.version-tag{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1px;}
+.live-pill{display:flex;align-items:center;gap:5px;background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;color:var(--green-m);letter-spacing:.5px;}
+
+/* Location bar */
+.loc-bar{background:var(--panel);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.loc-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--faint);}
+.loc-select{font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;color:var(--text);background:var(--white);border:1.5px solid var(--border);border-radius:var(--rs);padding:5px 10px;outline:none;cursor:pointer;}
+.loc-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.loc-chip{font-family:'DM Mono',monospace;font-size:10px;padding:3px 9px;border-radius:20px;background:var(--green-l);color:var(--green);font-weight:500;border:1px solid rgba(22,163,74,.2);}
+.loc-chip.blue{background:var(--blue-l);color:var(--blue);border-color:rgba(59,130,246,.2);}
+.loc-chip.amber{background:var(--amber-l);color:var(--amber);border-color:rgba(245,158,11,.2);}
+.units-toggle{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.units-btn{font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);font-family:'Outfit',sans-serif;transition:all .15s;}
+.units-btn.active{background:var(--text);color:#fff;border-color:var(--text);}
+
+/* Nav */
+.nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:2px;overflow-x:auto;flex-shrink:0;}
+.nav-tab{padding:13px 16px 11px;font-size:13px;font-weight:500;color:var(--faint);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s;display:flex;align-items:center;gap:6px;white-space:nowrap;user-select:none;}
+.nav-tab:hover{color:var(--muted);}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--green-b);font-weight:700;}
+
+/* Content */
+.content{flex:1;display:flex;overflow:auto;min-height:0;}
+
+/* Left panel */
+.left{width:272px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);padding:16px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+.sec-title{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--faint);margin-bottom:6px;}
+.ig{display:flex;flex-direction:column;gap:7px;}
+.ir{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.ic{background:var(--white);border:1.5px solid var(--border);border-radius:var(--rs);padding:9px 11px;transition:border-color .15s,box-shadow .15s;}
+.ic:focus-within{border-color:var(--green-m);box-shadow:0 0 0 3px rgba(34,197,94,.1);}
+.ic label{display:block;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:3px;}
+.ic input,.ic select{width:100%;border:none;background:transparent;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:var(--text);outline:none;cursor:pointer;}
+.ic select option{font-size:13px;}
+
+/* Scenario pills */
+.spills{display:flex;flex-direction:column;gap:5px;}
+.sp{background:var(--white);border:1.5px solid var(--border);border-radius:var(--rs);padding:7px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .15s;}
+.sp:hover{border-color:var(--border2);box-shadow:var(--sh1);}
+.sp.active{border-color:var(--green-m);background:var(--green-l);}
+.sp-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.sp-name{flex:1;font-size:11px;font-weight:600;}
+.sp-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+.sp-delta{font-family:'DM Mono',monospace;font-size:10px;min-width:42px;text-align:right;}
+
+/* Tree equiv */
+.tree-card{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #bbf7d0;border-radius:var(--rs);padding:10px 12px;}
+.tree-num{font-size:22px;font-weight:900;color:var(--green);letter-spacing:-1px;}
+.tree-label{font-size:10px;color:var(--green-b);font-weight:600;margin-top:1px;}
+.tree-sub{font-size:9px;color:var(--faint);margin-top:2px;}
+
+/* Right panel */
+.right{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.tab-panel{display:none;flex-direction:column;gap:14px;}
+.tab-panel.active{display:flex;animation:fi .22s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* KPI row */
+.krow{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;}
+.kcard{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh1);position:relative;overflow:hidden;transition:box-shadow .2s;}
+.kcard:hover{box-shadow:var(--sh2);}
+.kcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0;}
+.kcard.green::before{background:linear-gradient(90deg,var(--green),var(--green-m));}
+.kcard.amber::before{background:linear-gradient(90deg,var(--amber),var(--amber-m));}
+.kcard.red::before{background:linear-gradient(90deg,var(--red),var(--red-m));}
+.kcard.blue::before{background:linear-gradient(90deg,var(--blue),var(--blue-m));}
+.kcard.teal::before{background:linear-gradient(90deg,var(--teal),var(--teal-m));}
+.klabel{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:7px;}
+.kval{font-size:28px;font-weight:900;letter-spacing:-1.5px;line-height:1;margin-bottom:3px;transition:color .3s;}
+.kval.green{color:var(--green);}
+.kval.amber{color:var(--amber);}
+.kval.red{color:var(--red);}
+.kval.blue{color:var(--blue);}
+.kval.teal{color:var(--teal);}
+.ksub{font-size:10px;color:var(--faint);}
+.kbadge{display:inline-flex;align-items:center;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.3px;margin-top:5px;}
+.bg{background:var(--green-l);color:var(--green);}
+.ba{background:var(--amber-l);color:var(--amber);}
+.br{background:var(--red-l);color:var(--red);}
+.bb{background:var(--blue-l);color:var(--blue);}
+.bt{background:var(--teal-l);color:var(--teal);}
+.bp{background:var(--purple-l);color:var(--purple);}
+
+/* Chart cards */
+.cc{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:18px 22px;box-shadow:var(--sh1);}
+.ct{font-size:13px;font-weight:700;margin-bottom:3px;}
+.cs{font-size:10px;color:var(--faint);margin-bottom:16px;}
+.source-tag{font-family:'DM Mono',monospace;font-size:9px;color:var(--faint);margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+
+/* Bar chart */
+.bc-wrap{display:flex;flex-direction:column;gap:10px;}
+.br-row{display:flex;align-items:center;gap:10px;}
+.br-label{font-size:10px;font-weight:600;width:120px;flex-shrink:0;color:var(--muted);}
+.br-track{flex:1;height:26px;background:var(--panel);border-radius:5px;overflow:hidden;position:relative;}
+.br-fill{height:100%;border-radius:5px;display:flex;align-items:center;padding-left:9px;font-size:10px;font-weight:700;color:#fff;transition:width .7s cubic-bezier(.4,0,.2,1);min-width:36px;}
+.br-fill.cur{box-shadow:inset 0 -2px 0 rgba(0,0,0,.1);}
+.threshold-line{position:absolute;top:0;bottom:0;width:2px;background:rgba(245,158,11,.6);}
+.threshold-label{position:absolute;top:-16px;font-family:'DM Mono',monospace;font-size:8px;color:var(--amber);white-space:nowrap;transform:translateX(-50%);}
+.br-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:58px;text-align:right;}
+
+/* Two col */
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+/* Credits */
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.cchip{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:13px;display:flex;align-items:flex-start;gap:10px;box-shadow:var(--sh1);transition:box-shadow .2s;}
+.cchip:hover{box-shadow:var(--sh2);}
+.cicon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.cname{font-size:11px;font-weight:700;margin-bottom:2px;}
+.cdesc{font-size:9px;color:var(--faint);line-height:1.5;margin-bottom:5px;}
+.cstat{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;display:inline-block;}
+
+/* Insight */
+.insight{background:linear-gradient(135deg,#f0fdf4,#f7fdf8);border:1.5px solid #bbf7d0;border-left:4px solid var(--green-b);border-radius:var(--r);padding:16px 18px;position:relative;}
+.insight.amber{background:linear-gradient(135deg,#fffbeb,#fefce8);border-color:#fde68a;border-left-color:var(--amber-m);}
+.insight.red{background:linear-gradient(135deg,#fef2f2,#fff5f5);border-color:#fecaca;border-left-color:var(--red-m);}
+.insight-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;color:var(--green);}
+.insight-label.amber{color:var(--amber);}
+.insight-label.red{color:var(--red);}
+.insight-text{font-size:12px;line-height:1.8;color:#1a3a1a;}
+.insight-text strong{font-weight:700;color:var(--text);}
+.disclaimer{font-size:9px;color:var(--faint);margin-top:8px;padding-top:6px;border-top:1px solid rgba(0,0,0,.06);font-family:'DM Mono',monospace;}
+
+/* Heatmap */
+.heatmap{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin:14px 0 6px;}
+.hcell{aspect-ratio:1;border-radius:4px;cursor:default;transition:transform .1s;}
+.hcell:hover{transform:scale(1.25);z-index:1;}
+.hmonths{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:8px;color:var(--faint);}
+.hlegend{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:9px;color:var(--faint);}
+.hleg-bar{flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,#1a3a2a,#22c55e,#fef08a);}
+
+/* Dial */
+.dial-row{display:flex;gap:16px;flex-wrap:wrap;}
+.dial-wrap{text-align:center;}
+.dial{width:96px;height:96px;position:relative;margin:0 auto 6px;}
+.dial svg{transform:rotate(-90deg);}
+.dial-track{fill:none;stroke:var(--border);stroke-width:8;}
+.dial-fill{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);}
+.dial-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+.dial-num{font-size:17px;font-weight:900;letter-spacing:-1px;}
+.dial-unit{font-size:8px;color:var(--faint);font-family:'DM Mono',monospace;}
+.dial-name{font-size:10px;font-weight:700;color:var(--muted);}
+.dial-target{font-size:9px;margin-top:2px;}
+
+/* Wind rose */
+.wind-wrap{display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;}
+.wind-rose{width:150px;height:150px;flex-shrink:0;}
+.wind-rose svg{width:100%;height:100%;}
+.wind-stats-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.wstat{background:var(--panel);border:1.5px solid var(--border);border-radius:var(--rs);padding:10px 12px;}
+.wstat-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:3px;}
+.wstat-val{font-size:18px;font-weight:900;letter-spacing:-1px;}
+.wstat-sub{font-size:9px;color:var(--faint);}
+.wind-loading{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--faint);padding:20px 0;}
+.wind-spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--green-m);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PWC */
+.pwc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.pwc-card{background:var(--panel);border:1.5px solid var(--border);border-radius:var(--rs);padding:12px;text-align:center;}
+.pwc-zone{font-size:9px;font-weight:700;color:var(--faint);margin-bottom:5px;text-transform:uppercase;letter-spacing:.8px;}
+.pwc-val{font-size:20px;font-weight:900;letter-spacing:-1px;margin-bottom:1px;}
+.pwc-sub{font-size:9px;color:var(--faint);}
+
+/* Glazing table */
+.gtable{width:100%;border-collapse:collapse;}
+.gtable th{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.gtable td{font-size:11px;padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.gtable tr:last-child td{border-bottom:none;}
+.gtable tr.active-row{background:var(--green-l);}
+.mono{font-family:'DM Mono',monospace;font-size:10px;}
+
+/* Mitigation rows */
+.mit-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.mit-row:last-child{border-bottom:none;}
+.mit-icon{font-size:18px;}
+.mit-body{flex:1;}
+.mit-title{font-size:11px;font-weight:700;}
+.mit-desc{font-size:9px;color:var(--faint);margin-top:1px;}
+
+/* Export */
+.export-row{display:flex;gap:9px;padding-top:4px;}
+.btn{padding:9px 18px;border-radius:var(--rs);font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .18s;display:flex;align-items:center;gap:6px;}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--sh2);}
+.btn-primary{background:var(--text);color:#fff;}
+.btn-secondary{background:var(--white);color:var(--text);border:1.5px solid var(--border);}
+.btn-green{background:var(--green-b);color:#fff;}
+
+/* Analysis hero */
+.ahero{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--sh1);}
+.atitle{font-size:15px;font-weight:800;margin-bottom:3px;}
+.asub{font-size:10px;color:var(--faint);margin-bottom:16px;}
+
+/* Risk table */
+.rtable{width:100%;border-collapse:collapse;}
+.rtable th{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.rtable td{font-size:11px;padding:9px 10px;border-bottom:1px solid var(--border);}
+.rtable tr:last-child td{border-bottom:none;}
+
+/* Compliance checks */
+.comp-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:var(--rs);margin-bottom:6px;font-size:11px;font-weight:600;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  body{padding:0;}
+  .shell{border-radius:0;min-height:100vh;}
+  .topbar-meta,.version-tag{display:none;}
+  .content{flex-direction:column;}
+  .left{width:100%;border-right:none;border-bottom:1px solid var(--border);}
+  .ig{grid-template-columns:1fr 1fr;display:grid;}
+  .spills{flex-direction:row;overflow-x:auto;}
+  .sp{flex-shrink:0;min-width:130px;}
+  .right{overflow:visible;}
+  .krow{grid-template-columns:1fr 1fr;}
+  .krow .kcard:last-child{grid-column:1/-1;}
+  .twocol{grid-template-columns:1fr;}
+  .cgrid{grid-template-columns:1fr 1fr;}
+  .pwc-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:540px){
+  .topbar{height:44px;padding:0 14px;}
+  .live-pill{display:none;}
+  .loc-bar{padding:6px 14px;}
+  .nav-tab{font-size:11px;padding:10px 10px 8px;}
+  .krow{grid-template-columns:1fr;}
+  .krow .kcard:last-child{grid-column:auto;}
+  .kval{font-size:24px;}
+  .cgrid{grid-template-columns:1fr;}
+  .twocol{grid-template-columns:1fr;}
+  .dial-row{justify-content:center;}
+  .wind-wrap{flex-direction:column;align-items:center;}
+  .pwc-grid{grid-template-columns:1fr 1fr;}
+  .export-row{flex-direction:column;}
+  .btn{justify-content:center;}
+  .br-label{width:80px;font-size:9px;}
+  .loc-chips{display:none;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="tl">
+    <div class="logo"><div class="logo-dot"></div>Carbon Scout</div>
+    <div class="topbar-meta">AEC Sustainability Intelligence · v3.0</div>
+  </div>
+  <div class="tr">
+    <div class="version-tag">EN 15978 · A1–A5</div>
+    <div class="live-pill"><span>●</span> LIVE</div>
+  </div>
+</div>
+
+<!-- Location bar -->
+<div class="loc-bar">
+  <div class="loc-label">Location</div>
+  <select class="loc-select" id="city" onchange="onCityChange()">
+    <option value="nyc">New York, NY</option>
+    <option value="hou">Houston, TX</option>
+    <option value="dal">Dallas, TX</option>
+    <option value="chi">Chicago, IL</option>
+    <option value="la">Los Angeles, CA</option>
+    <option value="bos">Boston, MA</option>
+    <option value="sea">Seattle, WA</option>
+    <option value="mia">Miami, FL</option>
+    <option value="den">Denver, CO</option>
+    <option value="phx">Phoenix, AZ</option>
+  </select>
+  <div class="loc-chips">
+    <span class="loc-chip" id="chip-zone">Zone 4A</span>
+    <span class="loc-chip blue" id="chip-climate">Humid Continental</span>
+    <span class="loc-chip amber" id="chip-sun">4.7 PSH</span>
+  </div>
+  <div class="units-toggle">
+    <button class="units-btn active" id="btn-metric" onclick="setUnits('metric')">m²</button>
+    <button class="units-btn" id="btn-imperial" onclick="setUnits('imperial')">ft²</button>
+  </div>
+</div>
+
+<!-- Nav -->
+<div class="nav">
+  <div class="nav-tab active" onclick="switchTab('carbon')">🌿 Embodied Carbon</div>
+  <div class="nav-tab" onclick="switchTab('daylight')">☀️ Daylight</div>
+  <div class="nav-tab" onclick="switchTab('glare')">👁 Glare</div>
+  <div class="nav-tab" onclick="switchTab('wind')">💨 Wind / PWC</div>
+  <div class="nav-tab" onclick="switchTab('facade')">🏢 Facade & Glazing</div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- Left panel -->
+  <div class="left">
+    <div>
+      <div class="sec-title">Building Parameters</div>
+      <div class="ig">
+        <div class="ir">
+          <div class="ic"><label id="gfa-label">GFA (m²)</label><input type="number" id="gfa" value="5000" min="100" max="200000" oninput="recalc()"/></div>
+          <div class="ic"><label>Floors</label><input type="number" id="floors" value="12" min="1" max="80" oninput="recalc()"/></div>
+        </div>
+        <div class="ic"><label>Structural System</label>
+          <select id="structure" onchange="recalc()">
+            <option value="concrete_cast">Concrete (Cast-in-place)</option>
+            <option value="concrete_precast">Concrete (Precast)</option>
+            <option value="steel_composite" selected>Steel (Composite)</option>
+            <option value="steel_light">Steel (Light Frame)</option>
+            <option value="timber_clt">Mass Timber — CLT</option>
+            <option value="timber_glulam">Mass Timber — Glulam</option>
+            <option value="masonry">Masonry</option>
+          </select>
+        </div>
+        <div class="ic"><label>Building Use</label>
+          <select id="use" onchange="recalc()">
+            <option value="office" selected>Office</option>
+            <option value="residential">Residential</option>
+            <option value="mixed">Mixed-Use</option>
+            <option value="retail">Retail</option>
+            <option value="education">Education</option>
+            <option value="healthcare">Healthcare</option>
+          </select>
+        </div>
+        <div class="ir">
+          <div class="ic"><label>WWR (%)</label><input type="number" id="wwr" value="40" min="10" max="90" oninput="recalc()"/></div>
+          <div class="ic"><label>Orientation</label>
+            <select id="orient" onchange="recalc()">
+              <option value="N">North</option>
+              <option value="S" selected>South</option>
+              <option value="E">East</option>
+              <option value="W">West</option>
+            </select>
+          </div>
+        </div>
+        <div class="ic"><label>Glazing System</label>
+          <select id="glazing" onchange="recalc()">
+            <option value="std_dbl">Standard Double</option>
+            <option value="hp_dbl" selected>High-Perf Double</option>
+            <option value="triple">Triple Glazed</option>
+            <option value="electro">Electrochromic (Dynamic)</option>
+            <option value="bipv">BIPV (Solar Glass)</option>
+            <option value="fritted">Fritted / Ceramic</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-title">Scenario Comparison</div>
+      <div class="spills" id="spills"></div>
+    </div>
+
+    <div class="tree-card" id="tree-card">
+      <div class="tree-num" id="tree-num">—</div>
+      <div class="tree-label">🌳 trees equivalent saved</div>
+      <div class="tree-sub" id="tree-sub">vs concrete baseline</div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="right">
+
+    <!-- ══ CARBON ══ -->
+    <div class="tab-panel active" id="tab-carbon">
+      <div class="krow" id="krow-carbon"></div>
+
+      <div class="cc">
+        <div class="ct">Structural System Carbon Comparison</div>
+        <div class="cs">A1–A5 embodied carbon intensity · LEED MRc1 threshold 300 kg CO₂e/m² · LETI 2030 target 250 kg CO₂e/m²</div>
+        <div class="bc-wrap" id="bc-carbon"></div>
+        <div class="source-tag">Sources: EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023 · IStructE How to Calculate Embodied Carbon 2022 · LETI CEDGv2 2020</div>
+      </div>
+
+      <div class="twocol">
+        <div>
+          <div class="sec-title" style="margin-bottom:9px">Sustainability Compliance</div>
+          <div class="cgrid" id="cgrid"></div>
+        </div>
+        <div class="insight" id="carbon-insight">
+          <div class="insight-label" id="ci-label">✦ AI INSIGHT</div>
+          <div class="insight-text" id="ci-text">Calculating…</div>
+        </div>
+      </div>
+
+      <div class="export-row">
+        <button class="btn btn-primary" onclick="exportReport()">⬇ Export Report</button>
+        <button class="btn btn-secondary" id="csv-btn" onclick="copyCSV()">⎘ Copy CSV</button>
+        <button class="btn btn-green" onclick="printSummary()">🖨 Print Summary</button>
+      </div>
+    </div>
+
+    <!-- ══ DAYLIGHT ══ -->
+    <div class="tab-panel" id="tab-daylight">
+      <div class="ahero">
+        <div class="atitle">Daylight Autonomy Analysis</div>
+        <div class="asub">Spatial Daylight Autonomy (sDA) · Annual Sunlight Exposure (ASE) · LEED EQc7 · Climate zone <span id="dl-zone"></span> · <span id="dl-city"></span></div>
+        <div class="dial-row" id="dl-dials"></div>
+      </div>
+
+      <div class="cc">
+        <div class="ct">Annual Daylight Availability Heatmap</div>
+        <div class="cs">Estimated useful daylight illuminance (UDI 100–2000 lux) by month and floor zone · based on <span id="hm-city"></span> solar data · WWR <span id="hm-wwr"></span>% · <span id="hm-orient"></span>-facing</div>
+        <div class="heatmap" id="dl-heatmap"></div>
+        <div class="hmonths"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span></div>
+        <div class="hlegend"><span>Low</span><div class="hleg-bar"></div><span>High UDI</span></div>
+        <div class="source-tag">Parametric estimate based on ASHRAE 169-2020 climate data for <span id="hm-city2"></span> · Not a Radiance/Daysim simulation · Indicative for early design only</div>
+      </div>
+
+      <div class="twocol">
+        <div class="cc">
+          <div class="ct">LEED EQc7 Compliance</div>
+          <div class="cs">Required: sDA₃₀₀/₅₀% ≥ 55% · ASE₁₀₀₀/₂₅₀ ≤ 10%</div>
+          <div style="margin-top:12px" id="dl-compliance"></div>
+        </div>
+        <div class="insight" id="dl-insight">
+          <div class="insight-label">✦ DAYLIGHT INSIGHT</div>
+          <div class="insight-text" id="dl-insight-text">Calculating…</div>
+          <div class="disclaimer">⚠ Parametric estimate · Not a simulation · Verify with Climate Studio or Radiance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ GLARE ══ -->
+    <div class="tab-panel" id="tab-glare">
+      <div class="ahero">
+        <div class="atitle">Glare Risk Assessment</div>
+        <div class="asub">Daylight Glare Probability (DGP) · EN 17037 comfort categories · Glazing: <span id="gl-glazing"></span> · WWR <span id="gl-wwr"></span>%</div>
+        <div class="dial-row" id="gl-dials"></div>
+      </div>
+
+      <div class="cc">
+        <div class="ct">DGP by Orientation & Season</div>
+        <div class="cs">DGP thresholds: &lt;0.35 imperceptible · 0.35–0.40 perceptible · 0.40–0.45 disturbing · &gt;0.45 intolerable · Glazing system affects all values</div>
+        <table class="rtable" id="gl-table"></table>
+        <div class="source-tag">⚠ Parametric DGP estimate · Glazing SHGC applied · Verify with Evalglare or Climate Studio for detailed analysis</div>
+      </div>
+
+      <div class="twocol">
+        <div class="cc">
+          <div class="ct">Mitigation Strategies</div>
+          <div class="cs">Recommendations based on DGP risk level and glazing type</div>
+          <div style="margin-top:10px" id="gl-mit"></div>
+        </div>
+        <div class="insight" id="gl-insight">
+          <div class="insight-label">✦ GLARE INSIGHT</div>
+          <div class="insight-text" id="gl-insight-text">Calculating…</div>
+          <div class="disclaimer">⚠ Parametric estimate · Not a simulation</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ WIND ══ -->
+    <div class="tab-panel" id="tab-wind">
+      <div class="ahero">
+        <div class="atitle">Wind & Pedestrian Wind Comfort (PWC)</div>
+        <div class="asub">Lawson LDDC criteria · Real wind data from Open-Meteo for <span id="wind-city"></span> · Updated live</div>
+        <div class="wind-wrap" style="margin-top:14px">
+          <div class="wind-rose"><svg viewBox="0 0 160 160" id="wind-svg"></svg></div>
+          <div class="wind-stats-grid" id="wind-stats"></div>
+        </div>
+      </div>
+
+      <div class="cc">
+        <div class="ct">PWC Zone Assessment</div>
+        <div class="cs">Pedestrian comfort levels around building perimeter · based on real prevailing wind data</div>
+        <div class="pwc-grid" style="margin-top:14px" id="pwc-grid"></div>
+        <div class="source-tag">Wind data: Open-Meteo ERA5 reanalysis · <span id="wind-coords"></span> · Heights extrapolated using power law α=0.25 · Full CFD recommended at RIBA Stage 3</div>
+      </div>
+
+      <div class="twocol">
+        <div class="cc">
+          <div class="ct">Mitigation Recommendations</div>
+          <div style="margin-top:10px" id="wind-mit"></div>
+        </div>
+        <div class="insight" id="wind-insight">
+          <div class="insight-label">✦ WIND INSIGHT</div>
+          <div class="insight-text" id="wind-insight-text">Fetching real wind data…</div>
+          <div class="disclaimer">⚠ ERA5 reanalysis data · Indicative only · Full CFD required for planning</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ FACADE ══ -->
+    <div class="tab-panel" id="tab-facade">
+      <div class="krow" id="krow-facade"></div>
+
+      <div class="cc">
+        <div class="ct">Glazing System Comparison</div>
+        <div class="cs">All 6 systems · thermal, optical, carbon, and LEED performance · active system highlighted</div>
+        <table class="gtable" style="margin-top:14px" id="gl-compare"></table>
+        <div class="source-tag">Sources: ASHRAE 90.1-2022 · Pilkington / Guardian product data · EC3 EPD database · LEED v4.1 EAp2</div>
+      </div>
+
+      <div class="cc">
+        <div class="ct">WWR Performance Matrix</div>
+        <div class="cs">Trade-off between window-to-wall ratio, daylight autonomy, glare risk, and facade embodied carbon · active glazing system applied</div>
+        <div class="bc-wrap" style="margin-top:14px" id="facade-matrix"></div>
+      </div>
+
+      <div class="twocol">
+        <div class="cc">
+          <div class="ct">Carbon Impact of Glazing Choice</div>
+          <div class="cs">Facade A1–A3 contribution by system vs standard double baseline</div>
+          <div class="bc-wrap" style="margin-top:14px" id="glazing-carbon"></div>
+        </div>
+        <div class="insight" id="facade-insight">
+          <div class="insight-label">✦ FACADE INSIGHT</div>
+          <div class="insight-text" id="facade-insight-text">Calculating…</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /content -->
+</div><!-- /shell -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// CITY DATA — real climate zone, solar, coordinates
+// ═══════════════════════════════════════════════════
+const CITIES = {
+  nyc: {name:'New York, NY',   zone:'4A', climate:'Humid Continental', psh:4.7, lat:40.71, lon:-74.01, wind_dir:'NW', hdd:4871, cdd:1027},
+  hou: {name:'Houston, TX',    zone:'2A', climate:'Hot-Humid',         psh:5.2, lat:29.76, lon:-95.37, wind_dir:'SE', hdd:1435, cdd:2889},
+  dal: {name:'Dallas, TX',     zone:'3A', climate:'Hot-Mixed',         psh:5.4, lat:32.78, lon:-96.80, wind_dir:'S',  hdd:2363, cdd:2560},
+  chi: {name:'Chicago, IL',    zone:'5A', climate:'Humid Continental', psh:4.2, lat:41.88, lon:-87.63, wind_dir:'W',  hdd:6310, cdd:830},
+  la:  {name:'Los Angeles, CA',zone:'3B', climate:'Dry Mediterranean', psh:5.6, lat:34.05, lon:-118.24,wind_dir:'W',  hdd:1274, cdd:1115},
+  bos: {name:'Boston, MA',     zone:'5A', climate:'Humid Continental', psh:4.5, lat:42.36, lon:-71.06, wind_dir:'NW', hdd:5592, cdd:790},
+  sea: {name:'Seattle, WA',    zone:'4C', climate:'Oceanic',           psh:3.8, lat:47.61, lon:-122.33,wind_dir:'S',  hdd:4408, cdd:157},
+  mia: {name:'Miami, FL',      zone:'1A', climate:'Hot-Humid',         psh:5.7, lat:25.77, lon:-80.19, wind_dir:'SE', hdd:200,  cdd:4038},
+  den: {name:'Denver, CO',     zone:'5B', climate:'Semi-Arid',         psh:5.8, lat:39.74, lon:-104.98,wind_dir:'W',  hdd:5524, cdd:695},
+  phx: {name:'Phoenix, AZ',    zone:'2B', climate:'Hot-Dry',           psh:6.5, lat:33.45, lon:-112.07,wind_dir:'SE', hdd:1125, cdd:4244},
+};
+
+// Monthly solar irradiance factors by zone (relative to annual avg)
+const SOLAR_MONTHLY = {
+  '1A':[0.82,0.87,0.95,1.01,1.05,1.08,1.10,1.09,1.04,0.97,0.87,0.80],
+  '2A':[0.78,0.84,0.96,1.05,1.08,1.09,1.07,1.07,1.04,0.98,0.85,0.78],
+  '2B':[0.80,0.88,1.02,1.10,1.12,1.13,1.09,1.08,1.06,0.98,0.86,0.79],
+  '3A':[0.76,0.84,0.98,1.06,1.10,1.11,1.09,1.08,1.04,0.96,0.83,0.74],
+  '3B':[0.80,0.89,1.03,1.10,1.12,1.13,1.10,1.09,1.06,0.97,0.86,0.79],
+  '4A':[0.68,0.78,0.96,1.08,1.14,1.16,1.14,1.12,1.06,0.93,0.74,0.64],
+  '4C':[0.52,0.66,0.88,1.08,1.18,1.21,1.20,1.14,1.02,0.82,0.60,0.48],
+  '5A':[0.62,0.74,0.95,1.10,1.17,1.19,1.17,1.13,1.05,0.89,0.68,0.58],
+  '5B':[0.72,0.83,1.02,1.12,1.16,1.17,1.13,1.11,1.07,0.94,0.77,0.68],
+};
+
+// ═══════════════════════════════════════════════════
+// GLAZING DATA — real product specs
+// ═══════════════════════════════════════════════════
+const GLAZING = {
+  std_dbl:  {label:'Standard Double',        u:2.8,  shgc:0.63, vlt:0.72, ec:22, leed:false, dpg_mod:1.00, dl_mod:1.00, color:'#94a3b8'},
+  hp_dbl:   {label:'High-Perf Double',       u:1.4,  shgc:0.27, vlt:0.64, ec:28, leed:true,  dpg_mod:0.82, dl_mod:0.95, color:'#3b82f6'},
+  triple:   {label:'Triple Glazed',          u:0.8,  shgc:0.22, vlt:0.55, ec:42, leed:true,  dpg_mod:0.74, dl_mod:0.88, color:'#8b5cf6'},
+  electro:  {label:'Electrochromic (Dynamic)',u:1.2, shgc:0.06, vlt:0.60, ec:65, leed:true,  dpg_mod:0.45, dl_mod:0.92, color:'#06b6d4'},
+  bipv:     {label:'BIPV (Solar Glass)',      u:1.8,  shgc:0.18, vlt:0.28, ec:95, leed:true,  dpg_mod:0.60, dl_mod:0.60, color:'#f59e0b'},
+  fritted:  {label:'Fritted / Ceramic',       u:1.6,  shgc:0.30, vlt:0.45, ec:35, leed:true,  dpg_mod:0.68, dl_mod:0.78, color:'#10b981'},
+};
+
+// ═══════════════════════════════════════════════════
+// STRUCTURE DATA
+// ═══════════════════════════════════════════════════
+const STRUCT = {
+  concrete_cast:    {base:290, label:'Concrete CIP',      color:'#ef4444'},
+  concrete_precast: {base:260, label:'Concrete Precast',  color:'#f97316'},
+  steel_composite:  {base:245, label:'Steel Composite',   color:'#eab308'},
+  steel_light:      {base:210, label:'Steel Light',       color:'#84cc16'},
+  timber_clt:       {base:115, label:'Mass Timber CLT',   color:'#22c55e'},
+  timber_glulam:    {base:100, label:'Mass Timber Glulam',color:'#14b8a6'},
+  masonry:          {base:230, label:'Masonry',           color:'#a855f7'},
+};
+const USE_ADD = {office:85,residential:65,mixed:75,retail:60,education:70,healthcare:110};
+function floorMod(f){return f<=3?.85:f<=6?.95:f<=12?1:f<=20?1.08:f<=40?1.18:1.3;}
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let units = 'metric';
+let windData = null;
+let currentCity = 'nyc';
+
+function getCity(){ return CITIES[document.getElementById('city').value]; }
+
+function onCityChange(){
+  currentCity = document.getElementById('city').value;
+  const c = CITIES[currentCity];
+  document.getElementById('chip-zone').textContent = 'Zone ' + c.zone;
+  document.getElementById('chip-climate').textContent = c.climate;
+  document.getElementById('chip-sun').textContent = c.psh + ' PSH';
+  fetchWindData(c.lat, c.lon, c.name);
+  recalc();
+}
+
+function setUnits(u){
+  units = u;
+  document.getElementById('btn-metric').classList.toggle('active', u==='metric');
+  document.getElementById('btn-imperial').classList.toggle('active', u==='imperial');
+  document.getElementById('gfa-label').textContent = u==='metric' ? 'GFA (m²)' : 'GFA (ft²)';
+  recalc();
+}
+
+function getGFA(){
+  const raw = parseFloat(document.getElementById('gfa').value)||5000;
+  return units==='imperial' ? raw*0.0929 : raw; // always work in m² internally
+}
+
+function displayArea(m2){
+  return units==='imperial' ? Math.round(m2/0.0929).toLocaleString()+' ft²' : Math.round(m2).toLocaleString()+' m²';
+}
+
+function switchTab(name){
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>{
+    const names=['carbon','daylight','glare','wind','facade'];
+    t.classList.toggle('active',names[i]===name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p=>{
+    p.classList.toggle('active',p.id==='tab-'+name);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// WIND API — Open-Meteo ERA5
+// ═══════════════════════════════════════════════════
+async function fetchWindData(lat, lon, cityName){
+  document.getElementById('wind-city').textContent = cityName;
+  document.getElementById('wind-coords').textContent = `${lat.toFixed(2)}°N, ${Math.abs(lon).toFixed(2)}°W`;
+  document.getElementById('wind-insight-text').innerHTML = '<div class="wind-loading"><div class="wind-spinner"></div>Fetching real wind data from Open-Meteo…</div>';
+
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=windspeed_10m,winddirection_10m&past_days=7&forecast_days=1&windspeed_unit=ms`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const speeds = data.hourly.windspeed_10m.filter(v=>v!=null);
+    const dirs   = data.hourly.winddirection_10m.filter(v=>v!=null);
+    const avgSpeed = speeds.reduce((a,b)=>a+b,0)/speeds.length;
+    const maxSpeed = Math.max(...speeds);
+
+    // Bin directions into 8 compass sectors
+    const bins = new Array(8).fill(0);
+    dirs.forEach((d,i)=>{ if(speeds[i]>0) bins[Math.round(d/45)%8]++; });
+    const maxBin = Math.max(...bins);
+
+    windData = {avgSpeed,maxSpeed,bins,maxBin,lat,lon};
+    renderWindRose(windData);
+    renderWindStats(windData, cityName);
+    renderPWC(windData);
+    renderWindInsight(windData, cityName);
+  } catch(e) {
+    const city = CITIES[currentCity];
+    // Fallback to city defaults
+    windData = {avgSpeed:4.2, maxSpeed:9.1, bins:[3,4,5,8,6,7,9,5], maxBin:9, lat:city.lat, lon:city.lon};
+    renderWindRose(windData);
+    renderWindStats(windData, city.name);
+    renderPWC(windData);
+    document.getElementById('wind-insight-text').textContent = 'Using climate-typical wind data for '+city.name+'. Live API data unavailable.';
+  }
+}
+
+function renderWindRose(d){
+  const dirs=['N','NE','E','SE','S','SW','W','NW'];
+  const cx=80,cy=80,maxR=55;
+  const colors=['#16a34a','#22c55e','#86efac','#14b8a6','#60a5fa','#3b82f6','#818cf8','#a78bfa'];
+  let svg='';
+  // Rings
+  [0.33,0.66,1].forEach(r=>{
+    svg+=`<circle cx="${cx}" cy="${cy}" r="${maxR*r}" fill="none" stroke="#e4ebe4" stroke-width="1" stroke-dasharray="3,3"/>`;
+  });
+  // Cardinal lines
+  dirs.forEach((_,i)=>{
+    const a=(i/8)*2*Math.PI-Math.PI/2;
+    svg+=`<line x1="${cx}" y1="${cy}" x2="${cx+maxR*Math.cos(a)}" y2="${cy+maxR*Math.sin(a)}" stroke="#e4ebe4" stroke-width="1"/>`;
+  });
+  // Petals
+  dirs.forEach((dir,i)=>{
+    const a=(i/8)*2*Math.PI-Math.PI/2;
+    const r=(d.bins[i]/d.maxBin)*maxR;
+    if(r<1) return;
+    const spread=Math.PI/10;
+    const x1=cx+r*Math.cos(a-spread),y1=cy+r*Math.sin(a-spread);
+    const x2=cx+r*Math.cos(a+spread),y2=cy+r*Math.sin(a+spread);
+    svg+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z" fill="${colors[i]}" opacity="0.8" stroke="white" stroke-width="0.5"/>`;
+    const lx=cx+(maxR+12)*Math.cos(a),ly=cy+(maxR+12)*Math.sin(a);
+    svg+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="#5a6e5a" font-family="DM Mono,monospace">${dir}</text>`;
+  });
+  svg+=`<circle cx="${cx}" cy="${cy}" r="4" fill="#0c1a0c"/>`;
+  document.getElementById('wind-svg').innerHTML=svg;
+}
+
+function renderWindStats(d, cityName){
+  const floors = parseInt(document.getElementById('floors').value)||12;
+  const hFactor = Math.pow(floors*3.2/10, 0.25);
+  const pedestrian = (d.avgSpeed*0.6).toFixed(1);
+  const roof = (d.avgSpeed*hFactor).toFixed(1);
+  document.getElementById('wind-stats').innerHTML=[
+    {l:'Avg Wind Speed',v:d.avgSpeed.toFixed(1),u:'m/s at 10m · 7-day'},
+    {l:'Peak Gust',v:d.maxSpeed.toFixed(1),u:'m/s · 7-day max'},
+    {l:'Pedestrian Level',v:pedestrian,u:'m/s estimated · 1.5m'},
+    {l:'Roof Level',v:roof,u:`m/s · ${floors} floors`},
+  ].map(s=>`<div class="wstat">
+    <div class="wstat-label">${s.l}</div>
+    <div class="wstat-val">${s.v}</div>
+    <div class="wstat-sub">${s.u}</div>
+  </div>`).join('');
+}
+
+function renderPWC(d){
+  const floors=parseInt(document.getElementById('floors').value)||12;
+  const hFactor=Math.pow(floors*3.2/10,0.25);
+  const base=d.avgSpeed;
+  const zones=[
+    {zone:'Building Entry',   spd:(base*0.5*hFactor).toFixed(1), crit:'Sitting',      max:4},
+    {zone:'Plaza / Podium',   spd:(base*0.6*hFactor).toFixed(1), crit:'Strolling',    max:6},
+    {zone:'Corner (Accel.)',  spd:(base*1.1*hFactor).toFixed(1), crit:'Business Walk',max:8},
+    {zone:'Side Street',      spd:(base*0.7*hFactor).toFixed(1), crit:'Business Walk',max:8},
+    {zone:'Rooftop',          spd:(base*1.3*hFactor).toFixed(1), crit:'Sport',        max:10},
+    {zone:'Downwind',         spd:(base*0.4*hFactor).toFixed(1), crit:'Sitting',      max:4},
+  ];
+  document.getElementById('pwc-grid').innerHTML=zones.map(z=>{
+    const ok=parseFloat(z.spd)<=z.max;
+    return `<div class="pwc-card">
+      <div class="pwc-zone">${z.zone}</div>
+      <div class="pwc-val" style="color:${ok?'var(--green)':'var(--red)'}">${z.spd}</div>
+      <div class="pwc-sub">m/s · ${z.crit}</div>
+      <div style="margin-top:5px"><span class="kbadge ${ok?'bg':'br'}">${ok?'✓ Comfortable':'✗ Discomfort'}</span></div>
+    </div>`;
+  }).join('');
+
+  const uncomfortable=zones.filter(z=>parseFloat(z.spd)>z.max).length;
+  document.getElementById('wind-mit').innerHTML=[
+    {icon:'🌳',t:'Windbreak Planting',d:'Dense tree rows reduce pedestrian wind 30–50%',show:uncomfortable>1},
+    {icon:'🏗',t:'Permeable Podium',d:'Raised podium deflects wind above pedestrian zone',show:floors>12},
+    {icon:'🔲',t:'Corner Chamfering',d:'Rounded corners reduce corner acceleration ~20%',show:true},
+    {icon:'🧱',t:'Wind Baffles at Entry',d:'Low walls deflect prevailing winds at grade',show:uncomfortable>0},
+  ].map(m=>`<div class="mit-row">
+    <div class="mit-icon">${m.icon}</div>
+    <div class="mit-body"><div class="mit-title">${m.t}</div><div class="mit-desc">${m.d}</div></div>
+    <span class="kbadge ${m.show?'ba':'bg'}">${m.show?'Recommended':'Optional'}</span>
+  </div>`).join('');
+}
+
+function renderWindInsight(d, cityName){
+  const floors=parseInt(document.getElementById('floors').value)||12;
+  const hFactor=Math.pow(floors*3.2/10,0.25);
+  const ped=(d.avgSpeed*0.6*hFactor).toFixed(1);
+  const uncomfortable = parseFloat(ped)>4;
+  document.getElementById('wind-insight-text').innerHTML = uncomfortable
+    ? `<strong>Pedestrian comfort attention needed.</strong> Real wind data for ${cityName} shows average speeds of ${d.avgSpeed.toFixed(1)} m/s. At ${floors} floors, estimated pedestrian-level speeds reach ${ped} m/s — exceeding Lawson LDDC sitting comfort (4 m/s). Corner acceleration zones are most critical. Recommend windbreak planting at entry and corner chamfering in facade design.`
+    : `<strong>Good pedestrian comfort conditions.</strong> Real wind data for ${cityName} shows avg ${d.avgSpeed.toFixed(1)} m/s. At ${floors} floors, pedestrian-level speeds are estimated at ${ped} m/s — within Lawson LDDC sitting comfort criteria. Standard entry canopy recommended as precaution. Full CFD validation required at RIBA Stage 3.`;
+}
+
+// ═══════════════════════════════════════════════════
+// CARBON
+// ═══════════════════════════════════════════════════
+function calcCarbon(){
+  const gfa=getGFA();
+  const floors=parseInt(document.getElementById('floors').value)||12;
+  const str=document.getElementById('structure').value;
+  const use=document.getElementById('use').value;
+  const wwr=parseInt(document.getElementById('wwr').value)||40;
+  const orient=document.getElementById('orient').value;
+  const glaz=document.getElementById('glazing').value;
+  const mod=floorMod(floors);
+  const intensity=Math.round(STRUCT[str].base*mod+USE_ADD[use]);
+  const facadeEC=Math.round(GLAZING[glaz].ec*(wwr/100)*gfa/gfa); // per m² facade
+  const total=Math.round(intensity*gfa/1000);
+  return{gfa,floors,str,use,wwr,orient,glaz,mod,intensity,total,strF:STRUCT[str],glF:GLAZING[glaz]};
+}
+
+function tier(v){return v<=300?'green':v<=400?'amber':'red';}
+
+function renderCarbon(d){
+  const{intensity,total,gfa,floors,str,use,strF,mod,glF}=d;
+  const t=tier(intensity);
+  const uAdd=USE_ADD[use];
+  const city=getCity();
+
+  // Tree equivalent
+  const concreteIntensity=Math.round(STRUCT.concrete_cast.base*mod+uAdd);
+  const saving=(concreteIntensity-intensity)*gfa/1000;
+  const trees=Math.max(0,Math.round(saving/0.022));
+  document.getElementById('tree-num').textContent=trees>0?trees.toLocaleString():'0';
+  document.getElementById('tree-sub').textContent=saving>0?`${Math.round(saving)} tCO₂ vs concrete baseline`:'Current = baseline';
+
+  // KPIs
+  const areaLabel=displayArea(gfa);
+  document.getElementById('krow-carbon').innerHTML=[
+    {label:'Carbon Intensity',val:intensity,unit:'kg CO₂e/m² · A1–A5',sub:`${areaLabel} GFA`,t,badge:t==='green'?(intensity<=200?'EXCELLENT':'LEED ELIGIBLE'):t==='amber'?'REVIEW NEEDED':'HIGH CARBON'},
+    {label:'Total Embodied Carbon',val:total.toLocaleString(),unit:'tCO₂e',sub:`${floors} floors · ${strF.label}`,t,badge:city.zone},
+    {label:'Saved vs Concrete',val:Math.max(0,concreteIntensity-intensity),unit:'kg CO₂e/m²',sub:`≈ ${trees.toLocaleString()} trees`,t:'blue',badge:'REDUCTION'},
+  ].map(k=>`<div class="kcard ${k.t}">
+    <div class="klabel">${k.label}</div>
+    <div class="kval ${k.t}">${k.val}</div>
+    <div class="ksub">${k.unit} · ${k.sub}</div>
+    <div class="kbadge b${k.t[0]}">${k.badge}</div>
+  </div>`).join('');
+
+  // Scenarios
+  const scenarios=Object.entries(STRUCT).map(([k,v])=>({
+    key:k,label:v.label,color:v.color,val:Math.round(v.base*mod+uAdd)
+  })).sort((a,b)=>a.val-b.val);
+  document.getElementById('spills').innerHTML=scenarios.map(s=>{
+    const delta=s.val-intensity;
+    const dc=delta<0?'var(--green)':delta===0?'var(--faint)':'var(--red)';
+    const ds=delta===0?'current':(delta>0?'+':'')+delta;
+    return `<div class="sp ${s.key===str?'active':''}" onclick="document.getElementById('structure').value='${s.key}';recalc()">
+      <div class="sp-dot" style="background:${s.color}"></div>
+      <div class="sp-name">${s.label}</div>
+      <div class="sp-val" style="color:${s.color}">${s.val}</div>
+      <div class="sp-delta" style="color:${dc}">${ds}</div>
+    </div>`;
+  }).join('');
+
+  // Bar chart
+  const maxBar=380;
+  const tPct=((300/maxBar)*100).toFixed(1);
+  const t2Pct=((250/maxBar)*100).toFixed(1);
+  document.getElementById('bc-carbon').innerHTML=`<div style="position:relative;height:18px;margin-bottom:4px">
+    <div class="threshold-line" style="left:${tPct}%"><div class="threshold-label">LEED 300</div></div>
+    <div class="threshold-line" style="left:${t2Pct}%;background:rgba(22,163,74,.5)"><div class="threshold-label" style="color:var(--green)">LETI 250</div></div>
+  </div>`+scenarios.map(s=>{
+    const pct=Math.min(100,(s.val/maxBar*100)).toFixed(1);
+    const isCur=s.key===str;
+    return `<div class="br-row">
+      <div class="br-label">${s.label}</div>
+      <div class="br-track">
+        <div class="br-fill ${isCur?'cur':''}" style="width:${pct}%;background:${s.color};opacity:${isCur?1:0.45}">${isCur?s.val+' kg/m²':''}</div>
+        <div class="threshold-line" style="left:${tPct}%"></div>
+        <div class="threshold-line" style="left:${t2Pct}%;background:rgba(22,163,74,.4)"></div>
+      </div>
+      <div class="br-val">${s.val}</div>
+    </div>`;
+  }).join('');
+
+  // Credits
+  const isCLT=str.includes('timber');
+  const credits=[
+    {icon:'🏗',bg:'#dcfce7',name:'MRc1 Whole Building LCA',desc:'EN 15978 A1–A5 documentation required',ok:intensity<=300,warn:intensity>300&&intensity<=400},
+    {icon:'🪵',bg:'#f3e8ff',name:'MRc2 Low Carbon Materials',desc:'EPD-verified low embodied carbon',ok:isCLT,warn:str.includes('steel')},
+    {icon:'📊',bg:'#dbeafe',name:'EA Carbon Reporting',desc:'LETI/RIBA 2030 pathway alignment',ok:gfa>=1000,warn:false},
+    {icon:'🌍',bg:'#fef9c3',name:'LETI 2030 Embodied Target',desc:'≤250 kg CO₂e/m² structure+envelope',ok:intensity<=250,warn:intensity>250&&intensity<=350},
+    {icon:'♻️',bg:'#fce7f3',name:'MRc3 Recycled Content',desc:'Min. 20% recycled by value',ok:str.includes('steel'),warn:false},
+    {icon:'🪟',bg:'#ccfbf1',name:'EQc7 Facade Compliance',desc:'LEED glazing performance thresholds',ok:glF.leed,warn:false},
+  ];
+  document.getElementById('cgrid').innerHTML=credits.map(c=>{
+    const sc=c.ok?'bg ba':'';
+    const scClass=c.ok?'bg':c.warn?'ba':'br';
+    const st=c.ok?'✓ On Track':c.warn?'⚠ Review':'✗ At Risk';
+    return `<div class="cchip">
+      <div class="cicon" style="background:${c.bg}">${c.icon}</div>
+      <div><div class="cname">${c.name}</div><div class="cdesc">${c.desc}</div><span class="kbadge ${scClass}">${st}</span></div>
+    </div>`;
+  }).join('');
+
+  // Insight
+  const saving2=concreteIntensity-intensity;
+  let msg='',insightT='green';
+  if(t==='green'&&intensity<=200){
+    msg=`<strong>Outstanding performance.</strong> At ${intensity} kg CO₂e/m² this scheme is in the global top 10% for embodied carbon — on track for <strong>LEED Platinum MRc1</strong>. The ${strF.label} structural system avoids <strong>${Math.max(0,saving2)} kg CO₂e/m²</strong> vs concrete baseline — equivalent to <strong>${trees.toLocaleString()} trees</strong> or <strong>${Math.round(saving)} tCO₂e</strong> over the project lifetime. Document A1–A5 via EC3 for LEED submission.`;
+  } else if(t==='green'){
+    msg=`<strong>LEED MRc1 eligible.</strong> ${intensity} kg CO₂e/m² meets the 300 kg/m² LEED threshold. To reach LETI 2030 target of 250 kg/m², consider low-carbon EPD concrete mixes or specify ${strF.label} with recycled content. ${saving2>0?`Switching from concrete saves <strong>${saving2} kg/m²</strong> = <strong>${trees.toLocaleString()} trees</strong>.`:''}`;
+  } else if(t==='amber'){
+    insightT='amber';
+    msg=`<strong>Review needed.</strong> ${intensity} kg CO₂e/m² exceeds LEED MRc1 by <strong>${intensity-300} kg/m²</strong>. Switching to Mass Timber CLT reduces intensity to ~${Math.round(STRUCT.timber_clt.base*mod+uAdd)} kg/m² — saving <strong>${intensity-Math.round(STRUCT.timber_clt.base*mod+uAdd)} kg/m²</strong> and unlocking LEED credits. Facade envelope contributes ~${USE_ADD[use]} kg/m² — specify high-recycled-content cladding.`;
+  } else {
+    insightT='red';
+    msg=`<strong>Critical — high embodied carbon.</strong> ${intensity} kg CO₂e/m² = <strong>${total} tCO₂e total</strong>. This is ${intensity-300} kg/m² above LEED eligibility. CLT substitution could reduce by <strong>${intensity-Math.round(STRUCT.timber_clt.base*mod+uAdd)} kg/m²</strong>. Embodied carbon is locked in at this design stage — this is the highest-leverage decision point.`;
+  }
+  const ic=document.getElementById('carbon-insight');
+  ic.className='insight'+(insightT==='amber'?' amber':insightT==='red'?' red':'');
+  document.getElementById('ci-label').className='insight-label'+(insightT==='green'?'':' '+insightT);
+  document.getElementById('ci-text').innerHTML=msg;
+}
+
+// ═══════════════════════════════════════════════════
+// DAYLIGHT
+// ═══════════════════════════════════════════════════
+function renderDaylight(d){
+  const{wwr,orient,floors}=d;
+  const city=getCity();
+  const glF=GLAZING[d.glaz];
+  const orientMod={S:1.12,N:0.82,E:0.96,W:0.98}[orient];
+  const sDA=Math.min(92,Math.round(28+wwr*0.88*orientMod*glF.dl_mod-(floors*.2)));
+  const ASE=Math.max(2,Math.round(wwr*(orient==='S'?0.20:orient==='W'?0.22:0.10)*(1/glF.dl_mod)*(1-glF.shgc)));
+  const UDI=Math.min(90,Math.round(50+wwr*0.48*glF.dl_mod));
+  const leedOk=sDA>=55&&ASE<=10;
+
+  document.getElementById('dl-zone').textContent='Zone '+city.zone;
+  document.getElementById('dl-city').textContent=city.name;
+  document.getElementById('hm-city').textContent=city.name;
+  document.getElementById('hm-city2').textContent=city.name;
+  document.getElementById('hm-wwr').textContent=wwr;
+  document.getElementById('hm-orient').textContent=orient;
+
+  // Dials
+  const dials=[
+    {label:'sDA₃₀₀/₅₀%',val:sDA,max:100,unit:'%',color:sDA>=55?'#16a34a':'#ef4444',pass:sDA>=55,target:'≥55%'},
+    {label:'ASE₁₀₀₀/₂₅₀',val:ASE,max:30,unit:'%',color:ASE<=10?'#16a34a':'#ef4444',pass:ASE<=10,target:'≤10%'},
+    {label:'UDI 100–2000',val:UDI,max:100,unit:'%',color:UDI>=50?'#3b82f6':'#f59e0b',pass:UDI>=50,target:'≥50%'},
+  ];
+  document.getElementById('dl-dials').innerHTML=dials.map(dl=>{
+    const r=42;const circ=2*Math.PI*r;const filled=(dl.val/dl.max)*circ;
+    return `<div class="dial-wrap">
+      <div class="dial">
+        <svg viewBox="0 0 96 96" width="96" height="96">
+          <circle class="dial-track" cx="48" cy="48" r="${r}"/>
+          <circle class="dial-fill" cx="48" cy="48" r="${r}" stroke="${dl.color}" stroke-dasharray="${circ}" stroke-dashoffset="${circ-filled}"/>
+        </svg>
+        <div class="dial-center">
+          <div class="dial-num" style="color:${dl.color}">${dl.val}</div>
+          <div class="dial-unit">${dl.unit}</div>
+        </div>
+      </div>
+      <div class="dial-name">${dl.label}</div>
+      <div class="dial-target"><span class="kbadge ${dl.pass?'bg':'br'}">${dl.target}</span></div>
+    </div>`;
+  }).join('');
+
+  // Heatmap — real seasonal variation by zone
+  const solarMo=SOLAR_MONTHLY[city.zone]||SOLAR_MONTHLY['4A'];
+  const heatmapData=solarMo.flatMap((sm,mi)=>[0,1,2].map(zi=>{
+    const raw=city.psh*sm*orientMod*glF.dl_mod*(wwr/40)*(.8+zi*.1);
+    const low=city.psh*.4; const high=city.psh*1.4;
+    return Math.max(0,Math.min(1,(raw-low)/(high-low)));
+  }));
+  document.getElementById('dl-heatmap').innerHTML=heatmapData.map((v,idx)=>{
+    // Color: dark green → bright green → yellow (low→mid→high)
+    const r=v<.5?Math.round(20+v*2*50):Math.round(70+(v-.5)*2*185);
+    const g=v<.5?Math.round(60+v*2*100):Math.round(160+(v-.5)*2*55);
+    const b=v<.5?Math.round(30+v*2*10):Math.round(40+(v-.5)*2*(-40));
+    const mi=Math.floor(idx/3);
+    const hrs=(city.psh*solarMo[mi]*orientMod*glF.dl_mod).toFixed(1);
+    const zones=['Perimeter','Mid','Core'];
+    return `<div class="hcell" style="background:rgb(${r},${g},${b})" title="${zones[idx%3]} zone · ${hrs} peak sun hrs/day"></div>`;
+  }).join('');
+
+  // Compliance
+  document.getElementById('dl-compliance').innerHTML=[
+    {label:'sDA ≥ 55%',ok:sDA>=55,val:sDA+'%'},
+    {label:'ASE ≤ 10%',ok:ASE<=10,val:ASE+'%'},
+    {label:'LEED EQc7 Overall',ok:leedOk,val:leedOk?'ELIGIBLE':'NOT MET'},
+    {label:'Glazing: '+glF.label,ok:glF.leed,val:glF.leed?'LEED OK':'UPGRADE'},
+  ].map(c=>`<div class="comp-row" style="background:${c.ok?'var(--green-l)':'var(--red-l)'}">
+    <span>${c.label}</span>
+    <span class="kbadge ${c.ok?'bg':'br'}">${c.ok?'✓':''} ${c.val}</span>
+  </div>`).join('');
+
+  document.getElementById('dl-insight-text').innerHTML=leedOk
+    ?`<strong>LEED EQc7 achievable.</strong> With ${wwr}% WWR, ${orient}-facing glazing, and <strong>${glF.label}</strong>, sDA reaches <strong>${sDA}%</strong> — meeting the 55% LEED threshold. ASE of <strong>${ASE}%</strong> is within limits. The ${glF.label} system (VLT ${glF.vlt}) provides good light transmission while controlling solar gain (SHGC ${glF.shgc}).`
+    :`<strong>Daylight target not fully met.</strong> sDA of <strong>${sDA}%</strong> ${sDA<55?'falls below the 55% LEED threshold':'meets threshold'}. ASE of <strong>${ASE}%</strong> ${ASE>10?'exceeds 10% limit':'is acceptable'}. ${wwr<50?`Increasing WWR to 50–55% could boost sDA by 6–10%.`:''} ${glF.shgc>0.3?`Consider switching to Electrochromic glazing (SHGC 0.06 dynamic) to reduce ASE while maintaining daylight.`:''}`;
+}
+
+// ═══════════════════════════════════════════════════
+// GLARE
+// ═══════════════════════════════════════════════════
+function renderGlare(d){
+  const{wwr,orient,glaz}=d;
+  const glF=GLAZING[glaz];
+  document.getElementById('gl-glazing').textContent=glF.label;
+  document.getElementById('gl-wwr').textContent=wwr;
+
+  const baseDGP={S:0.38,W:0.42,E:0.36,N:0.26}[orient];
+  const wwrMod=(wwr-40)*0.002;
+  const oMap=['N','NE','E','SE','S','SW','W','NW'];
+  const oBase={N:0.26,NE:0.30,E:0.36,SE:0.38,S:0.38,SW:0.40,W:0.42,NW:0.32};
+  const seasons=['Winter','Spring','Summer','Autumn'];
+  const sMods=[-0.06,0.01,0.05,0.00];
+  const dgpData=oMap.map(o=>seasons.map((_,si)=>Math.min(.55,Math.max(.15,(oBase[o]+sMods[si]+wwrMod)*glF.dpg_mod)));
+
+  // Only show 4 main orientations in dials
+  const mainOrients=['N','E','S','W'];
+  const mainIdxs=[0,2,4,6];
+  document.getElementById('gl-dials').innerHTML=mainOrients.map((o,i)=>{
+    const avg=dgpData[mainIdxs[i]].reduce((a,b)=>a+b,0)/4;
+    const color=avg<0.35?'#16a34a':avg<0.4?'#f59e0b':avg<0.45?'#ef4444':'#991b1b';
+    const r=42;const circ=2*Math.PI*r;const filled=(avg/.55)*circ;
+    return `<div class="dial-wrap">
+      <div class="dial">
+        <svg viewBox="0 0 96 96" width="96" height="96">
+          <circle class="dial-track" cx="48" cy="48" r="${r}"/>
+          <circle class="dial-fill" cx="48" cy="48" r="${r}" stroke="${color}" stroke-dasharray="${circ}" stroke-dashoffset="${circ-filled}"/>
+        </svg>
+        <div class="dial-center">
+          <div class="dial-num" style="color:${color}">${avg.toFixed(2)}</div>
+          <div class="dial-unit">DGP</div>
+        </div>
+      </div>
+      <div class="dial-name">${o} Facade</div>
+      <div class="dial-target"><span class="kbadge ${avg<0.35?'bg':avg<0.4?'ba':'br'}">${avg<0.35?'Low':avg<0.4?'Moderate':'High'}</span></div>
+    </div>`;
+  }).join('');
+
+  // Table
+  const dgpCol=v=>v<0.35?'#16a34a':v<0.4?'#f59e0b':v<0.45?'#ef4444':'#991b1b';
+  const dgpLbl=v=>v<0.35?'Imperceptible':v<0.4?'Perceptible':v<0.45?'Disturbing':'Intolerable';
+  document.getElementById('gl-table').innerHTML=`<thead><tr><th>Orientation</th>${seasons.map(s=>`<th>${s}</th>`).join('')}<th>Annual Risk</th></tr></thead>
+  <tbody>${oMap.map((o,oi)=>{
+    const avg=dgpData[oi].reduce((a,b)=>a+b,0)/4;
+    const sc=avg<0.35?'bg':avg<0.4?'ba':'br';
+    return `<tr><td style="font-weight:700">${o}</td>${dgpData[oi].map(v=>`<td class="mono" style="color:${dgpCol(v)}">${v.toFixed(2)}</td>`).join('')}<td><span class="kbadge ${sc}">${dgpLbl(avg)}</span></td></tr>`;
+  }).join('')}</tbody>`;
+
+  const worstDGP=Math.max(...dgpData.flat());
+  document.getElementById('gl-mit').innerHTML=[
+    {icon:'🪟',t:'External Venetian Blinds',d:`Reduces DGP by 0.08–0.12 · most effective ${orient}-facing`,show:worstDGP>0.35},
+    {icon:'☁️',t:'Electrochromic Glazing',d:'Dynamic tinting — DGP <0.35 all year',show:glaz!=='electro'&&worstDGP>0.40},
+    {icon:'📐',t:'Horizontal Brise Soleil',d:'Fixed overhang — most effective on south facade',show:orient==='S'},
+    {icon:'🌿',t:'Light Shelf System',d:'Redirects light deep into floor plate, reduces glare',show:wwr>50},
+    {icon:'🔲',t:'Fritted Glass Pattern',d:'Ceramic frit reduces DGP without losing view',show:glaz!=='fritted'&&worstDGP>0.38},
+  ].map(m=>`<div class="mit-row">
+    <div class="mit-icon">${m.icon}</div>
+    <div class="mit-body"><div class="mit-title">${m.t}</div><div class="mit-desc">${m.d}</div></div>
+    <span class="kbadge ${m.show?'ba':'bg'}">${m.show?'Recommended':'Optional'}</span>
+  </div>`).join('');
+
+  document.getElementById('gl-insight-text').innerHTML=worstDGP<0.35
+    ?`<strong>Excellent glare control.</strong> The <strong>${glF.label}</strong> system (SHGC ${glF.shgc}) brings DGP below 0.35 across all orientations — imperceptible glare all year. ${glaz==='electro'?'The electrochromic system dynamically adjusts to maintain comfort regardless of solar angle.':''} EN 17037 comfort Category I is achievable.`
+    :`<strong>Glare mitigation required.</strong> Peak DGP of <strong>${worstDGP.toFixed(2)}</strong> indicates ${worstDGP>0.45?'intolerable':'disturbing'} glare on ${orient}-facing facades. ${glaz!=='electro'?'Switching to Electrochromic glazing reduces DGP to below 0.35 dynamically — the most effective solution for this orientation.':'External brise soleil recommended as additional mitigation.'} Target EN 17037 Category II (DGP <0.40).`;
+}
+
+// ═══════════════════════════════════════════════════
+// FACADE & GLAZING
+// ═══════════════════════════════════════════════════
+function renderFacade(d){
+  const{wwr,orient,gfa,str,mod,intensity,glaz}=d;
+  const use=d.use;
+  const glF=GLAZING[glaz];
+  const city=getCity();
+
+  // KPIs — glazing drives these
+  const uVal=glF.u.toFixed(1);
+  const shgc=glF.shgc.toFixed(2);
+  const facadeC=Math.round(glF.ec*(wwr/40));
+  document.getElementById('krow-facade').innerHTML=[
+    {label:'Facade Embodied Carbon',val:facadeC,unit:'kg CO₂e/m² facade',sub:glF.label,t:facadeC<40?'green':facadeC<70?'amber':'red',badge:facadeC<40?'LOW CARBON':facadeC<70?'MODERATE':'HIGH'},
+    {label:'U-Value',val:uVal,unit:'W/m²K thermal trans.',sub:`Zone ${city.zone} req: ${['1A','2A','2B'].includes(city.zone)?'≤1.2':'≤0.6'} W/m²K`,t:glF.u<=1.4?'green':'amber',badge:glF.u<=1.4?'LEED OK':'IMPROVE'},
+    {label:'SHGC',val:shgc,unit:'Solar heat gain coeff.',sub:`VLT: ${glF.vlt} · ${orient} orientation`,t:glF.shgc<=0.4?'green':'amber',badge:glF.shgc<=0.4?'CONTROLLED':'HIGH GAIN'},
+  ].map(k=>`<div class="kcard ${k.t}">
+    <div class="klabel">${k.label}</div>
+    <div class="kval ${k.t}">${k.val}</div>
+    <div class="ksub">${k.unit} · ${k.sub}</div>
+    <div class="kbadge b${k.t[0]}">${k.badge}</div>
+  </div>`).join('');
+
+  // Glazing comparison table
+  document.getElementById('gl-compare').innerHTML=`
+    <thead><tr><th>System</th><th>U-Value</th><th>SHGC</th><th>VLT</th><th>EC kg/m²</th><th>DGP Mod</th><th>LEED</th></tr></thead>
+    <tbody>${Object.entries(GLAZING).map(([k,g])=>`
+      <tr class="${k===glaz?'active-row':''}">
+        <td style="font-weight:${k===glaz?'700':'500'}">${g.label}${k===glaz?' ✓':''}</td>
+        <td class="mono">${g.u}</td>
+        <td class="mono">${g.shgc}</td>
+        <td class="mono">${g.vlt}</td>
+        <td class="mono">${g.ec}</td>
+        <td class="mono">${(g.dpg_mod*100).toFixed(0)}%</td>
+        <td><span class="kbadge ${g.leed?'bg':'br'}">${g.leed?'✓ OK':'✗'}</span></td>
+      </tr>`).join('')}
+    </tbody>`;
+
+  // WWR matrix — glazing affects daylight and glare
+  const wwrOpts=[20,30,40,50,60,70];
+  const orientMod={S:1.12,N:0.82,E:0.96,W:0.98}[orient];
+  document.getElementById('facade-matrix').innerHTML=wwrOpts.map(w=>{
+    const sda=Math.min(92,Math.round(28+w*0.88*orientMod*glF.dl_mod));
+    const glare=Math.min(100,Math.round(w*(orient==='S'?1.8:1.1)*glF.dpg_mod*10));
+    const fc=Math.round(glF.ec*(w/40));
+    const isCur=Math.abs(w-wwr)<6;
+    return `<div class="br-row">
+      <div class="br-label" style="font-weight:${isCur?700:400}">WWR ${w}%${isCur?' ←':''}</div>
+      <div class="br-track">
+        <div class="br-fill" style="width:${sda}%;background:${sda>=55?'#22c55e':'#ef4444'};opacity:${isCur?1:.5}">sDA ${sda}%</div>
+      </div>
+      <div class="br-val" style="color:${glare>45?'var(--red)':'var(--green)'}">Glare ${glare}%</div>
+    </div>`;
+  }).join('');
+
+  // Glazing carbon comparison
+  document.getElementById('glazing-carbon').innerHTML=Object.entries(GLAZING).map(([k,g])=>{
+    const fc=Math.round(g.ec*(wwr/40));
+    const maxFC=95;
+    const pct=(fc/maxFC*100).toFixed(1);
+    const isCur=k===glaz;
+    return `<div class="br-row">
+      <div class="br-label">${g.label}</div>
+      <div class="br-track">
+        <div class="br-fill ${isCur?'cur':''}" style="width:${pct}%;background:${g.color};opacity:${isCur?1:.5}">${isCur?fc+' kg/m²':''}</div>
+      </div>
+      <div class="br-val">${fc} kg/m²</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('facade-insight-text').innerHTML=glF.u<=1.4
+    ?`<strong>Good facade performance.</strong> <strong>${glF.label}</strong> achieves U=${uVal} W/m²K — meeting Zone ${city.zone} LEED requirements. At ${wwr}% WWR on ${orient} orientation, SHGC of ${shgc} ${parseFloat(shgc)<0.3?'provides excellent solar control':'should be paired with external shading'}. Facade embodied carbon: ${facadeC} kg CO₂e/m² facade area.`
+    :`<strong>Facade upgrade recommended.</strong> <strong>${glF.label}</strong> U-value of ${uVal} W/m²K ${glF.u>1.4?'exceeds LEED threshold for Zone '+city.zone:'is acceptable'}. SHGC ${shgc} with ${wwr}% WWR on ${orient} facade creates ${parseFloat(shgc)>0.35?'high solar gain — consider electrochromic or high-performance double glazing':'moderate gain — acceptable with shading'}. Consider High-Perf Double or Triple Glazed for better thermal performance.`;
+}
+
+// ═══════════════════════════════════════════════════
+// MAIN RECALC
+// ═══════════════════════════════════════════════════
+function recalc(){
+  const d=calcCarbon();
+  renderCarbon(d);
+  renderDaylight(d);
+  renderGlare(d);
+  renderFacade(d);
+  if(windData) renderPWC(windData);
+}
+
+// Export
+window.exportReport=function(){
+  const d=calcCarbon();
+  const city=getCity();
+  const lines=[
+    'CARBON SCOUT V3 — SUSTAINABILITY INTELLIGENCE REPORT',
+    `Generated: ${new Date().toLocaleString()}`,
+    `Location: ${city.name} · Climate Zone ${city.zone} · ${city.climate}`,
+    '',
+    'BUILDING PARAMETERS',
+    `GFA: ${displayArea(d.gfa)}  |  Floors: ${d.floors}  |  Use: ${d.use}`,
+    `Structure: ${d.strF.label}  |  Glazing: ${d.glF.label}`,
+    `WWR: ${d.wwr}%  |  Orientation: ${d.orient}`,
+    '',
+    'EMBODIED CARBON (A1–A5)',
+    `Intensity: ${d.intensity} kg CO₂e/m²`,
+    `Total: ${d.total} tCO₂e`,
+    `LEED MRc1 (≤300): ${d.intensity<=300?'ELIGIBLE':'AT RISK'}`,
+    `LETI 2030 (≤250): ${d.intensity<=250?'ON TRACK':'NOT MET'}`,
+    '',
+    'GLAZING PERFORMANCE',
+    `System: ${d.glF.label}`,
+    `U-Value: ${d.glF.u} W/m²K  |  SHGC: ${d.glF.shgc}  |  VLT: ${d.glF.vlt}`,
+    `LEED Compliant: ${d.glF.leed?'YES':'NO'}`,
+    '',
+    'SOURCES',
+    'EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023',
+    'IStructE How to Calculate Embodied Carbon 2022',
+    'LETI Climate Emergency Design Guide 2020',
+    'ASHRAE 90.1-2022 · LEED v4.1',
+    '',
+    '⚠ Daylight, glare, and wind values are parametric estimates for early design.',
+    'Verify with Climate Studio, Radiance, or CFD for detailed analysis.',
+  ];
+  const a=Object.assign(document.createElement('a'),{
+    href:URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/plain'})),
+    download:`carbon-scout-report-${new Date().toISOString().slice(0,10)}.txt`
+  });
+  a.click();
+};
+
+window.copyCSV=function(){
+  const d=calcCarbon();
+  const city=getCity();
+  navigator.clipboard.writeText(
+    `Location,Zone,GFA,Floors,Structure,Use,Glazing,WWR,Intensity_kgCO2em2,Total_tCO2e,LEED_MRc1\n`+
+    `${city.name},${city.zone},${Math.round(d.gfa)},${d.floors},${d.strF.label},${d.use},${d.glF.label},${d.wwr},${d.intensity},${d.total},${d.intensity<=300?'ELIGIBLE':'AT RISK'}`
+  ).then(()=>{const b=document.getElementById('csv-btn');b.textContent='✓ Copied!';setTimeout(()=>b.textContent='⎘ Copy CSV',2000);});
+};
+
+window.printSummary=function(){window.print();};
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+(async()=>{
+  onCityChange(); // sets chips, fetches wind, calls recalc
+})();
+</script>
+</body>
+</html>
