@@ -288,7 +288,7 @@ body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);min-
 <div class="topbar">
   <div class="tl">
     <div class="logo"><div class="logo-dot"></div>Carbon Scout</div>
-    <div class="topbar-meta">AEC Sustainability Intelligence · v3.5</div>
+    <div class="topbar-meta">AEC Sustainability Intelligence · v3.6</div>
   </div>
   <div class="tr">
     <div class="version-tag">EN 15978 · A1–A5</div>
@@ -317,8 +317,8 @@ body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);min-
     <span class="loc-chip amber" id="chip-sun">4.7 PSH</span>
   </div>
   <div class="units-toggle">
-    <button class="units-btn active" id="btn-metric" onclick="setUnits('metric')">m²</button>
-    <button class="units-btn" id="btn-imperial" onclick="setUnits('imperial')">ft²</button>
+    <button class="units-btn" id="btn-metric" onclick="setUnits('metric')">m²</button>
+    <button class="units-btn active" id="btn-imperial" onclick="setUnits('imperial')">ft²</button>
   </div>
 </div>
 
@@ -340,7 +340,7 @@ body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);min-
       <div class="sec-title">Project Parameters</div>
       <div class="ig">
         <div class="ir">
-          <div class="ic"><label id="gfa-label">GFA (m²)</label><input type="number" id="gfa" value="5000" min="100" max="200000" oninput="recalc()"/></div>
+          <div class="ic"><label id="gfa-label">GFA (ft²)</label><input type="number" id="gfa" value="53820" min="100" max="200000" oninput="recalc()"/></div>
           <div class="ic"><label>Floors</label><input type="number" id="floors" value="12" min="1" max="80" oninput="recalc()"/></div>
         </div>
         <div class="ic"><label>Structural System</label>
@@ -413,7 +413,7 @@ body{background:var(--bg);font-family:'Outfit',sans-serif;color:var(--text);min-
         <div class="ct">Structural System Carbon Comparison</div>
         <div class="cs">A1–A5 embodied carbon intensity · LEED MRc1 eligibility threshold: 300 kg CO₂e/m²</div>
         <div class="bc-wrap" id="bc-carbon"></div>
-        <div class="source-tag">Sources: EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023 · IStructE How to Calculate Embodied Carbon 2022 · LETI CEDGv2 2020</div>
+        <div class="source-tag">Sources: EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023 · IStructE How to Calculate Embodied Carbon 2022 · LETI CEDGv2 2020 · Values = structure + envelope A1–A5 per m² GFA</div>
       </div>
 
       <div class="twocol">
@@ -625,7 +625,7 @@ function floorMod(f){
 // ═══════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════
-let units = 'metric';
+let units = 'imperial';
 let windData = null;
 let currentCity = 'nyc';
 
