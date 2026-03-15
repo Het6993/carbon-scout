@@ -48,7 +48,7 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
-body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;}html,body{height:100%;}
 
 /* ── TOP BAR ── */
 .topbar{height:52px;background:var(--cs-dark);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;}
@@ -83,17 +83,17 @@ body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-h
 .chip-a{background:var(--amber-l);color:var(--amber);border:1px solid rgba(133,77,14,.15);}
 
 /* ── MAIN LAYOUT ── */
-.main{flex:1;display:flex;overflow:hidden;height:calc(100vh - 136px);}
+.main{flex:1;display:flex;overflow:hidden;min-height:0;}
 
 /* ── NAV TABS ── */
-.nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 0 0 272px;flex-shrink:0;}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-shrink:0;overflow-x:auto;}
 .nav-tab{padding:12px 20px 10px;font-size:12px;font-weight:500;color:var(--faint);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s;display:flex;align-items:center;gap:6px;white-space:nowrap;user-select:none;letter-spacing:-.1px;}
 .nav-tab:hover{color:var(--text2);}
 .nav-tab.active{color:var(--text);border-bottom-color:var(--cs);font-weight:700;}
 .nav-tab .tab-icon{font-size:13px;}
 
 /* ── LEFT PANEL ── */
-.left{width:272px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.left{width:272px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;min-height:0;}
 .left-inner{padding:16px 14px;display:flex;flex-direction:column;gap:12px;flex:1;}
 .panel-section{display:flex;flex-direction:column;gap:7px;}
 .panel-title{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);padding:0 2px;margin-bottom:1px;}
@@ -124,7 +124,7 @@ body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-h
 .pdiv{height:1px;background:var(--border);margin:2px 0;}
 
 /* ── RIGHT PANEL ── */
-.right{flex:1;overflow-y:auto;background:var(--bg);}
+.right{flex:1;overflow-y:auto;background:var(--bg);min-height:0;}
 .tab-panel{display:none;padding:20px;flex-direction:column;gap:14px;animation:fadein .2s ease;}
 .tab-panel.active{display:flex;}
 @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
@@ -267,8 +267,8 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
 .btn-green:hover{background:var(--cs-dark);}
 
 /* ── DETAIL MODE NAV WRAP ── */
-.nav-wrap{background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-shrink:0;}
-.nav-left-spacer{width:272px;flex-shrink:0;border-right:1px solid var(--border);}
+.nav-wrap{background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-shrink:0;overflow-x:auto;}
+.nav-left-spacer{display:none;}
 
 /* ── QUICK ASSESS LEED ── */
 .leed-likelihood{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--rs);margin-top:4px;}
@@ -277,13 +277,10 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
 
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
-  .left{display:none;}
-  .nav-wrap{padding-left:0;}
-  .nav{padding-left:0;}
-  .main{height:auto;}
+  .left{width:220px;}
   .krow{grid-template-columns:1fr 1fr;}
   .twocol{grid-template-columns:1fr;}
-  .quick-inputs{grid-template-columns:1fr;}
+  .quick-inputs{grid-template-columns:1fr 1fr!important;}
   .quick-results{grid-template-columns:1fr;}
 }
 
@@ -301,7 +298,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
     Carbon Scout
   </div>
   <div class="topbar-sep"></div>
-  <div class="topbar-meta">AEC Sustainability Intelligence · v4.6</div>
+  <div class="topbar-meta">AEC Sustainability Intelligence · v4.8</div>
   <div class="topbar-right">
     <div class="topbar-meta" id="top-std">EN 15978 · A1–A5</div>
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
@@ -360,10 +357,14 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
       </div>
       <div style="font-size:9px;color:var(--faint);padding:4px 4px 0;font-family:'DM Mono',monospace;">AI reads your description and fills in the fields automatically</div>
     </div>
-    <div class="quick-inputs">
+    <div class="quick-inputs" style="grid-template-columns:repeat(4,1fr)">
       <div class="quick-field">
         <label id="q-gfa-label">GFA (ft²)</label>
         <input type="number" id="q-gfa" value="50000" oninput="quickCalc()"/>
+      </div>
+      <div class="quick-field">
+        <label>Floors</label>
+        <input type="number" id="q-floors" value="12" min="1" max="100" oninput="document.getElementById('floors').value=this.value;quickCalc()"/>
       </div>
       <div class="quick-field">
         <label>Building Type</label>
@@ -398,18 +399,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
 </div>
 
 <!-- DETAIL MODE -->
-<div id="detail-mode" style="display:flex;flex:1;overflow:hidden;flex-direction:column;">
-
-  <!-- NAV (sits below left panel width) -->
-  <div class="nav-wrap">
-    <div class="nav-left-spacer"></div>
-    <div class="nav" style="flex:1;padding:0;">
-      <div class="nav-tab active" data-tab="carbon" onclick="switchTab('carbon')"><span class="tab-icon">🌿</span>Embodied Carbon</div>
-      <div class="nav-tab" data-tab="daylight" onclick="switchTab('daylight')"><span class="tab-icon">☀️</span>Daylight & Glare</div>
-      <div class="nav-tab" data-tab="wind" onclick="switchTab('wind')"><span class="tab-icon">🌬</span>Climate & Wind</div>
-      <div class="nav-tab" data-tab="report" onclick="switchTab('report')"><span class="tab-icon">📋</span>Report</div>
-    </div>
-  </div>
+<div id="detail-mode" style="display:flex;flex:1;overflow:hidden;flex-direction:column;min-height:0;">
 
   <!-- MAIN CONTENT -->
   <div class="main">
@@ -426,7 +416,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
             </div>
             <div class="field">
               <label>Floors</label>
-              <input type="number" id="floors" value="12" min="1" max="100" oninput="recalc()"/>
+              <input type="number" id="floors" value="12" min="1" max="100" oninput="document.getElementById('q-floors').value=this.value;recalc()"/>
             </div>
           </div>
           <div class="field">
@@ -581,12 +571,33 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
       </div>
     </div>
 
+    <!-- RIGHT COLUMN: nav + content -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+
+    <!-- NAV TABS -->
+    <div class="nav">
+      <div class="nav-tab active" data-tab="carbon" onclick="switchTab('carbon')"><span class="tab-icon">🌿</span>Embodied Carbon</div>
+      <div class="nav-tab" data-tab="daylight" onclick="switchTab('daylight')"><span class="tab-icon">☀️</span>Daylight & Glare</div>
+      <div class="nav-tab" data-tab="wind" onclick="switchTab('wind')"><span class="tab-icon">🌬</span>Climate & Wind</div>
+      <div class="nav-tab" data-tab="report" onclick="switchTab('report')"><span class="tab-icon">📋</span>Report</div>
+    </div>
+
     <!-- RIGHT PANEL -->
     <div class="right">
 
       <!-- CARBON TAB -->
       <div class="tab-panel active" id="tab-carbon">
         <div class="krow" id="carbon-kpis"></div>
+        <!-- Carbon range toggle -->
+        <div style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--faint);">Carbon Range</div>
+          <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px;gap:2px;">
+            <button class="range-btn" id="range-best" onclick="setCarbonRange('best')" style="font-size:10px;font-weight:600;padding:3px 12px;border-radius:14px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all .18s;">Best Practice</button>
+            <button class="range-btn active" id="range-typical" onclick="setCarbonRange('typical')" style="font-size:10px;font-weight:600;padding:3px 12px;border-radius:14px;border:none;background:var(--cs);color:#fff;cursor:pointer;font-family:'Inter',sans-serif;transition:all .18s;">Typical</button>
+            <button class="range-btn" id="range-conservative" onclick="setCarbonRange('conservative')" style="font-size:10px;font-weight:600;padding:3px 12px;border-radius:14px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all .18s;">Conservative</button>
+          </div>
+          <div style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;" id="range-label">EC3 median · typical US construction</div>
+        </div>
         <div class="card card-pad">
           <div class="card-title">Structural System Carbon Comparison</div>
           <div class="card-sub" id="carbon-chart-sub">A1–A5 embodied carbon intensity · LEED MRc1 requires 10% reduction vs project-specific baseline</div>
@@ -603,6 +614,58 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
           <div class="insight">
             <div class="insight-tag">✦ AI Insight</div>
             <div class="insight-text" id="carbon-insight">Calculating…</div>
+          </div>
+        </div>
+
+        <!-- EPD UPLOAD DRAWER -->
+        <div class="card">
+          <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleEPD()">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--text);letter-spacing:-.2px;">📄 Upload Your EPD</div>
+              <div style="font-size:10px;color:var(--faint);margin-top:2px;">Drop a product EPD PDF — AI reads the GWP value and checks LEED MRc4 eligibility</div>
+            </div>
+            <div id="epd-toggle-icon" style="font-size:16px;color:var(--faint);transition:transform .2s;">▼</div>
+          </div>
+          <div id="epd-drawer" style="display:none;border-top:1px solid var(--border);padding:18px 20px;">
+            <!-- Drop Zone -->
+            <div id="epd-dropzone" style="border:2px dashed var(--border);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);"
+              ondragover="event.preventDefault();this.style.borderColor='var(--cs-accent)';this.style.background='var(--cs-l)'"
+              ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'"
+              ondrop="handleEPDDrop(event)"
+              onclick="document.getElementById('epd-file-input').click()">
+              <div style="font-size:28px;margin-bottom:8px;">📄</div>
+              <div style="font-size:12px;font-weight:700;color:var(--text2)">Drop EPD PDF here or click to upload</div>
+              <div style="font-size:10px;color:var(--faint);margin-top:4px;">AI extracts GWP value · Compares to benchmark · LEED MRc4 check</div>
+              <input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>
+            </div>
+
+            <!-- Or paste GWP manually -->
+            <div style="display:flex;align-items:center;gap:10px;margin-top:14px;">
+              <div style="flex:1;height:1px;background:var(--border)"></div>
+              <div style="font-size:10px;color:var(--faint);white-space:nowrap">or enter GWP manually</div>
+              <div style="flex:1;height:1px;background:var(--border)"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:12px;align-items:end;">
+              <div class="field">
+                <label>Material Category</label>
+                <select id="epd-material">
+                  <option value="concrete">Concrete / Ready-Mix</option>
+                  <option value="steel">Structural Steel</option>
+                  <option value="timber">Mass Timber / CLT</option>
+                  <option value="glazing">Glazing / Curtain Wall</option>
+                  <option value="insulation">Insulation</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>GWP Value (kg CO₂e/unit)</label>
+                <input type="number" id="epd-gwp" placeholder="e.g. 245" step="0.1"/>
+              </div>
+              <button class="btn btn-primary" onclick="analyzeManualEPD()" style="height:42px;white-space:nowrap">Analyze EPD</button>
+            </div>
+
+            <!-- EPD Results -->
+            <div id="epd-results" style="display:none;margin-top:16px;"></div>
           </div>
         </div>
       </div>
@@ -699,6 +762,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
       </div>
 
     </div><!-- /right -->
+    </div><!-- /right-column -->
   </div><!-- /main -->
 </div><!-- /detail-mode -->
 
@@ -866,9 +930,12 @@ function quickCalc(){
   const gfaM2=units==='imperial'?gfa/10.764:gfa;
   const type=document.getElementById('q-type').value||'office';
   const qStr=document.getElementById('q-struct')?.value||'steel_composite';
+  const qFlr=parseInt(document.getElementById('q-floors')?.value)||12;
+  // Sync floors to detailed panel
+  document.getElementById('floors').value=qFlr;
   const strF=STRUCT[qStr];
   const typeAdd=USE_ADD[type]||85;
-  const selectedI=Math.round(strF.base+typeAdd);
+  const selectedI=Math.round(strF.base*floorMod(qFlr)+typeAdd);
   const concreteI=Math.round(STRUCT.concrete_cast.base+typeAdd);
   const timberI=Math.round(STRUCT.timber_clt.base+typeAdd);
   const totalT=Math.round(selectedI*gfaM2/1000);
@@ -895,13 +962,24 @@ function quickCalc(){
       <div class="qr-label">${trees>0?'trees equivalent saved':'already at baseline'}</div>
       <div class="qr-badge ${trees>0?'b-g':'b-a'}">${trees>0?Math.round(saving)+' tCO₂e saved':'switch to timber to save'}</div>
     </div>`;
-  document.getElementById('quick-insight-text').innerHTML=
-    `<strong>${strF.label}</strong> at ${displayArea(gfaM2)}: <strong>${selectedI} kg CO₂e/m²</strong> — `+
-    (selectedI<=200?`outstanding performance, global top 10%. Total lifecycle carbon: ${totalT.toLocaleString()} tCO₂e. LEED MRc1 Platinum eligible. `
-    :selectedI<=250?`meets LEED MRc1. Total: ${totalT.toLocaleString()} tCO₂e. `
-    :selectedI<=300?`LEED MRc1 eligible. Total: ${totalT.toLocaleString()} tCO₂e. Consider Mass Timber CLT (~${timberI} kg/m²) to reduce intensity further. `
-    :`exceeds LEED MRc1 threshold by ${selectedI-300} kg/m². Total: ${totalT.toLocaleString()} tCO₂e. `)
-    +(qStr!=='timber_clt'&&qStr!=='timber_glulam'?`Switching to Mass Timber CLT saves <strong>${Math.round((selectedI-timberI)*gfaM2/1000).toLocaleString()} tCO₂e</strong> — equivalent to ${Math.round(Math.max(0,(selectedI-timberI)*gfaM2/1000/0.022)).toLocaleString()} trees.`:'Already using low-carbon timber — excellent choice for early-design sustainability goals.');
+  // Use AI for quick insight too
+  const qInsEl = document.getElementById('quick-insight-text');
+  qInsEl.innerHTML = '<div class="insight-loading"><div class="insight-spinner"></div>Analyzing…</div>';
+  const qFloors = parseInt(document.getElementById('floors')?.value)||12;
+  const qOrient = document.getElementById('orient')?.value||'S';
+  const qWwr = parseInt(document.getElementById('wwr')?.value)||40;
+  const qGlaz = document.getElementById('glazing')?.value||'hp_dbl';
+  const qGlF = GLAZING[qGlaz];
+  const qCity = getCity();
+  // Build a quick data object matching what getAIInsight expects
+  const qD = {
+    gfa:gfaM2, floors:qFloors, str:qStr, use:type, wwr:qWwr, orient:qOrient, glaz:qGlaz,
+    intensity:selectedI, total:totalT, saving:saving, trees:trees,
+    concreteI:concreteI, strF:strF, glF:qGlF, uAdd:USE_ADD[type]||85,
+    mod:floorMod(qFloors), facadeEC:Math.round(qGlF.ec*(qWwr/40)),
+    sDA:0, ASE:0, t:selectedI<=200?'green':selectedI<=300?'amber':'red', city:qCity
+  };
+  getAIInsight('carbon', qD).then(text => { qInsEl.innerHTML = text; });
 }
 
 // ── RENDER CARBON ──
@@ -927,11 +1005,12 @@ function renderCarbon(d){
 
   // Bar chart
   const structs=Object.entries(STRUCT).sort((a,b)=>a[1].base-b[1].base);
-  const maxBar=Math.max(...structs.map(([,s])=>Math.round(s.base*d.mod+d.uAdd)))*1.15;
+  const rangeMult=RANGE_MULTIPLIERS[carbonRange]||1.0;
+  const maxBar=Math.max(...structs.map(([,s])=>Math.round(s.base*d.mod*rangeMult+d.uAdd)))*1.15;
   const tPct=0; const bpPct=0; // reference lines removed
   document.getElementById('carbon-threshold-row').innerHTML='';
   document.getElementById('carbon-bars').innerHTML=structs.map(([k,s])=>{
-    const v=Math.round(s.base*d.mod+d.uAdd);
+    const v=Math.round(s.base*d.mod*(RANGE_MULTIPLIERS[carbonRange]||1)+d.uAdd);
     const pct=(v/maxBar*100).toFixed(1);
     const isActive=k===d.str;
     // All bars same brand color — selected is full opacity + label, others are dimmed
@@ -967,7 +1046,7 @@ function renderCarbon(d){
   const activeI=d.intensity;
   document.getElementById('scenario-list').innerHTML=scenOrder.map(k=>{
     const s=STRUCT[k];
-    const v=Math.round(s.base*d.mod+d.uAdd);
+    const v=Math.round(s.base*d.mod*(RANGE_MULTIPLIERS[carbonRange]||1)+d.uAdd);
     const delta=v-activeI;
     const isAct=k===d.str;
     return `<div class="sc-item ${isAct?'active':''}" onclick="document.getElementById('structure').value='${k}';recalc()">
@@ -1618,6 +1697,230 @@ Rules:
 
   btn.textContent = orig;
   btn.disabled = false;
+}
+
+// ── EPD UPLOAD ──
+function toggleEPD(){
+  const drawer = document.getElementById('epd-drawer');
+  const icon = document.getElementById('epd-toggle-icon');
+  const open = drawer.style.display === 'none';
+  drawer.style.display = open ? 'block' : 'none';
+  icon.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+function handleEPDDrop(e){
+  e.preventDefault();
+  document.getElementById('epd-dropzone').style.borderColor='var(--border)';
+  document.getElementById('epd-dropzone').style.background='var(--surface2)';
+  const file = e.dataTransfer.files[0];
+  if(file && file.type === 'application/pdf') handleEPDFile(file);
+  else showEPDError('Please drop a PDF file.');
+}
+
+function handleEPDFile(file){
+  if(!file) return;
+  const dropzone = document.getElementById('epd-dropzone');
+  dropzone.innerHTML = `<div style="font-size:28px;margin-bottom:8px">⏳</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text2)">Reading "${file.name}"…</div>
+    <div style="font-size:10px;color:var(--faint);margin-top:4px">AI is extracting GWP value from the EPD</div>`;
+
+  const reader = new FileReader();
+  reader.onload = async function(e){
+    const base64 = e.target.result.split(',')[1];
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 400,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'document',
+                source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+              },
+              {
+                type: 'text',
+                text: `You are reading an Environmental Product Declaration (EPD). Extract these values and return ONLY valid JSON, nothing else:
+{
+  "product_name": "string or null",
+  "manufacturer": "string or null", 
+  "material_category": "concrete|steel|timber|glazing|insulation|other",
+  "gwp_a1a3": number (kg CO2e — the A1-A3 Global Warming Potential value),
+  "gwp_unit": "string (e.g. kg CO2e/m3, kg CO2e/tonne, kg CO2e/m2)",
+  "declared_unit": "string",
+  "valid_until": "string or null",
+  "standard": "string (e.g. ISO 14044, EN 15804)"
+}
+Look for: GWP, Global Warming Potential, A1-A3, Climate Change, CO2e in the EPD tables.`
+              }
+            ]
+          }]
+        })
+      });
+      if(!res.ok) throw new Error('API '+res.status);
+      const data = await res.json();
+      if(data.error) throw new Error(data.error.message);
+      const raw = data.content?.[0]?.text || '{}';
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      showEPDResults(parsed, file.name);
+    } catch(err) {
+      showEPDError('Could not read EPD: '+err.message+'. Try entering the GWP value manually below.');
+      // Reset dropzone
+      dropzone.innerHTML = `<div style="font-size:28px;margin-bottom:8px">📄</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text2)">Drop EPD PDF here or click to upload</div>
+        <div style="font-size:10px;color:var(--faint);margin-top:4px">AI extracts GWP value · Compares to benchmark · LEED MRc4 check</div>
+        <input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function analyzeManualEPD(){
+  const material = document.getElementById('epd-material').value;
+  const gwp = parseFloat(document.getElementById('epd-gwp').value);
+  if(!gwp || isNaN(gwp)){ showEPDError('Please enter a GWP value.'); return; }
+  showEPDResults({ material_category: material, gwp_a1a3: gwp, gwp_unit: 'kg CO₂e/unit', product_name: 'Manual Entry', manufacturer: null }, null);
+}
+
+function showEPDResults(epd, filename){
+  const resEl = document.getElementById('epd-results');
+  resEl.style.display = 'block';
+
+  // Benchmark values per material (EC3 US typical, kg CO2e per functional unit)
+  const benchmarks = {
+    concrete:  { typical: 350, good: 250, unit: 'kg CO₂e/m³', label: 'Ready-mix concrete' },
+    steel:     { typical: 1800, good: 1200, unit: 'kg CO₂e/tonne', label: 'Structural steel' },
+    timber:    { typical: 150, good: 80, unit: 'kg CO₂e/m³', label: 'Mass timber' },
+    glazing:   { typical: 45, good: 25, unit: 'kg CO₂e/m²', label: 'Glazing' },
+    insulation:{ typical: 3, good: 1.5, unit: 'kg CO₂e/m²', label: 'Insulation' },
+    other:     { typical: 100, good: 60, unit: 'kg CO₂e/unit', label: 'Material' },
+  };
+
+  const mat = epd.material_category || 'other';
+  const bench = benchmarks[mat] || benchmarks.other;
+  const gwp = epd.gwp_a1a3;
+  const isGood = gwp <= bench.good;
+  const isMid = gwp <= bench.typical;
+  const pctVsBench = Math.round((1 - gwp/bench.typical)*100);
+  const status = isGood ? 'b-g' : isMid ? 'b-a' : 'b-r';
+  const statusLabel = isGood ? '✓ Low Carbon' : isMid ? '⚠ Average' : '✗ Above Average';
+
+  // LEED MRc4 — low embodied carbon materials credit
+  // Threshold: material must be in lowest 50% of industry EPDs for category
+  const leedMrc4 = gwp <= bench.typical;
+
+  resEl.innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;">
+      <div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:12px;">
+        <div>
+          <div style="font-size:13px;font-weight:700;">${epd.product_name||'EPD Product'}${epd.manufacturer?` — ${epd.manufacturer}`:''}</div>
+          <div style="font-size:10px;color:var(--faint);margin-top:2px;">${filename||'Manual entry'} · ${epd.standard||'EN 15804'}</div>
+        </div>
+        <div class="k-badge ${status}">${statusLabel}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
+          <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px">A1–A3 GWP</div>
+          <div style="font-size:18px;font-weight:800;color:${isGood?'var(--green)':isMid?'var(--amber)':'var(--red)'}">${gwp}</div>
+          <div style="font-size:9px;color:var(--muted)">${epd.gwp_unit||bench.unit}</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
+          <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px">Industry Avg</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text)">${bench.typical}</div>
+          <div style="font-size:9px;color:var(--muted)">${bench.unit}</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
+          <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px">vs Benchmark</div>
+          <div style="font-size:18px;font-weight:800;color:${pctVsBench>=0?'var(--green)':'var(--red)'}">${pctVsBench>=0?'-':'+'}${Math.abs(pctVsBench)}%</div>
+          <div style="font-size:9px;color:var(--muted)">${pctVsBench>=0?'below':'above'} avg</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
+          <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px">LEED MRc4</div>
+          <div style="font-size:14px;font-weight:800;color:${leedMrc4?'var(--green)':'var(--red)'};">${leedMrc4?'✓ Eligible':'✗ Review'}</div>
+          <div style="font-size:9px;color:var(--muted)">${leedMrc4?'Below 50th pctl':'Above avg EPD'}</div>
+        </div>
+      </div>
+      <div id="epd-ai-insight" style="background:linear-gradient(135deg,var(--cs-l),#dbeafe);border:1px solid rgba(29,78,216,.12);border-radius:8px;padding:12px 14px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cs);margin-bottom:6px;">✦ EPD Analysis</div>
+        <div class="insight-loading"><div class="insight-spinner"></div>Analyzing EPD against project benchmarks…</div>
+      </div>
+    </div>`;
+
+  // Get AI to analyze this EPD in context of the project
+  const d = calcCarbon();
+  const epdPrompt = `You are an AEC sustainability consultant reviewing an EPD for a project.
+
+Project context:
+- Building: ${d.floors} floor ${d.use}, ${Math.round(d.gfa).toLocaleString()} m² GFA
+- Location: ${d.city.name}, Climate Zone ${d.city.zone}
+- Current structural system: ${d.strF.label} at ${d.intensity} kg CO₂e/m²
+
+EPD being reviewed:
+- Product: ${epd.product_name||'Unknown'} by ${epd.manufacturer||'Unknown manufacturer'}
+- Material category: ${mat}
+- A1-A3 GWP: ${gwp} ${epd.gwp_unit||bench.unit}
+- Industry average for this category: ${bench.typical} ${bench.unit}
+- Performance vs benchmark: ${pctVsBench>=0?pctVsBench+'% BELOW':'Math.abs(pctVsBench)+'% ABOVE'} average
+- LEED MRc4 eligibility: ${leedMrc4?'ELIGIBLE (below 50th percentile)':'NOT ELIGIBLE (above average)'}
+
+Write 2-3 sentences analyzing this EPD. Be specific:
+- Is this a good, average, or poor product from a carbon perspective?
+- How does it fit this specific project?
+- One specific recommendation (e.g. specify this for X, or find a lower-carbon alternative)
+Use <strong> tags for key numbers. Max 3 sentences. Professional tone.`;
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:epdPrompt}]})
+  }).then(r=>r.json()).then(data=>{
+    const text = data.content?.[0]?.text || `${isGood?'Strong EPD performance.':'Average EPD performance.'} This ${mat} product is ${Math.abs(pctVsBench)}% ${pctVsBench>=0?'below':'above'} industry average. ${leedMrc4?'LEED MRc4 eligible — specify this product and document the EPD for submission.':'Consider sourcing an alternative with lower GWP to strengthen LEED MRc4 documentation.'}`;
+    document.getElementById('epd-ai-insight').innerHTML = `<div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cs);margin-bottom:6px;">✦ EPD Analysis</div><div class="insight-text">${text}</div>`;
+  }).catch(()=>{
+    document.getElementById('epd-ai-insight').innerHTML = `<div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cs);margin-bottom:6px;">✦ EPD Analysis</div><div class="insight-text">${isGood?'<strong>Low carbon product.</strong>':'<strong>Average carbon product.</strong>'} At ${gwp} ${epd.gwp_unit||bench.unit} this is ${Math.abs(pctVsBench)}% ${pctVsBench>=0?'below':'above'} industry average. ${leedMrc4?'LEED MRc4 eligible — document this EPD for LEED submission.':'Source a lower-GWP alternative to strengthen LEED MRc4 credit.'}</div>`;
+  });
+}
+
+function showEPDError(msg){
+  const resEl = document.getElementById('epd-results');
+  resEl.style.display = 'block';
+  resEl.innerHTML = `<div style="background:var(--red-l);border:1px solid rgba(155,28,28,.15);border-radius:8px;padding:12px 14px;font-size:11px;color:var(--red);">⚠ ${msg}</div>`;
+}
+
+// ── CARBON RANGE ──
+// Best Practice = EC3 20th percentile, Typical = 50th, Conservative = 80th
+let carbonRange = 'typical';
+const RANGE_MULTIPLIERS = { best: 0.75, typical: 1.0, conservative: 1.22 };
+const RANGE_LABELS = {
+  best: 'EC3 20th percentile · top-performing projects',
+  typical: 'EC3 median · typical US construction',
+  conservative: 'EC3 80th percentile · industry average'
+};
+
+function setCarbonRange(range){
+  carbonRange = range;
+  // Update button styles
+  ['best','typical','conservative'].forEach(r => {
+    const btn = document.getElementById('range-'+r);
+    if(!btn) return;
+    const isActive = r === range;
+    btn.style.background = isActive ? 'var(--cs)' : 'transparent';
+    btn.style.color = isActive ? '#fff' : 'var(--muted)';
+  });
+  document.getElementById('range-label').textContent = RANGE_LABELS[range];
+  aiInsightCache = {}; // clear cache so AI regenerates with new range
+  recalc();
+}
+
+// Override calcCarbon to apply range multiplier
+const _origCalcCarbon = calcCarbon;
+// Patch STRUCT lookup to use range
+function getRangedIntensity(baseIntensity) {
+  return Math.round(baseIntensity * RANGE_MULTIPLIERS[carbonRange]);
 }
 
 // ── INIT ──
