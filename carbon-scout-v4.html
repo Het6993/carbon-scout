@@ -301,7 +301,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
     Carbon Scout
   </div>
   <div class="topbar-sep"></div>
-  <div class="topbar-meta">AEC Sustainability Intelligence · v4.4</div>
+  <div class="topbar-meta">AEC Sustainability Intelligence · v4.5</div>
   <div class="topbar-right">
     <div class="topbar-meta" id="top-std">EN 15978 · A1–A5</div>
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
@@ -560,11 +560,12 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
           <div class="field">
             <label>Design Stage</label>
             <select id="proj-stage">
-              <option>RIBA Stage 1</option>
-              <option>RIBA Stage 2</option>
-              <option>LEED SD</option>
-              <option>LEED DD</option>
-              <option>Schematic Design</option>
+              <option>RIBA Stage 2 — Concept Design</option>
+              <option>RIBA Stage 3 — Spatial Coordination</option>
+              <option>RIBA Stage 1 — Preparation & Briefing</option>
+              <option>Schematic Design (SD)</option>
+              <option>Design Development (DD)</option>
+              <option>Construction Documents (CD)</option>
             </select>
           </div>
           <div class="field">
@@ -588,7 +589,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
         <div class="krow" id="carbon-kpis"></div>
         <div class="card card-pad">
           <div class="card-title">Structural System Carbon Comparison</div>
-          <div class="card-sub" id="carbon-chart-sub">A1–A5 embodied carbon intensity · LEED MRc1 eligibility threshold: 300 kg CO₂e/m²</div>
+          <div class="card-sub" id="carbon-chart-sub">A1–A5 embodied carbon intensity · ~300 kg/m² = US industry average · 250 kg/m² = best practice benchmark · LEED MRc1 requires 10% reduction vs project baseline</div>
           <div style="position:relative;height:22px;margin-bottom:6px;" id="carbon-threshold-row"></div>
           <div class="bar-list" id="carbon-bars"></div>
           <div class="source-note">Sources: EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023 · IStructE How to Calculate Embodied Carbon 2022 · Values = structure + envelope A1–A5 per m² GFA · Intensity (kg/m²) is independent of GFA — Total carbon (tCO₂e) scales with GFA</div>
@@ -928,7 +929,10 @@ function renderCarbon(d){
   const structs=Object.entries(STRUCT).sort((a,b)=>a[1].base-b[1].base);
   const maxBar=Math.max(...structs.map(([,s])=>Math.round(s.base*d.mod+d.uAdd)))*1.15;
   const tPct=((300/maxBar)*100).toFixed(1);
-  document.getElementById('carbon-threshold-row').innerHTML=`<div class="threshold-line" style="left:${tPct}%"><div class="threshold-label">LEED 300</div></div>`;
+  const bpPct=((250/maxBar)*100).toFixed(1);
+  document.getElementById('carbon-threshold-row').innerHTML=
+    `<div class="threshold-line" style="left:${tPct}%;background:rgba(245,158,11,.5)"><div class="threshold-label" style="color:var(--amber)">~US Avg 300</div></div>
+     <div class="threshold-line" style="left:${bpPct}%;background:rgba(29,78,216,.4)"><div class="threshold-label" style="color:var(--cs)">Best Practice 250</div></div>`;
   document.getElementById('carbon-bars').innerHTML=structs.map(([k,s])=>{
     const v=Math.round(s.base*d.mod+d.uAdd);
     const pct=(v/maxBar*100).toFixed(1);
@@ -938,7 +942,8 @@ function renderCarbon(d){
       <div class="bar-label" style="font-weight:${isActive?700:400};color:${isActive?'var(--text)':'var(--muted)'}">${s.label}</div>
       <div class="bar-track">
         <div class="bar-fill" style="width:${pct}%;background:var(--cs);opacity:${isActive?1:0.22}">${isActive?v+' kg/m²':''}</div>
-        <div class="threshold-line" style="left:${tPct}%"></div>
+        <div class="threshold-line" style="left:${tPct}%;background:rgba(245,158,11,.4)"></div>
+        <div class="threshold-line" style="left:${bpPct}%;background:rgba(29,78,216,.3)"></div>
       </div>
       <div class="bar-num" style="opacity:${isActive?1:0.5};font-weight:${isActive?700:400}">${v}</div>
     </div>`;
@@ -946,10 +951,10 @@ function renderCarbon(d){
 
   // Compliance
   const items=[
-    {icon:'🏗',title:'MRc1 Whole Building LCA',sub:'EN 15978 A1–A5 documentation',ok:d.intensity<=300,warn:d.intensity>250&&d.intensity<=300},
-    {icon:'♻️',title:'MRc2 Low Carbon Materials',sub:'EPD-verified low embodied carbon',ok:d.intensity<=250,warn:d.intensity<=300},
-    {icon:'📊',title:'EA Carbon Reporting',sub:'RIBA 2030 pathway alignment',ok:d.intensity<=250,warn:d.intensity<=300},
-    {icon:'🌿',title:'Best Practice Target',sub:'≤250 kg CO₂e/m² structure+envelope (EC3 top quartile)',ok:d.intensity<=250,warn:d.intensity<=300},
+    {icon:'🏗',title:'MRc1 Whole Building LCA',sub:'Requires 10% reduction vs project baseline — conduct full LCA to verify',ok:true,warn:false},
+    {icon:'♻️',title:'MRc2 Low Carbon Materials',sub:'EPD-verified low embodied carbon',ok:['timber_clt','timber_glulam','steel_light'].includes(d.str),warn:['steel_composite','masonry'].includes(d.str)},
+    {icon:'📊',title:'EA Carbon Reporting',sub:'Embodied carbon documentation per EN 15978 A1–A5',ok:true,warn:false},
+    {icon:'🌿',title:'Best Practice Benchmark',sub:'≤250 kg CO₂e/m² = EC3 top quartile for US buildings',ok:d.intensity<=250,warn:d.intensity<=320},
     {icon:'♻',title:'MRc3 Recycled Content',sub:'Min. 20% recycled by value',ok:['timber_clt','timber_glulam'].includes(d.str),warn:false},
     {icon:'🪟',title:'EQc7 Facade Compliance',sub:'LEED glazing performance thresholds',ok:d.glF.leed,warn:false},
   ];
@@ -1012,7 +1017,7 @@ You are analyzing a building project with these parameters:
 
 Write a 2-3 sentence AI insight for the EMBODIED CARBON tab. Be specific with numbers. 
 - Lead with a bold performance rating (Outstanding/Strong/LEED Eligible/Review Needed)
-- Reference the exact carbon number and whether it meets LEED MRc1 (≤300 kg/m²) threshold
+- Reference the exact carbon number vs industry benchmarks. IMPORTANT: LEED MRc1 requires a 10% reduction vs a project-specific baseline — NOT a hard 300 kg/m² threshold. Never say "exceeds LEED MRc1 by X kg/m²". Instead reference whether the system is above/below typical US construction (300 kg/m² is a rough industry average, not a LEED rule). Most LEED Gold/Platinum buildings use steel or concrete — embodied carbon is just one optional credit.
 - Give one specific, actionable recommendation (e.g. switch to X to save Y kg/m²)
 - If trees > 0 mention the tree equivalent
 - Keep it sharp and professional — like a senior sustainability consultant's verbal note
@@ -1065,10 +1070,12 @@ Write a 2-3 sentence AI insight for the WIND & PWC tab. Be specific.
 function getFallbackInsight(tab, d){
   if(tab==='carbon'){
     const saving=Math.round(d.concreteI-d.intensity);
-    if(d.intensity<=200) return `<strong>Outstanding performance.</strong> At ${d.intensity} kg CO₂e/m² this scheme is in the global top 10% — on track for <strong>LEED Platinum MRc1</strong>. The ${d.strF.label} system avoids ${saving} kg CO₂e/m² vs concrete — equivalent to ${d.trees.toLocaleString()} trees. Document A1–A5 via EC3 for LEED submission.`;
-    if(d.intensity<=250) return `<strong>Strong performance.</strong> ${d.intensity} kg CO₂e/m² meets LEED MRc1. ${saving>0?`${d.strF.label} saves ${saving} kg CO₂e/m² vs concrete — ${d.trees.toLocaleString()} trees equivalent.`:'Specify EPD-verified products for MRc2.'}`;
-    if(d.intensity<=300) return `<strong>LEED MRc1 eligible.</strong> At ${d.intensity} kg CO₂e/m² — Switch to Mass Timber CLT (~${Math.round(STRUCT.timber_clt.base*d.mod+d.uAdd)} kg/m²) to unlock additional LEED credits.`;
-    return `<strong>Review needed.</strong> ${d.intensity} kg CO₂e/m² exceeds LEED MRc1 by ${d.intensity-300} kg/m². Switching to Mass Timber CLT saves ${Math.round((d.intensity-Math.round(STRUCT.timber_clt.base*d.mod+d.uAdd))*d.gfa/1000)} tCO₂e and unlocks LEED credits.`;
+    const timberI=Math.round(STRUCT.timber_clt.base*d.mod+d.uAdd);
+    const pctVsAvg=Math.round((1-d.intensity/300)*100);
+    if(d.intensity<=180) return `<strong>Best-in-class performance.</strong> At ${d.intensity} kg CO₂e/m² this scheme is well below the US industry average (~300 kg/m²). ${saving>0?`The ${d.strF.label} system avoids ${saving} kg CO₂e/m² vs concrete — equivalent to ${d.trees.toLocaleString()} trees.`:''} Strong position for LEED MRc1 — conduct full LCA to document the 10% baseline reduction.`;
+    if(d.intensity<=250) return `<strong>Strong performance.</strong> ${d.intensity} kg CO₂e/m² is ${Math.abs(pctVsAvg)}% below US industry average. ${saving>0?`${d.strF.label} saves ${saving} kg CO₂e/m² vs concrete — ${d.trees.toLocaleString()} trees equivalent.`:'Specify EPD-verified products for MRc2 documentation.'} LEED MRc1 achievable with a 10% baseline reduction.`;
+    if(d.intensity<=340) return `<strong>Good performance.</strong> ${d.intensity} kg CO₂e/m² is near the US industry average. Steel and concrete buildings at this intensity regularly achieve LEED Gold and Platinum — embodied carbon is one optional MRc1 credit worth 1–5 points. Specify low-carbon concrete mixes or high-recycled-content steel to strengthen the carbon story.`;
+    return `<strong>Above industry average.</strong> ${d.intensity} kg CO₂e/m² is above typical US construction (~300 kg/m²). LEED certification remains fully achievable — MRc1 is one optional credit out of 110 total. Consider low-carbon concrete mixes or switching to ${d.str.includes('concrete')?'steel light frame (~210 kg/m²)':'mass timber (~115 kg/m²)'} to reduce intensity.`;
   }
   if(tab==='daylight'){
     const ok=d.sDA>=55&&d.ASE<=10;
@@ -1314,17 +1321,17 @@ function renderReport(){
       </div>`).join('')}
     </div>`;
   const credits=[
-    {name:'MRc1 Whole Building LCA',ok:d.intensity<=300},
-    {name:'MRc2 Low Carbon Materials',ok:d.intensity<=250},
-    {name:'MRc3 Recycled Content',ok:['timber_clt','timber_glulam'].includes(d.str)},
-    {name:'MRc4 Low Embodied Carbon',ok:d.intensity<=200},
-    {name:'EQc7 Daylight',ok:d.sDA>=55&&d.ASE<=10},
-    {name:'EAc2 Optimize Energy',ok:false},
+    {name:'MRc1 Whole Building LCA',ok:true,note:'Requires full LCA with 10% baseline reduction'},
+    {name:'MRc2 Low Carbon Materials',ok:['timber_clt','timber_glulam','steel_light'].includes(d.str),note:'EPD-verified products required'},
+    {name:'MRc3 Recycled Content',ok:['timber_clt','timber_glulam','steel_composite','steel_light'].includes(d.str),note:'Min. 20% recycled content by value'},
+    {name:'MRc4 Low Embodied Carbon',ok:d.intensity<=200,note:'Below 200 kg/m² benchmark'},
+    {name:'EQc7 Daylight',ok:d.sDA>=55&&d.ASE<=10,note:`sDA ${d.sDA}% / ASE ${d.ASE}%`},
+    {name:'EAc2 Optimize Energy',ok:false,note:'Operational carbon not yet modelled'},
   ];
   document.getElementById('report-leed').innerHTML=`<div style="display:flex;flex-direction:column;gap:5px;margin-top:10px;">`+
     credits.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;">
-      <div style="font-size:11px;font-weight:600">${c.name}</div>
-      <div class="k-badge ${c.ok?'b-g':'b-r'}">${c.ok?'✓ On Track':'✗ At Risk'}</div>
+      <div><div style="font-size:11px;font-weight:600">${c.name}</div><div style="font-size:9px;color:var(--faint);margin-top:2px">${c.note||''}</div></div>
+      <div class="k-badge ${c.ok?'b-g':'b-a'}" style="white-space:nowrap;margin-left:12px">${c.ok?'✓ On Track':'⚠ Verify'}</div>
     </div>`).join('')+`</div>`;
   document.getElementById('report-method').innerHTML=`
     <strong>Embodied Carbon</strong> — Benchmark intensities from EC3 Carbon Leadership Forum, RICS WLCA 2nd Ed. 2023, and IStructE How to Calculate Embodied Carbon 2022. Values represent structure + envelope A1–A5 per m² GFA. Accuracy: ±15–20% vs full project-specific EPD LCA. For LEED submission, conduct full LCA using One Click LCA, Tally, or equivalent.<br><br>
