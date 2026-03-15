@@ -301,7 +301,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
     Carbon Scout
   </div>
   <div class="topbar-sep"></div>
-  <div class="topbar-meta">AEC Sustainability Intelligence · v4.2</div>
+  <div class="topbar-meta">AEC Sustainability Intelligence · v4.4</div>
   <div class="topbar-right">
     <div class="topbar-meta" id="top-std">EN 15978 · A1–A5</div>
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
@@ -350,7 +350,15 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
   <div class="quick-panel">
     <div class="quick-hero">
       <div class="quick-hero-title">60-Second Carbon Assessment</div>
-      <div class="quick-hero-sub">Three inputs. Instant sustainability feedback.</div>
+      <div class="quick-hero-sub">Describe your building or fill in the fields below.</div>
+    </div>
+    <div style="max-width:600px;margin:0 auto;width:100%;">
+      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:10px;transition:border-color .15s;box-shadow:var(--sh);" id="nl-wrap" onfocusin="this.style.borderColor='var(--cs-accent)'" onfocusout="this.style.borderColor='var(--border)'">
+        <div style="font-size:16px">💬</div>
+        <input type="text" id="nl-input" placeholder="e.g. 12 storey office in Houston, concrete frame, 50,000 sqft" style="flex:1;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);outline:none;" onkeydown="if(event.key==='Enter')parseNLInput()"/>
+        <button onclick="parseNLInput()" style="background:var(--cs);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">Parse ↵</button>
+      </div>
+      <div style="font-size:9px;color:var(--faint);padding:4px 4px 0;font-family:'DM Mono',monospace;">AI reads your description and fills in the fields automatically</div>
     </div>
     <div class="quick-inputs">
       <div class="quick-field">
@@ -889,8 +897,8 @@ function quickCalc(){
   document.getElementById('quick-insight-text').innerHTML=
     `<strong>${strF.label}</strong> at ${displayArea(gfaM2)}: <strong>${selectedI} kg CO₂e/m²</strong> — `+
     (selectedI<=200?`outstanding performance, global top 10%. Total lifecycle carbon: ${totalT.toLocaleString()} tCO₂e. LEED MRc1 Platinum eligible. `
-    :selectedI<=250?`meets LETI 2030 targets and LEED MRc1. Total: ${totalT.toLocaleString()} tCO₂e. `
-    :selectedI<=300?`LEED MRc1 eligible. Total: ${totalT.toLocaleString()} tCO₂e. Consider Mass Timber CLT (~${timberI} kg/m²) to hit LETI 2030. `
+    :selectedI<=250?`meets LEED MRc1. Total: ${totalT.toLocaleString()} tCO₂e. `
+    :selectedI<=300?`LEED MRc1 eligible. Total: ${totalT.toLocaleString()} tCO₂e. Consider Mass Timber CLT (~${timberI} kg/m²) to reduce intensity further. `
     :`exceeds LEED MRc1 threshold by ${selectedI-300} kg/m². Total: ${totalT.toLocaleString()} tCO₂e. `)
     +(qStr!=='timber_clt'&&qStr!=='timber_glulam'?`Switching to Mass Timber CLT saves <strong>${Math.round((selectedI-timberI)*gfaM2/1000).toLocaleString()} tCO₂e</strong> — equivalent to ${Math.round(Math.max(0,(selectedI-timberI)*gfaM2/1000/0.022)).toLocaleString()} trees.`:'Already using low-carbon timber — excellent choice for early-design sustainability goals.');
 }
@@ -940,8 +948,8 @@ function renderCarbon(d){
   const items=[
     {icon:'🏗',title:'MRc1 Whole Building LCA',sub:'EN 15978 A1–A5 documentation',ok:d.intensity<=300,warn:d.intensity>250&&d.intensity<=300},
     {icon:'♻️',title:'MRc2 Low Carbon Materials',sub:'EPD-verified low embodied carbon',ok:d.intensity<=250,warn:d.intensity<=300},
-    {icon:'📊',title:'EA Carbon Reporting',sub:'LETI/RIBA 2030 pathway alignment',ok:d.intensity<=250,warn:d.intensity<=300},
-    {icon:'🌿',title:'LETI 2030 Embodied Target',sub:'≤250 kg CO₂e/m² structure+envelope',ok:d.intensity<=250,warn:d.intensity<=300},
+    {icon:'📊',title:'EA Carbon Reporting',sub:'RIBA 2030 pathway alignment',ok:d.intensity<=250,warn:d.intensity<=300},
+    {icon:'🌿',title:'Best Practice Target',sub:'≤250 kg CO₂e/m² structure+envelope (EC3 top quartile)',ok:d.intensity<=250,warn:d.intensity<=300},
     {icon:'♻',title:'MRc3 Recycled Content',sub:'Min. 20% recycled by value',ok:['timber_clt','timber_glulam'].includes(d.str),warn:false},
     {icon:'🪟',title:'EQc7 Facade Compliance',sub:'LEED glazing performance thresholds',ok:d.glF.leed,warn:false},
   ];
@@ -969,22 +977,105 @@ function renderCarbon(d){
     </div>`;
   }).join('');
 
-  // AI insight
+  // AI insight — live Anthropic API call
   const insightEl=document.getElementById('carbon-insight');
-  const cacheKey=`carbon-${d.str}-${d.intensity}-${d.city.zone}`;
-  if(aiInsightCache[cacheKey]){insightEl.innerHTML=aiInsightCache[cacheKey];return;}
-  const ins=generateCarbonInsight(d);
-  insightEl.innerHTML=ins;
-  aiInsightCache[cacheKey]=ins;
+  insightEl.innerHTML='<div class="insight-loading"><div class="insight-spinner"></div>Analyzing carbon performance…</div>';
+  getAIInsight('carbon', d).then(text=>{insightEl.innerHTML=text;});
 }
 
-function generateCarbonInsight(d){
-  const pct=Math.round((1-d.intensity/STRUCT.concrete_cast.base)*100);
-  const saving=Math.round(d.concreteI-d.intensity);
-  if(d.intensity<=200) return `<strong>Outstanding performance.</strong> At ${d.intensity} kg CO₂e/m² this scheme is in the global top 10% for embodied carbon — on track for <strong>LEED Platinum MRc1</strong>. The ${d.strF.label} system avoids ${saving} kg CO₂e/m² vs concrete — equivalent to ${d.trees.toLocaleString()} trees over the project lifetime. Document A1–A5 via EC3 for LEED submission.`;
-  if(d.intensity<=250) return `<strong>Strong performance.</strong> ${d.intensity} kg CO₂e/m² meets LETI 2030 targets and qualifies for <strong>LEED MRc1</strong>. ${saving>0?`The ${d.strF.label} system saves ${saving} kg CO₂e/m² vs concrete baseline — ${d.trees.toLocaleString()} trees equivalent.`:'Consider switching to timber to unlock MRc4 low-carbon materials credit.'} Specify EPD-verified products for MRc2 documentation.`;
-  if(d.intensity<=300) return `<strong>LEED eligible.</strong> At ${d.intensity} kg CO₂e/m² this scheme qualifies for MRc1. ${saving>0?`Switching to ${d.intensity>200?'Mass Timber CLT':'the current system'} reduces intensity by ${saving} kg/m².`:'Consider timber framing to reduce intensity and unlock additional LEED credits.'} To hit LETI 2030 targets, reduce to ≤250 kg/m² — achievable with ${d.str==='concrete_cast'?'steel light frame or mass timber':'mass timber'}.`;
-  return `<strong>Review needed.</strong> ${d.intensity} kg CO₂e/m² exceeds LEED MRc1 by ${d.intensity-300} kg/m². Switching to Mass Timber CLT reduces intensity to ~${Math.round(STRUCT.timber_clt.base*d.mod+d.uAdd)} kg/m² — saving ${Math.round((d.intensity-Math.round(STRUCT.timber_clt.base*d.mod+d.uAdd))*d.gfa/1000)} tCO₂e and unlocking LEED credits. Facade envelope contributes ~${d.facadeEC} kg CO₂e/m² — specify high-recycled-content cladding.`;
+// ── AI INSIGHT ENGINE ──
+// Calls Anthropic API with full project context
+// Caches per unique input combination to avoid redundant calls
+
+async function getAIInsight(tab, d){
+  const city = d.city;
+  const cacheKey = `${tab}-${d.str}-${d.intensity}-${d.orient}-${d.wwr}-${d.glaz}-${city.zone}-${d.floors}`;
+  if(aiInsightCache[cacheKey]) return aiInsightCache[cacheKey];
+
+  const context = `You are Carbon Scout's AI sustainability advisor — an expert AEC sustainability consultant.
+You are analyzing a building project with these parameters:
+- Location: ${city.name}, Climate Zone ${city.zone} (${city.climate})
+- GFA: ${Math.round(d.gfa).toLocaleString()} m² (${Math.round(d.gfa*10.764).toLocaleString()} ft²), ${d.floors} floors
+- Structural System: ${d.strF.label}
+- Building Use: ${d.use}
+- Embodied Carbon Intensity: ${d.intensity} kg CO₂e/m² (A1–A5)
+- Total Embodied Carbon: ${d.total.toLocaleString()} tCO₂e
+- Carbon vs Concrete Baseline: ${d.saving>0?'-'+Math.round(d.saving)+' tCO₂e saved':'+'+Math.round(Math.abs(d.saving))+' tCO₂e above baseline'}
+- Trees equivalent: ${d.trees.toLocaleString()}
+- WWR: ${d.wwr}%, Orientation: ${d.orient}-facing
+- Glazing: ${d.glF.label} (U=${d.glF.u} W/m²K, SHGC=${d.glF.shgc}, VLT=${d.glF.vlt})
+- sDA: ${d.sDA}% (LEED target ≥55%), ASE: ${d.ASE}% (LEED target ≤10%)
+- LEED MRc1: ${d.intensity<=300?'ELIGIBLE':'AT RISK'}`;
+
+  const prompts = {
+    carbon: `${context}
+
+Write a 2-3 sentence AI insight for the EMBODIED CARBON tab. Be specific with numbers. 
+- Lead with a bold performance rating (Outstanding/Strong/LEED Eligible/Review Needed)
+- Reference the exact carbon number and whether it meets LEED MRc1 (≤300 kg/m²) threshold
+- Give one specific, actionable recommendation (e.g. switch to X to save Y kg/m²)
+- If trees > 0 mention the tree equivalent
+- Keep it sharp and professional — like a senior sustainability consultant's verbal note
+- Use <strong> tags for key numbers and recommendations
+- Max 3 sentences. No fluff.`,
+
+    daylight: `${context}
+
+Write a 2-3 sentence AI insight for the DAYLIGHT & GLARE tab. Be specific with numbers.
+- Lead with LEED EQc7 status (achievable/at risk/not met)
+- Reference sDA ${d.sDA}% and ASE ${d.ASE}% specifically vs LEED thresholds
+- Comment on how the ${d.glF.label} glazing affects daylight and glare on ${d.orient}-facing facades in Zone ${city.zone}
+- Give one specific actionable recommendation if there's a problem
+- Use <strong> tags for key numbers
+- Max 3 sentences. No fluff.`,
+
+    wind: `${context}
+
+Write a 2-3 sentence AI insight for the WIND & PWC tab. Be specific.
+- Reference the wind data source (ERA5 or EPW TMY3 fallback)
+- Comment on pedestrian comfort around this ${d.floors}-floor building
+- Give one specific mitigation recommendation based on the building height and climate
+- Use <strong> tags for key values
+- Max 3 sentences. No fluff.`,
+  };
+
+  const prompt = prompts[tab] || prompts.carbon;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        messages: [{role:'user', content: prompt}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || getFallbackInsight(tab, d);
+    aiInsightCache[cacheKey] = text;
+    return text;
+  } catch(e) {
+    const fallback = getFallbackInsight(tab, d);
+    aiInsightCache[cacheKey] = fallback;
+    return fallback;
+  }
+}
+
+function getFallbackInsight(tab, d){
+  if(tab==='carbon'){
+    const saving=Math.round(d.concreteI-d.intensity);
+    if(d.intensity<=200) return `<strong>Outstanding performance.</strong> At ${d.intensity} kg CO₂e/m² this scheme is in the global top 10% — on track for <strong>LEED Platinum MRc1</strong>. The ${d.strF.label} system avoids ${saving} kg CO₂e/m² vs concrete — equivalent to ${d.trees.toLocaleString()} trees. Document A1–A5 via EC3 for LEED submission.`;
+    if(d.intensity<=250) return `<strong>Strong performance.</strong> ${d.intensity} kg CO₂e/m² meets LEED MRc1. ${saving>0?`${d.strF.label} saves ${saving} kg CO₂e/m² vs concrete — ${d.trees.toLocaleString()} trees equivalent.`:'Specify EPD-verified products for MRc2.'}`;
+    if(d.intensity<=300) return `<strong>LEED MRc1 eligible.</strong> At ${d.intensity} kg CO₂e/m² — Switch to Mass Timber CLT (~${Math.round(STRUCT.timber_clt.base*d.mod+d.uAdd)} kg/m²) to unlock additional LEED credits.`;
+    return `<strong>Review needed.</strong> ${d.intensity} kg CO₂e/m² exceeds LEED MRc1 by ${d.intensity-300} kg/m². Switching to Mass Timber CLT saves ${Math.round((d.intensity-Math.round(STRUCT.timber_clt.base*d.mod+d.uAdd))*d.gfa/1000)} tCO₂e and unlocks LEED credits.`;
+  }
+  if(tab==='daylight'){
+    const ok=d.sDA>=55&&d.ASE<=10;
+    return ok?`<strong>LEED EQc7 achievable.</strong> sDA ${d.sDA}% meets the 55% threshold and ASE ${d.ASE}% is within limits. ${d.glF.label} (VLT ${Math.round(d.glF.vlt*100)}%) provides good transmission while controlling solar gain.`
+    :`<strong>${d.sDA<55?'Daylight improvement needed.':'Glare risk flag.'}</strong> ${d.sDA<55?`sDA ${d.sDA}% is below the 55% LEED EQc7 threshold. Increase WWR to ${Math.min(70,d.wwr+10)}% or reorient to South.`:`ASE ${d.ASE}% exceeds the 10% limit. Switch to electrochromic glazing or add external shading.`}`;
+  }
+  return `<strong>Wind analysis loaded.</strong> Using verified climate data for ${d.city.name}. Pedestrian comfort assessment based on Lawson LDDC criteria — full CFD recommended at RIBA Stage 3.`;
 }
 
 // ── RENDER DAYLIGHT ──
@@ -1078,18 +1169,10 @@ function renderDaylight(d){
       <div class="k-badge ${r.ok?'b-g':'b-r'}">${r.ok?'✓ ':r.bold?'✗ ':''}${r.val}</div>
     </div>`).join('')}</div>`;
 
-  // Daylight insight
+  // Daylight AI insight — live call
   const dlIns=document.getElementById('dl-insight');
-  const key=`dl-${orient}-${wwr}-${d.glaz}-${city.zone}`;
-  if(!aiInsightCache[key]){
-    const ins=sDA>=55&&ASE<=10
-      ?`<strong>LEED EQc7 achievable.</strong> With ${wwr}% WWR, ${orient}-facing glazing, and ${glF.label}, sDA reaches <strong>${sDA}%</strong> — meeting the 55% LEED threshold. ASE of <strong>${ASE}%</strong> is within limits. The ${glF.label} system (VLT ${(glF.vlt*100).toFixed(0)}%) provides good light transmission while controlling solar gain (SHGC ${glF.shgc}).`
-      :sDA<55
-      ?`<strong>Daylight improvement needed.</strong> sDA of ${sDA}% is below the 55% LEED EQc7 threshold. Consider increasing WWR to ${Math.min(70,wwr+10)}% or switching orientation from ${orient} to South to improve daylight autonomy. ${glF.label} VLT of ${(glF.vlt*100).toFixed(0)}% ${glF.vlt<0.5?'— a higher VLT glazing would help':'is adequate'}.`
-      :`<strong>Glare risk flag.</strong> sDA of ${sDA}% meets LEED threshold but ASE of ${ASE}% exceeds the 10% limit on ${orient}-facing facades. Consider ${glF.shgc>0.3?'switching to electrochromic or triple glazed to reduce SHGC':'adding external shading devices — horizontal brise soleil most effective on '+orient+' facade'}.`;
-    aiInsightCache[key]=ins;
-    dlIns.innerHTML=ins;
-  } else dlIns.innerHTML=aiInsightCache[key];
+  dlIns.innerHTML='<div class="insight-loading"><div class="insight-spinner"></div>Analyzing daylight performance…</div>';
+  getAIInsight('daylight', d).then(text=>{dlIns.innerHTML=text;});
 }
 
 // ── RENDER WIND ──
@@ -1106,6 +1189,12 @@ function renderWind(d){
   renderWindStats(windData,city.name,d.floors);
   renderPWC(windData,d.floors);
   renderWindMitigations(windData);
+  // Wind AI insight — only if wind data already loaded (not from fetchWindData)
+  const windInsEl=document.getElementById('wind-insight');
+  if(windInsEl&&!windInsEl.innerHTML.includes('insight-loading')&&!windInsEl.innerHTML.includes('Fetching')){
+    windInsEl.innerHTML='<div class="insight-loading"><div class="insight-spinner"></div>Analyzing wind conditions…</div>';
+    getAIInsight('wind', d).then(text=>{windInsEl.innerHTML=text;});
+  }
 }
 
 function renderWindRose(wd){
@@ -1273,7 +1362,14 @@ async function fetchWindData(lat,lon,cityName){
     document.getElementById('wind-city').textContent=cityName;
     const dirs=['N','NE','E','SE','S','SW','W','NW'];
     const dominant=dirs[bins.indexOf(Math.max(...bins))];
-    document.getElementById('wind-insight').innerHTML=`<strong>ERA5 live data loaded.</strong> ${cityName} annual wind: avg <strong>${windData.avgSpeed} m/s</strong>, prevailing <strong>${dominant}</strong>. Data from ${allS.length.toLocaleString()} hourly ERA5 observations (2023) — same source as EPW/TMY3 files used by Autodesk Forma and Ladybug Tools.`;
+    // Show ERA5 source confirmation then upgrade to AI insight
+    document.getElementById('wind-insight').innerHTML=`<strong>ERA5 live data loaded.</strong> ${cityName}: avg <strong>${windData.avgSpeed} m/s</strong>, prevailing <strong>${dominant}</strong> from ${allS.length.toLocaleString()} hourly observations.`;
+    // Upgrade to AI insight after a short delay (let recalc settle)
+    setTimeout(()=>{
+      const d=calcCarbon();
+      document.getElementById('wind-insight').innerHTML='<div class="insight-loading"><div class="insight-spinner"></div>Analyzing wind conditions for '+cityName+'…</div>';
+      getAIInsight('wind',d).then(text=>{document.getElementById('wind-insight').innerHTML=text;});
+    }, 800);
   }catch(e){
     const cw=EPW_WIND[currentCity]||EPW_WIND['hou'];
     windData={avgSpeed:cw.avg,maxSpeed:cw.max,bins:cw.bins,maxBin:Math.max(...cw.bins),lat,lon,source:'EPW TMY3 fallback'};
@@ -1320,7 +1416,7 @@ function exportReport(){
     `Intensity: ${d.intensity} kg CO₂e/m²`,
     `Total: ${d.total.toLocaleString()} tCO₂e`,
     `LEED MRc1 (≤300 kg/m²): ${d.intensity<=300?'ELIGIBLE':'AT RISK'}`,
-    `LETI 2030 (≤250 kg/m²): ${d.intensity<=250?'ON TRACK':'NOT MET'}`,
+    
     `Trees equivalent saved: ${d.trees.toLocaleString()}`,
     '',
     'DAYLIGHT',
@@ -1356,6 +1452,122 @@ function copyCSV(){
     `Location,Zone,GFA,Floors,Structure,Use,Glazing,WWR,Intensity_kgCO2em2,Total_tCO2e,LEED_MRc1,sDA,ASE,EQc7\n`+
     `${city.name},${city.zone},${Math.round(d.gfa)},${d.floors},${d.strF.label},${d.use},${d.glF.label},${d.wwr},${d.intensity},${d.total},${d.intensity<=300?'ELIGIBLE':'AT RISK'},${d.sDA},${d.ASE},${d.sDA>=55&&d.ASE<=10?'ELIGIBLE':'NOT MET'}`
   ).then(()=>{alert('CSV copied to clipboard!');});
+}
+
+// ── NATURAL LANGUAGE INPUT ──
+async function parseNLInput(){
+  const input = document.getElementById('nl-input').value.trim();
+  if(!input) return;
+
+  const btn = document.querySelector('#nl-wrap button');
+  const orig = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+
+  const prompt = `You are parsing a building description for a sustainability tool. Extract these fields from the text and return ONLY valid JSON, nothing else:
+
+Text: "${input}"
+
+Return this exact JSON structure (use null for missing values):
+{
+  "gfa_sqft": number or null,
+  "gfa_m2": number or null,
+  "floors": number or null,
+  "structure": one of ["concrete_cast","concrete_precast","steel_composite","steel_light","timber_clt","timber_glulam","masonry"] or null,
+  "use": one of ["office","residential","mixed","retail","education","healthcare"] or null,
+  "city": one of ["nyc","hou","dal","chi","la","bos","sea","mia","den","phx"] or null,
+  "orient": one of ["N","NE","E","SE","S","SW","W","NW"] or null,
+  "wwr": number or null
+}
+
+Rules:
+- "concrete" alone = concrete_cast
+- "steel" alone = steel_composite  
+- "timber" or "wood" or "CLT" = timber_clt
+- "glulam" = timber_glulam
+- City name detection: New York/NYC=nyc, Houston=hou, Dallas=dal, Chicago=chi, LA/Los Angeles=la, Boston=bos, Seattle=sea, Miami=mia, Denver=den, Phoenix=phx
+- If sqft given, put in gfa_sqft. If m² given, put in gfa_m2.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{role:'user', content: prompt}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '{}';
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+
+    // Apply parsed values to form fields
+    let applied = [];
+
+    if(parsed.gfa_sqft && units==='imperial'){
+      document.getElementById('q-gfa').value = Math.round(parsed.gfa_sqft);
+      document.getElementById('gfa').value = Math.round(parsed.gfa_sqft);
+      applied.push('GFA');
+    } else if(parsed.gfa_m2 && units==='metric'){
+      document.getElementById('q-gfa').value = Math.round(parsed.gfa_m2);
+      document.getElementById('gfa').value = Math.round(parsed.gfa_m2);
+      applied.push('GFA');
+    } else if(parsed.gfa_sqft && units==='metric'){
+      document.getElementById('q-gfa').value = Math.round(parsed.gfa_sqft/10.764);
+      document.getElementById('gfa').value = Math.round(parsed.gfa_sqft/10.764);
+      applied.push('GFA');
+    }
+
+    if(parsed.floors){
+      document.getElementById('floors').value = parsed.floors;
+      applied.push('Floors');
+    }
+
+    if(parsed.structure){
+      document.getElementById('structure').value = parsed.structure;
+      document.getElementById('q-struct').value = parsed.structure;
+      applied.push('Structure');
+    }
+
+    if(parsed.use){
+      document.getElementById('use').value = parsed.use;
+      document.getElementById('q-type').value = parsed.use;
+      applied.push('Use');
+    }
+
+    if(parsed.city){
+      document.getElementById('city').value = parsed.city;
+      onCityChange();
+      applied.push('City');
+    }
+
+    if(parsed.orient){
+      document.getElementById('orient').value = parsed.orient;
+      applied.push('Orientation');
+    }
+
+    if(parsed.wwr){
+      document.getElementById('wwr').value = parsed.wwr;
+      applied.push('WWR');
+    }
+
+    // Show what was filled
+    document.getElementById('nl-input').value = '';
+    document.getElementById('nl-input').placeholder = applied.length>0
+      ? '✓ Filled: '+applied.join(', ')+' — adjust any field and results update instantly'
+      : 'Could not parse — try: "12 storey office Houston concrete 50000 sqft"';
+
+    recalc();
+    quickCalc();
+
+  } catch(e) {
+    document.getElementById('nl-input').placeholder = 'Parse failed — try again or fill fields manually';
+  }
+
+  btn.textContent = orig;
+  btn.disabled = false;
 }
 
 // ── INIT ──
