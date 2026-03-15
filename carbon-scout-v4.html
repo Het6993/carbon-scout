@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta http-equiv="Cache-Control" content="no-cache"/>
+<title>Carbon Scout — AEC Sustainability Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Carbon Scout Brand — Cobalt Blue */
+  --cs:#1D4ED8;           /* CS primary — cobalt blue */
+  --cs-m:#2563EB;         /* CS medium blue */
+  --cs-l:#EFF6FF;         /* CS light tint */
+  --cs-dark:#1E3A8A;      /* CS dark navy — topbar */
+  --cs-accent:#3B82F6;    /* CS accent — bright blue */
+
+  --bg:#f3f4f1;
+  --surface:#ffffff;
+  --surface2:#f7f8f5;
+  --border:#e6ebe4;
+  --border2:#cdd5ca;
+  --text:#111510;
+  --text2:#3a4a3a;
+  --muted:#788878;
+  --faint:#a5b5a5;
+  --green:#1a6b3a;
+  --green-l:#e8f5ed;
+  --green-m:#22c55e;
+  --green-b:#16a34a;
+  --green-d:#0f4024;
+  --amber:#854d0e;
+  --amber-l:#fef9ee;
+  --amber-m:#f59e0b;
+  --red:#9b1c1c;
+  --red-l:#fef2f2;
+  --red-m:#ef4444;
+  --blue:#1e40af;
+  --blue-l:#eff6ff;
+  --blue-m:#3b82f6;
+  --teal:#0f766e;
+  --teal-l:#f0fdfa;
+  --teal-m:#14b8a6;
+  --r:12px; --rs:8px; --r2:6px;
+  --sh:0 1px 2px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.06);
+  --sh2:0 4px 20px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── TOP BAR ── */
+.topbar{height:52px;background:var(--cs-dark);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:9px;color:#fff;font-size:13px;font-weight:700;letter-spacing:-.2px;}
+.logo-pulse{width:7px;height:7px;border-radius:50%;background:var(--cs-accent);box-shadow:0 0 0 0 rgba(59,130,246,.4);animation:pulse 2.5s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.4)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,.12);}
+.topbar-meta{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.4px;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.live-badge{display:flex;align-items:center;gap:5px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:20px;padding:3px 10px 3px 8px;font-size:10px;font-weight:600;color:var(--cs-accent);letter-spacing:.3px;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;}
+
+/* ── MODE BAR ── */
+.modebar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:44px;display:flex;align-items:center;gap:16px;}
+.mode-label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--faint);}
+.mode-toggle{display:flex;background:var(--bg);border-radius:20px;padding:3px;gap:2px;}
+.mode-btn{font-size:11px;font-weight:600;padding:4px 14px;border-radius:16px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all .18s;letter-spacing:-.1px;}
+.mode-btn.active{background:var(--cs);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.modebar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.units-toggle{display:flex;background:var(--bg);border-radius:20px;padding:3px;gap:2px;}
+.units-btn{font-size:11px;font-weight:600;padding:3px 12px;border-radius:14px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all .18s;}
+.units-btn.active{background:var(--cs);color:#fff;}
+
+/* ── LOCATION BAR ── */
+.locbar{background:var(--surface2);border-bottom:1px solid var(--border);padding:0 24px;height:40px;display:flex;align-items:center;gap:10px;}
+.loc-label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--faint);}
+.loc-select{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:var(--text);background:transparent;border:none;outline:none;cursor:pointer;padding:2px 4px;}
+.loc-chips{display:flex;gap:6px;margin-left:4px;}
+.chip{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;padding:2px 8px;border-radius:20px;letter-spacing:.3px;}
+.chip-g{background:var(--green-l);color:var(--green);border:1px solid rgba(26,107,58,.15);}
+.chip-b{background:var(--blue-l);color:var(--blue);border:1px solid rgba(30,64,175,.15);}
+.chip-a{background:var(--amber-l);color:var(--amber);border:1px solid rgba(133,77,14,.15);}
+
+/* ── MAIN LAYOUT ── */
+.main{flex:1;display:flex;overflow:hidden;height:calc(100vh - 136px);}
+
+/* ── NAV TABS ── */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 0 0 272px;flex-shrink:0;}
+.nav-tab{padding:12px 20px 10px;font-size:12px;font-weight:500;color:var(--faint);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s;display:flex;align-items:center;gap:6px;white-space:nowrap;user-select:none;letter-spacing:-.1px;}
+.nav-tab:hover{color:var(--text2);}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--cs);font-weight:700;}
+.nav-tab .tab-icon{font-size:13px;}
+
+/* ── LEFT PANEL ── */
+.left{width:272px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.left-inner{padding:16px 14px;display:flex;flex-direction:column;gap:12px;flex:1;}
+.panel-section{display:flex;flex-direction:column;gap:7px;}
+.panel-title{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--faint);padding:0 2px;margin-bottom:1px;}
+.field{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:9px 11px;transition:border-color .15s,box-shadow .15s;cursor:pointer;}
+.field:focus-within{border-color:var(--cs-accent);box-shadow:0 0 0 3px rgba(59,130,246,.12);}
+.field label{display:block;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:3px;cursor:pointer;}
+.field input,.field select{width:100%;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--text);outline:none;cursor:pointer;letter-spacing:-.2px;}
+.field select option{font-size:13px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+
+/* Scenario list */
+.scenario-list{display:flex;flex-direction:column;gap:4px;}
+.sc-item{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rs);padding:7px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .15s;}
+.sc-item:hover{border-color:var(--border2);}
+.sc-item.active{border-color:var(--cs-m);background:var(--cs-l);}
+.sc-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.sc-name{flex:1;font-size:11px;font-weight:600;letter-spacing:-.1px;}
+.sc-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.sc-delta{font-family:'DM Mono',monospace;font-size:9px;min-width:38px;text-align:right;}
+
+/* Tree card */
+.tree-card{background:linear-gradient(135deg,var(--cs-l),#d8ede0);border:1.5px solid rgba(26,71,42,.12);border-radius:var(--rs);padding:12px 14px;}
+.tree-num{font-size:24px;font-weight:800;color:var(--cs);letter-spacing:-1.5px;line-height:1;}
+.tree-label{font-size:10px;color:var(--cs-m);font-weight:600;margin-top:2px;display:flex;align-items:center;gap:4px;}
+.tree-sub{font-size:9px;color:var(--faint);margin-top:3px;font-family:'DM Mono',monospace;}
+
+/* Panel divider */
+.pdiv{height:1px;background:var(--border);margin:2px 0;}
+
+/* ── RIGHT PANEL ── */
+.right{flex:1;overflow-y:auto;background:var(--bg);}
+.tab-panel{display:none;padding:20px;flex-direction:column;gap:14px;animation:fadein .2s ease;}
+.tab-panel.active{display:flex;}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);}
+.card-pad{padding:18px 20px;}
+.card-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;letter-spacing:-.2px;}
+.card-sub{font-size:10px;color:var(--faint);margin-bottom:14px;line-height:1.4;}
+.source-note{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--faint);margin-top:10px;padding-top:8px;border-top:1px solid var(--border);line-height:1.5;}
+
+/* ── KPI ROW ── */
+.krow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.kcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);position:relative;overflow:hidden;}
+.kcard::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:var(--r) var(--r) 0 0;}
+.kcard.k-green::after{background:linear-gradient(90deg,var(--green),var(--green-m));}
+.kcard.k-amber::after{background:linear-gradient(90deg,var(--amber),var(--amber-m));}
+.kcard.k-red::after{background:linear-gradient(90deg,var(--red),var(--red-m));}
+.kcard.k-blue::after{background:linear-gradient(90deg,var(--blue),var(--blue-m));}
+.kcard.k-teal::after{background:linear-gradient(90deg,var(--teal),var(--teal-m));}
+.k-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:8px;}
+.k-val{font-size:26px;font-weight:800;letter-spacing:-1.5px;line-height:1;margin-bottom:2px;}
+.k-val.c-green{color:var(--cs);}
+.k-val.c-amber{color:var(--amber);}
+.k-val.c-red{color:var(--red);}
+.k-val.c-blue{color:var(--blue);}
+.k-val.c-teal{color:var(--teal);}
+.k-sub{font-size:9px;color:var(--faint);line-height:1.4;}
+.k-badge{display:inline-flex;align-items:center;font-size:8px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.3px;margin-top:6px;}
+.b-g{background:var(--cs-l);color:var(--cs);}
+.b-a{background:var(--amber-l);color:var(--amber);}
+.b-r{background:var(--red-l);color:var(--red);}
+.b-b{background:var(--blue-l);color:var(--blue);}
+.b-t{background:var(--teal-l);color:var(--teal);}
+
+/* ── BAR CHART ── */
+.bar-list{display:flex;flex-direction:column;gap:9px;}
+.bar-row{display:flex;align-items:center;gap:10px;}
+.bar-label{font-size:10px;font-weight:500;width:140px;flex-shrink:0;color:var(--text2);letter-spacing:-.1px;}
+.bar-track{flex:1;height:24px;background:var(--bg);border-radius:5px;overflow:hidden;position:relative;}
+.bar-fill{height:100%;border-radius:5px;display:flex;align-items:center;padding-left:9px;font-size:9px;font-weight:700;color:#fff;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.bar-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);min-width:32px;text-align:right;}
+.threshold-line{position:absolute;top:0;bottom:0;width:1.5px;background:rgba(245,158,11,.6);}
+.threshold-label{position:absolute;top:-16px;left:2px;font-size:8px;font-weight:700;color:var(--amber);white-space:nowrap;font-family:'DM Mono',monospace;}
+
+/* ── COMPLIANCE GRID ── */
+.comply-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.comply-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;}
+.comply-icon{font-size:18px;margin-bottom:6px;}
+.comply-title{font-size:11px;font-weight:700;margin-bottom:2px;letter-spacing:-.1px;}
+.comply-sub{font-size:9px;color:var(--faint);line-height:1.4;}
+.comply-status{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;margin-top:6px;padding:2px 8px;border-radius:20px;}
+.s-ok{background:var(--cs-l);color:var(--cs);}
+.s-warn{background:var(--amber-l);color:var(--amber);}
+.s-fail{background:var(--red-l);color:var(--red);}
+
+/* ── INSIGHT BOX ── */
+.insight{background:linear-gradient(135deg,var(--cs-l),#dbeafe);border:1px solid rgba(29,78,216,.12);border-radius:var(--r);padding:16px 18px;}
+.insight-tag{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cs);margin-bottom:7px;display:flex;align-items:center;gap:5px;}
+.insight-text{font-size:11px;color:var(--text2);line-height:1.65;}
+.insight-text strong{color:var(--text);font-weight:700;}
+.insight-loading{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);}
+.insight-spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--green-m);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TWO COL ── */
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+/* ── DIALS ── */
+.dials-row{display:flex;gap:16px;justify-content:center;padding:8px 0;}
+.dial-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.dial{position:relative;width:88px;height:88px;}
+.dial svg{transform:rotate(-90deg);}
+circle.dial-track{fill:none;stroke:var(--border);stroke-width:7;}
+circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .7s cubic-bezier(.4,0,.2,1);}
+.dial-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.dial-val{font-size:18px;font-weight:800;letter-spacing:-1px;line-height:1;}
+.dial-unit{font-size:8px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.dial-name{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:-.1px;}
+
+/* ── HEATMAP ── */
+.heatmap-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin:12px 0 8px;}
+.heatmap-cell{aspect-ratio:1;border-radius:4px;transition:opacity .3s;}
+.heatmap-months{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;}
+.heatmap-month{font-size:8px;color:var(--faint);text-align:center;font-family:'DM Mono',monospace;}
+.heatmap-legend{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.heatmap-bar{flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,#1e3a8a,#2563eb,#93c5fd);}
+.heatmap-l{font-size:8px;color:var(--faint);font-family:'DM Mono',monospace;}
+
+/* ── WIND ROSE ── */
+.wind-layout{display:grid;grid-template-columns:180px 1fr;gap:20px;align-items:start;}
+.wind-rose-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.wind-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.wind-kpi{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;}
+.wind-kpi-label{font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px;}
+.wind-kpi-val{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-1px;}
+.wind-kpi-unit{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;}
+
+/* ── PWC ZONES ── */
+.pwc-zones{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.pwc-zone{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;text-align:center;}
+.pwc-zone-name{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);margin-bottom:6px;}
+.pwc-zone-val{font-size:20px;font-weight:800;letter-spacing:-1px;color:var(--text);}
+.pwc-zone-unit{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;}
+.pwc-zone-label{font-size:9px;font-weight:700;margin-top:4px;}
+
+/* ── FACADE TABLE ── */
+.facade-table{width:100%;border-collapse:collapse;font-size:10px;}
+.facade-table th{text-align:left;font-size:8.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);padding:6px 10px;border-bottom:1px solid var(--border);}
+.facade-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text2);}
+.facade-table tr:last-child td{border-bottom:none;}
+.facade-table tr.active-row td{background:var(--green-l);color:var(--text);font-weight:600;}
+.facade-table tr.active-row td:first-child{border-left:2.5px solid var(--green-m);}
+
+/* ── QUICK MODE ── */
+.quick-panel{display:flex;flex-direction:column;gap:20px;padding:24px;}
+.quick-hero{text-align:center;padding:20px 0 8px;}
+.quick-hero-title{font-size:18px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px;}
+.quick-hero-sub{font-size:12px;color:var(--muted);}
+.quick-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:600px;margin:0 auto;}
+.quick-field{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;transition:border-color .15s,box-shadow .15s;}
+.quick-field:focus-within{border-color:var(--green-m);box-shadow:0 0 0 4px rgba(34,197,94,.08);}
+.quick-field label{display:block;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--faint);margin-bottom:6px;}
+.quick-field input,.quick-field select{width:100%;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;color:var(--text);outline:none;letter-spacing:-.3px;}
+.quick-results{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:800px;margin:0 auto;}
+.quick-result{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;text-align:center;box-shadow:var(--sh);}
+.qr-icon{font-size:24px;margin-bottom:8px;}
+.qr-val{font-size:28px;font-weight:800;letter-spacing:-1.5px;margin-bottom:3px;}
+.qr-label{font-size:10px;color:var(--muted);font-weight:500;}
+.qr-badge{display:inline-flex;margin-top:8px;font-size:9px;font-weight:700;padding:2px 10px;border-radius:20px;}
+
+/* ── REPORT TAB ── */
+.report-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;border:none;font-family:'Inter',sans-serif;letter-spacing:-.1px;}
+.btn-primary{background:var(--text);color:#fff;}
+.btn-primary:hover{background:var(--text2);}
+.btn-secondary{background:var(--surface);color:var(--text);border:1.5px solid var(--border);}
+.btn-secondary:hover{border-color:var(--border2);box-shadow:var(--sh);}
+.btn-green{background:var(--cs);color:#fff;}
+.btn-green:hover{background:var(--cs-dark);}
+
+/* ── DETAIL MODE NAV WRAP ── */
+.nav-wrap{background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-shrink:0;}
+.nav-left-spacer{width:272px;flex-shrink:0;border-right:1px solid var(--border);}
+
+/* ── QUICK ASSESS LEED ── */
+.leed-likelihood{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--rs);margin-top:4px;}
+.ll-bar-wrap{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.ll-bar{height:100%;border-radius:4px;transition:width .7s ease;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .left{display:none;}
+  .nav-wrap{padding-left:0;}
+  .nav{padding-left:0;}
+  .main{height:auto;}
+  .krow{grid-template-columns:1fr 1fr;}
+  .twocol{grid-template-columns:1fr;}
+  .quick-inputs{grid-template-columns:1fr;}
+  .quick-results{grid-template-columns:1fr;}
+}
+
+/* ── MISC ── */
+.divider{height:1px;background:var(--border);}
+.tag-mono{font-family:'DM Mono',monospace;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-pulse"></div>
+    Carbon Scout
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-meta">AEC Sustainability Intelligence · v4.2</div>
+  <div class="topbar-right">
+    <div class="topbar-meta" id="top-std">EN 15978 · A1–A5</div>
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+  </div>
+</div>
+
+<!-- MODE + UNITS BAR -->
+<div class="modebar">
+  <div class="mode-label">Mode</div>
+  <div class="mode-toggle">
+    <button class="mode-btn" id="mode-quick" onclick="setMode('quick')">⚡ Quick</button>
+    <button class="mode-btn active" id="mode-detail" onclick="setMode('detail')">🔬 Detailed</button>
+  </div>
+  <div class="modebar-right">
+    <div class="units-toggle">
+      <button class="units-btn" id="btn-m2" onclick="setUnits('metric')">m²</button>
+      <button class="units-btn active" id="btn-ft2" onclick="setUnits('imperial')">ft²</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOCATION BAR -->
+<div class="locbar">
+  <div class="loc-label">Location</div>
+  <select class="loc-select" id="city" onchange="onCityChange()">
+    <option value="nyc">New York, NY</option>
+    <option value="hou" selected>Houston, TX</option>
+    <option value="dal">Dallas, TX</option>
+    <option value="chi">Chicago, IL</option>
+    <option value="la">Los Angeles, CA</option>
+    <option value="bos">Boston, MA</option>
+    <option value="sea">Seattle, WA</option>
+    <option value="mia">Miami, FL</option>
+    <option value="den">Denver, CO</option>
+    <option value="phx">Phoenix, AZ</option>
+  </select>
+  <div class="loc-chips">
+    <span class="chip chip-g" id="chip-zone">Zone 2A</span>
+    <span class="chip chip-a" id="chip-climate">Hot-Humid</span>
+    <span class="chip chip-b" id="chip-sun">5.2 PSH</span>
+  </div>
+</div>
+
+<!-- QUICK MODE -->
+<div id="quick-mode" style="display:none;flex:1;overflow-y:auto;background:var(--bg);">
+  <div class="quick-panel">
+    <div class="quick-hero">
+      <div class="quick-hero-title">60-Second Carbon Assessment</div>
+      <div class="quick-hero-sub">Three inputs. Instant sustainability feedback.</div>
+    </div>
+    <div class="quick-inputs">
+      <div class="quick-field">
+        <label id="q-gfa-label">GFA (ft²)</label>
+        <input type="number" id="q-gfa" value="50000" oninput="quickCalc()"/>
+      </div>
+      <div class="quick-field">
+        <label>Building Type</label>
+        <select id="q-type" onchange="quickCalc()">
+          <option value="office">Office</option>
+          <option value="residential">Residential</option>
+          <option value="mixed">Mixed-Use</option>
+          <option value="retail">Retail</option>
+          <option value="education">Education</option>
+          <option value="healthcare">Healthcare</option>
+        </select>
+      </div>
+      <div class="quick-field">
+        <label>Structural System</label>
+        <select id="q-struct" onchange="quickCalc()">
+          <option value="concrete_cast">Concrete CIP</option>
+          <option value="concrete_precast">Concrete Precast</option>
+          <option value="steel_composite" selected>Steel Composite</option>
+          <option value="steel_light">Steel Light Frame</option>
+          <option value="timber_clt">Mass Timber CLT</option>
+          <option value="timber_glulam">Mass Timber Glulam</option>
+          <option value="masonry">Masonry</option>
+        </select>
+      </div>
+    </div>
+    <div class="quick-results" id="quick-results"></div>
+    <div class="card card-pad" id="quick-insight-card" style="max-width:800px;margin:0 auto;width:100%;">
+      <div class="insight-tag">✦ AI Insight</div>
+      <div class="insight-text" id="quick-insight-text">Adjust inputs above to see your assessment.</div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODE -->
+<div id="detail-mode" style="display:flex;flex:1;overflow:hidden;flex-direction:column;">
+
+  <!-- NAV (sits below left panel width) -->
+  <div class="nav-wrap">
+    <div class="nav-left-spacer"></div>
+    <div class="nav" style="flex:1;padding:0;">
+      <div class="nav-tab active" data-tab="carbon" onclick="switchTab('carbon')"><span class="tab-icon">🌿</span>Embodied Carbon</div>
+      <div class="nav-tab" data-tab="daylight" onclick="switchTab('daylight')"><span class="tab-icon">☀️</span>Daylight & Glare</div>
+      <div class="nav-tab" data-tab="wind" onclick="switchTab('wind')"><span class="tab-icon">🌬</span>Climate & Wind</div>
+      <div class="nav-tab" data-tab="report" onclick="switchTab('report')"><span class="tab-icon">📋</span>Report</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- LEFT PANEL -->
+    <div class="left">
+      <div class="left-inner" id="left-carbon">
+        <div class="panel-section">
+          <div class="panel-title">Building</div>
+          <div class="field-row">
+            <div class="field">
+              <label id="gfa-label">GFA (ft²)</label>
+              <input type="number" id="gfa" value="53820" oninput="recalc()"/>
+            </div>
+            <div class="field">
+              <label>Floors</label>
+              <input type="number" id="floors" value="12" min="1" max="100" oninput="recalc()"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Structural System</label>
+            <select id="structure" onchange="recalc()">
+              <option value="concrete_cast">Concrete (Cast-in-place)</option>
+              <option value="concrete_precast">Concrete (Precast)</option>
+              <option value="steel_composite" selected>Steel (Composite)</option>
+              <option value="steel_light">Steel (Light Frame)</option>
+              <option value="timber_clt">Mass Timber — CLT</option>
+              <option value="timber_glulam">Mass Timber — Glulam</option>
+              <option value="masonry">Masonry</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Building Use</label>
+            <select id="use" onchange="recalc()">
+              <option value="office" selected>Office</option>
+              <option value="residential">Residential</option>
+              <option value="mixed">Mixed-Use</option>
+              <option value="retail">Retail</option>
+              <option value="education">Education</option>
+              <option value="healthcare">Healthcare</option>
+            </select>
+          </div>
+        </div>
+        <div class="pdiv"></div>
+        <div class="panel-section">
+          <div class="panel-title">Scenarios</div>
+          <div class="scenario-list" id="scenario-list"></div>
+        </div>
+        <div class="pdiv"></div>
+        <div class="tree-card">
+          <div class="tree-num" id="tree-num">—</div>
+          <div class="tree-label">🌳 trees equivalent saved</div>
+          <div class="tree-sub" id="tree-sub">vs concrete baseline</div>
+        </div>
+      </div>
+
+      <div class="left-inner" id="left-daylight" style="display:none;">
+        <div class="panel-section">
+          <div class="panel-title">Facade</div>
+          <div class="field-row">
+            <div class="field">
+              <label>WWR (%)</label>
+              <input type="number" id="wwr" value="40" min="10" max="90" oninput="recalc()"/>
+            </div>
+            <div class="field">
+              <label>Orientation</label>
+              <select id="orient" onchange="recalc()">
+                <option value="N">North</option>
+                <option value="NE">North-East</option>
+                <option value="E">East</option>
+                <option value="SE">South-East</option>
+                <option value="S" selected>South</option>
+                <option value="SW">South-West</option>
+                <option value="W">West</option>
+                <option value="NW">North-West</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Glazing System</label>
+            <select id="glazing" onchange="recalc()">
+              <option value="std_dbl">Standard Double</option>
+              <option value="hp_dbl" selected>High-Perf Double</option>
+              <option value="triple">Triple Glazed</option>
+              <option value="electro">Electrochromic (Dynamic)</option>
+              <option value="bipv">BIPV (Solar Glass)</option>
+              <option value="fritted">Fritted / Ceramic</option>
+            </select>
+          </div>
+        </div>
+        <div class="pdiv"></div>
+        <div class="panel-section">
+          <div class="panel-title">Glazing Performance</div>
+          <div class="field-row">
+            <div class="field">
+              <label>U-Value</label>
+              <div id="gl-u" style="font-size:13px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
+            </div>
+            <div class="field">
+              <label>SHGC</label>
+              <div id="gl-shgc" style="font-size:13px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>VLT</label>
+            <div id="gl-vlt" style="font-size:13px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="left-inner" id="left-wind" style="display:none;">
+        <div class="panel-section">
+          <div class="panel-title">Climate Data</div>
+          <div class="field" style="pointer-events:none;">
+            <label>Station</label>
+            <div id="wind-station" style="font-size:12px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
+          </div>
+          <div class="field" style="pointer-events:none;">
+            <label>Coordinates</label>
+            <div id="wind-coords" style="font-size:11px;font-weight:600;color:var(--text2);padding-top:2px;font-family:'DM Mono',monospace;">—</div>
+          </div>
+          <div class="field" style="pointer-events:none;">
+            <label>Data Source</label>
+            <div style="font-size:10px;font-weight:600;color:var(--muted);padding-top:2px;font-family:'DM Mono',monospace;">ERA5 Annual Archive</div>
+          </div>
+        </div>
+        <div class="pdiv"></div>
+        <div class="panel-section">
+          <div class="panel-title">Building</div>
+          <div class="field">
+            <label>Floors</label>
+            <input type="number" id="wind-floors" value="12" min="1" oninput="recalc()"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="left-inner" id="left-report" style="display:none;">
+        <div class="panel-section">
+          <div class="panel-title">Project Info</div>
+          <div class="field">
+            <label>Project Name</label>
+            <input type="text" id="proj-name" value="Untitled Project" style="font-size:13px;font-weight:600;"/>
+          </div>
+          <div class="field">
+            <label>Client</label>
+            <input type="text" id="proj-client" value="" placeholder="Client name"/>
+          </div>
+          <div class="field">
+            <label>Design Stage</label>
+            <select id="proj-stage">
+              <option>RIBA Stage 1</option>
+              <option>RIBA Stage 2</option>
+              <option>LEED SD</option>
+              <option>LEED DD</option>
+              <option>Schematic Design</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Prepared By</label>
+            <input type="text" id="proj-author" value="Het Patel, LEED AP"/>
+          </div>
+        </div>
+        <div class="pdiv"></div>
+        <div class="report-actions" style="flex-direction:column;">
+          <button class="btn btn-green" onclick="exportReport()">↓ Export PDF Report</button>
+          <button class="btn btn-secondary" onclick="copyCSV()">⎘ Copy CSV Data</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right">
+
+      <!-- CARBON TAB -->
+      <div class="tab-panel active" id="tab-carbon">
+        <div class="krow" id="carbon-kpis"></div>
+        <div class="card card-pad">
+          <div class="card-title">Structural System Carbon Comparison</div>
+          <div class="card-sub" id="carbon-chart-sub">A1–A5 embodied carbon intensity · LEED MRc1 eligibility threshold: 300 kg CO₂e/m²</div>
+          <div style="position:relative;height:22px;margin-bottom:6px;" id="carbon-threshold-row"></div>
+          <div class="bar-list" id="carbon-bars"></div>
+          <div class="source-note">Sources: EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023 · IStructE How to Calculate Embodied Carbon 2022 · Values = structure + envelope A1–A5 per m² GFA · Intensity (kg/m²) is independent of GFA — Total carbon (tCO₂e) scales with GFA</div>
+        </div>
+        <div class="twocol">
+          <div class="card card-pad">
+            <div class="card-title">Sustainability Compliance</div>
+            <div class="card-sub">LEED v4.1 credit tracking</div>
+            <div class="comply-grid" id="carbon-comply"></div>
+          </div>
+          <div class="insight">
+            <div class="insight-tag">✦ AI Insight</div>
+            <div class="insight-text" id="carbon-insight">Calculating…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAYLIGHT & GLARE TAB -->
+      <div class="tab-panel" id="tab-daylight">
+        <div class="card card-pad">
+          <div class="card-title">Daylight Autonomy</div>
+          <div class="card-sub" id="dl-sub">Spatial Daylight Autonomy (sDA) · Annual Sunlight Exposure (ASE) · LEED EQc7</div>
+          <div class="dials-row" id="dl-dials"></div>
+          <div class="source-note">ASHRAE 169-2020 climate data · Parametric estimate — verify with Climate Studio or Radiance for compliance submission</div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">Annual Daylight Availability Heatmap</div>
+          <div class="card-sub" id="heatmap-sub">Estimated useful daylight illuminance (UDI 100–2000 lux) by month · Based on location solar data</div>
+          <div class="heatmap-grid" id="heatmap"></div>
+          <div class="heatmap-months" id="heatmap-months"></div>
+          <div class="heatmap-legend">
+            <div class="heatmap-l">Low</div>
+            <div class="heatmap-bar"></div>
+            <div class="heatmap-l">High UDI</div>
+          </div>
+        </div>
+        <div class="twocol">
+          <div class="card card-pad">
+            <div class="card-title">Glare Risk by Orientation</div>
+            <div class="card-sub">Daylight Glare Probability (DGP) — EN 17037 categories</div>
+            <div class="dials-row" id="glare-dials"></div>
+            <div class="source-note">Parametric DGP estimate · Glazing SHGC applied · Verify with Evalglare for detailed analysis</div>
+          </div>
+          <div class="insight">
+            <div class="insight-tag">✦ Daylight Insight</div>
+            <div class="insight-text" id="dl-insight">Calculating…</div>
+          </div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">LEED EQc7 Compliance</div>
+          <div class="card-sub">Required: sDA₃₀₀/₅₀% ≥ 55% · ASE₁₀₀₀/₂₅₀ ≤ 10%</div>
+          <div id="leed-eqc7"></div>
+        </div>
+      </div>
+
+      <!-- WIND TAB -->
+      <div class="tab-panel" id="tab-wind">
+        <div class="card card-pad">
+          <div class="card-title">Wind Rose & Annual Climate</div>
+          <div class="card-sub" id="wind-title-sub">ERA5 annual wind frequency · Open-Meteo archive · Same source as EPW/TMY3 files used by Autodesk Forma</div>
+          <div class="wind-layout">
+            <div class="wind-rose-wrap">
+              <svg id="wind-rose-svg" viewBox="0 0 160 160" width="160" height="160"></svg>
+              <div style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;" id="wind-city">—</div>
+            </div>
+            <div>
+              <div class="wind-kpis" id="wind-kpis"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">PWC Zone Assessment</div>
+          <div class="card-sub">Pedestrian Wind Comfort — Lawson LDDC criteria</div>
+          <div class="pwc-zones" id="pwc-zones"></div>
+          <div class="source-note">Wind data: ERA5 annual archive (Open-Meteo) · Heights extrapolated using power law α=0.25 · Full CFD recommended at RIBA Stage 3</div>
+        </div>
+        <div class="twocol">
+          <div class="card card-pad">
+            <div class="card-title">Mitigation Recommendations</div>
+            <div class="card-sub">Based on prevailing wind and building height</div>
+            <div id="wind-mitigations"></div>
+          </div>
+          <div class="insight">
+            <div class="insight-tag">✦ Wind Insight</div>
+            <div class="insight-text" id="wind-insight">Fetching climate data…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORT TAB -->
+      <div class="tab-panel" id="tab-report">
+        <div class="card card-pad">
+          <div class="card-title">Sustainability Performance Summary</div>
+          <div class="card-sub" id="report-sub">—</div>
+          <div id="report-content" style="margin-top:12px;"></div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">LEED Credit Summary</div>
+          <div class="card-sub">LEED v4.1 BD+C — credit status based on current inputs</div>
+          <div id="report-leed"></div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">Methodology & Disclaimers</div>
+          <div class="card-sub">Data sources and accuracy levels</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.7;" id="report-method"></div>
+        </div>
+      </div>
+
+    </div><!-- /right -->
+  </div><!-- /main -->
+</div><!-- /detail-mode -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA CONSTANTS — all verified sources preserved
+// ═══════════════════════════════════════════════════
+const STRUCT = {
+  concrete_cast:    {base:290, label:'Concrete CIP',       color:'#ef4444'},
+  concrete_precast: {base:260, label:'Concrete Precast',   color:'#f97316'},
+  steel_composite:  {base:245, label:'Steel Composite',    color:'#eab308'},
+  steel_light:      {base:210, label:'Steel Light',        color:'#84cc16'},
+  timber_clt:       {base:115, label:'Mass Timber CLT',    color:'#22c55e'},
+  timber_glulam:    {base:100, label:'Mass Timber Glulam', color:'#14b8a6'},
+  masonry:          {base:230, label:'Masonry',            color:'#a855f7'},
+};
+const USE_ADD = {office:85,residential:65,mixed:75,retail:60,education:70,healthcare:110};
+const GLAZING = {
+  std_dbl:  {label:'Standard Double',         u:2.8,  shgc:0.63, vlt:0.72, ec:22, leed:false, dpg_mod:1.00, dl_mod:1.00, color:'#94a3b8'},
+  hp_dbl:   {label:'High-Perf Double',        u:1.4,  shgc:0.27, vlt:0.64, ec:28, leed:true,  dpg_mod:0.82, dl_mod:0.95, color:'#3b82f6'},
+  triple:   {label:'Triple Glazed',           u:0.8,  shgc:0.22, vlt:0.55, ec:42, leed:true,  dpg_mod:0.74, dl_mod:0.88, color:'#8b5cf6'},
+  electro:  {label:'Electrochromic (Dynamic)',u:1.2,  shgc:0.06, vlt:0.60, ec:55, leed:true,  dpg_mod:0.45, dl_mod:0.92, color:'#06b6d4'},
+  bipv:     {label:'BIPV (Solar Glass)',       u:1.8,  shgc:0.18, vlt:0.28, ec:95, leed:true,  dpg_mod:0.60, dl_mod:0.60, color:'#f59e0b'},
+  fritted:  {label:'Fritted / Ceramic',        u:1.6,  shgc:0.30, vlt:0.45, ec:35, leed:true,  dpg_mod:0.68, dl_mod:0.78, color:'#10b981'},
+};
+const CITIES = {
+  nyc:{name:'New York, NY',   zone:'4A',climate:'Humid Continental',psh:4.7,lat:40.71,lon:-74.01,hdd:4871,cdd:1027},
+  hou:{name:'Houston, TX',    zone:'2A',climate:'Hot-Humid',        psh:5.2,lat:29.76,lon:-95.37,hdd:1435,cdd:2889},
+  dal:{name:'Dallas, TX',     zone:'3A',climate:'Hot-Mixed',        psh:5.4,lat:32.78,lon:-96.80,hdd:2363,cdd:2560},
+  chi:{name:'Chicago, IL',    zone:'5A',climate:'Humid Continental',psh:4.2,lat:41.88,lon:-87.63,hdd:6310,cdd:830},
+  la: {name:'Los Angeles, CA',zone:'3B',climate:'Dry Mediterranean',psh:5.6,lat:34.05,lon:-118.24,hdd:1274,cdd:1115},
+  bos:{name:'Boston, MA',     zone:'5A',climate:'Humid Continental',psh:4.5,lat:42.36,lon:-71.06,hdd:5592,cdd:790},
+  sea:{name:'Seattle, WA',    zone:'4C',climate:'Oceanic',          psh:3.8,lat:47.61,lon:-122.33,hdd:4408,cdd:157},
+  mia:{name:'Miami, FL',      zone:'1A',climate:'Hot-Humid',        psh:5.7,lat:25.77,lon:-80.19,hdd:200, cdd:4038},
+  den:{name:'Denver, CO',     zone:'5B',climate:'Semi-Arid',        psh:5.8,lat:39.74,lon:-104.98,hdd:5524,cdd:695},
+  phx:{name:'Phoenix, AZ',    zone:'2B',climate:'Hot-Dry',          psh:6.5,lat:33.45,lon:-112.07,hdd:1125,cdd:4244},
+};
+
+// EPW TMY3-derived fallback wind bins [N,NE,E,SE,S,SW,W,NW]
+const EPW_WIND = {
+  nyc:{avg:4.9,max:11.4,bins:[342,295,280,310,540,780,660,430]},
+  hou:{avg:3.8,max:9.2, bins:[380,290,390,870,710,350,280,380]},
+  dal:{avg:4.4,max:10.6,bins:[460,290,300,520,800,430,360,500]},
+  chi:{avg:5.6,max:13.2,bins:[310,260,300,295,370,880,650,630]},
+  la: {avg:3.0,max:7.8, bins:[210,240,360,295,300,590,1070,540]},
+  bos:{avg:5.2,max:12.0,bins:[320,380,310,295,380,860,660,510]},
+  sea:{avg:3.7,max:9.0, bins:[380,295,225,300,810,730,440,510]},
+  mia:{avg:4.2,max:10.0,bins:[220,440,660,800,510,360,300,370]},
+  den:{avg:4.0,max:10.0,bins:[375,220,300,305,880,430,360,790]},
+  phx:{avg:3.1,max:8.2, bins:[295,300,640,520,300,290,730,580]},
+};
+
+// ── STATE ──
+let units = 'imperial';
+let windData = null;
+let currentCity = 'hou';
+let currentMode = 'detail';
+let currentTab = 'carbon';
+let aiInsightCache = {};
+
+// ── HELPERS ──
+function getCity(){ return CITIES[document.getElementById('city')?.value||'hou']||CITIES['hou']; }
+function getGFA(){
+  const v=parseFloat(document.getElementById('gfa')?.value)||53820;
+  return units==='imperial'?v/10.764:v;
+}
+function displayArea(m2){ return units==='imperial'?Math.round(m2*10.764).toLocaleString()+' ft²':Math.round(m2).toLocaleString()+' m²'; }
+function floorMod(f){ if(f<=2)return 0.80; if(f<=4)return 0.88; return Math.min(1.45,0.88+(f-4)*0.012); }
+
+// ── CALC ──
+function calcCarbon(){
+  const gfa=getGFA();
+  const floors=parseInt(document.getElementById('floors')?.value)||12;
+  const str=document.getElementById('structure')?.value||'steel_composite';
+  const use=document.getElementById('use')?.value||'office';
+  const wwr=parseInt(document.getElementById('wwr')?.value)||40;
+  const orient=document.getElementById('orient')?.value||'S';
+  const glaz=document.getElementById('glazing')?.value||'hp_dbl';
+  const strF=STRUCT[str];
+  const glF=GLAZING[glaz];
+  const uAdd=USE_ADD[use]||85;
+  const mod=floorMod(floors);
+  const city=getCity();
+  const zoneBase={'1A':45,'2A':42,'2B':48,'3A':40,'3B':52,'4A':38,'4C':32,'5A':35,'5B':44}[city.zone]||38;
+  const intensity=Math.round(strF.base*mod+uAdd);
+  const facadeEC=Math.round(glF.ec*(wwr/40));
+  const total=Math.round(intensity*gfa/1000);
+  const concreteI=Math.round(STRUCT.concrete_cast.base*mod+uAdd);
+  const saving=(concreteI-intensity)*gfa/1000;
+  const trees=Math.max(0,Math.round(saving/0.022));
+  const orientMod={S:1.12,N:0.82,E:0.96,W:0.98,NE:0.89,SE:1.04,SW:1.08,NW:0.85}[orient]||1.0;
+  const aseOrientMod={S:0.22,W:0.24,E:0.14,N:0.05,NE:0.09,SE:0.18,SW:0.20,NW:0.10}[orient]||0.14;
+  const sDA=Math.min(92,Math.round(zoneBase+wwr*0.82*orientMod*glF.dl_mod-(floors*0.15)));
+  const ASE=Math.max(1,Math.round(wwr*aseOrientMod*(1/(glF.shgc+0.1))*0.8));
+  const t=intensity<=200?'green':intensity<=300?'amber':'red';
+  return {gfa,floors,str,use,wwr,orient,glaz,mod,intensity,facadeEC,total,saving,trees,concreteI,strF,glF,uAdd,sDA,ASE,t,city,zoneBase,orientMod};
+}
+
+// ── MODE ──
+function setMode(m){
+  currentMode=m;
+  document.getElementById('quick-mode').style.display=m==='quick'?'block':'none';
+  document.getElementById('detail-mode').style.display=m==='detail'?'flex':'none';
+  document.getElementById('mode-quick').classList.toggle('active',m==='quick');
+  document.getElementById('mode-detail').classList.toggle('active',m==='detail');
+  if(m==='quick') quickCalc(); else recalc();
+}
+
+// ── UNITS ──
+function setUnits(u){
+  units=u;
+  document.getElementById('btn-m2').classList.toggle('active',u==='metric');
+  document.getElementById('btn-ft2').classList.toggle('active',u==='imperial');
+  const gfaEl=document.getElementById('gfa');
+  const qGfaEl=document.getElementById('q-gfa');
+  const curVal=parseFloat(gfaEl.value)||53820;
+  if(u==='metric'){
+    const m2=Math.round(units==='imperial'?curVal/10.764:curVal);
+    gfaEl.value=Math.round(curVal/10.764);
+    qGfaEl.value=Math.round(curVal/10.764);
+    document.getElementById('gfa-label').textContent='GFA (m²)';
+    document.getElementById('q-gfa-label').textContent='GFA (m²)';
+  } else {
+    gfaEl.value=Math.round(curVal*10.764);
+    qGfaEl.value=Math.round(curVal*10.764);
+    document.getElementById('gfa-label').textContent='GFA (ft²)';
+    document.getElementById('q-gfa-label').textContent='GFA (ft²)';
+  }
+  recalc();
+}
+
+// ── CITY CHANGE ──
+function onCityChange(){
+  const v=document.getElementById('city').value||'hou';
+  currentCity=v;
+  const c=CITIES[v];
+  document.getElementById('chip-zone').textContent='Zone '+c.zone;
+  document.getElementById('chip-climate').textContent=c.climate;
+  document.getElementById('chip-sun').textContent=c.psh+' PSH';
+  windData=null;
+  document.getElementById('wind-city').textContent=c.name;
+  document.getElementById('wind-coords').textContent=c.lat.toFixed(2)+'°N, '+Math.abs(c.lon).toFixed(2)+'°W';
+  document.getElementById('wind-station').textContent=c.name;
+  document.getElementById('wind-insight').innerHTML='<div class="insight-loading"><div class="insight-spinner"></div>Fetching ERA5 wind data for '+c.name+'…</div>';
+  aiInsightCache={};
+  recalc();
+  fetchWindData(c.lat,c.lon,c.name);
+}
+
+// ── TAB SWITCH ──
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id==='tab-'+tab));
+  ['carbon','daylight','wind','report'].forEach(t=>{
+    const el=document.getElementById('left-'+t);
+    if(el) el.style.display=t===tab?'flex':'none';
+  });
+  if(tab==='report') renderReport();
+}
+
+// ── QUICK CALC ──
+function quickCalc(){
+  const gfa=parseFloat(document.getElementById('q-gfa').value)||(units==='imperial'?53820:5000);
+  const gfaM2=units==='imperial'?gfa/10.764:gfa;
+  const type=document.getElementById('q-type').value||'office';
+  const qStr=document.getElementById('q-struct')?.value||'steel_composite';
+  const strF=STRUCT[qStr];
+  const typeAdd=USE_ADD[type]||85;
+  const selectedI=Math.round(strF.base+typeAdd);
+  const concreteI=Math.round(STRUCT.concrete_cast.base+typeAdd);
+  const timberI=Math.round(STRUCT.timber_clt.base+typeAdd);
+  const totalT=Math.round(selectedI*gfaM2/1000);
+  const saving=(concreteI-selectedI)*gfaM2/1000;
+  const trees=Math.max(0,Math.round(saving/0.022));
+  const leedOk=selectedI<=300;
+  const t=selectedI<=200?'var(--green)':selectedI<=300?'var(--amber)':'var(--red)';
+  document.getElementById('quick-results').innerHTML=`
+    <div class="quick-result">
+      <div class="qr-icon">🌿</div>
+      <div class="qr-val" style="color:${t}">${selectedI}</div>
+      <div class="qr-label">kg CO₂e/m² · A1–A5</div>
+      <div class="qr-badge ${selectedI<=200?'b-g':selectedI<=300?'b-a':'b-r'}">${selectedI<=200?'EXCELLENT':selectedI<=300?'LEED ELIGIBLE':'REVIEW NEEDED'}</div>
+    </div>
+    <div class="quick-result">
+      <div class="qr-icon">📊</div>
+      <div class="qr-val" style="color:var(--cs-dark)">${totalT.toLocaleString()}</div>
+      <div class="qr-label">tCO₂e total embodied carbon</div>
+      <div class="qr-badge b-cs">${displayArea(gfaM2)}</div>
+    </div>
+    <div class="quick-result">
+      <div class="qr-icon">🌳</div>
+      <div class="qr-val" style="color:var(--green)">${trees>0?trees.toLocaleString():'—'}</div>
+      <div class="qr-label">${trees>0?'trees equivalent saved':'already at baseline'}</div>
+      <div class="qr-badge ${trees>0?'b-g':'b-a'}">${trees>0?Math.round(saving)+' tCO₂e saved':'switch to timber to save'}</div>
+    </div>`;
+  document.getElementById('quick-insight-text').innerHTML=
+    `<strong>${strF.label}</strong> at ${displayArea(gfaM2)}: <strong>${selectedI} kg CO₂e/m²</strong> — `+
+    (selectedI<=200?`outstanding performance, global top 10%. Total lifecycle carbon: ${totalT.toLocaleString()} tCO₂e. LEED MRc1 Platinum eligible. `
+    :selectedI<=250?`meets LETI 2030 targets and LEED MRc1. Total: ${totalT.toLocaleString()} tCO₂e. `
+    :selectedI<=300?`LEED MRc1 eligible. Total: ${totalT.toLocaleString()} tCO₂e. Consider Mass Timber CLT (~${timberI} kg/m²) to hit LETI 2030. `
+    :`exceeds LEED MRc1 threshold by ${selectedI-300} kg/m². Total: ${totalT.toLocaleString()} tCO₂e. `)
+    +(qStr!=='timber_clt'&&qStr!=='timber_glulam'?`Switching to Mass Timber CLT saves <strong>${Math.round((selectedI-timberI)*gfaM2/1000).toLocaleString()} tCO₂e</strong> — equivalent to ${Math.round(Math.max(0,(selectedI-timberI)*gfaM2/1000/0.022)).toLocaleString()} trees.`:'Already using low-carbon timber — excellent choice for early-design sustainability goals.');
+}
+
+// ── RENDER CARBON ──
+function renderCarbon(d){
+  const city=d.city;
+  // KPIs
+  const kpis=[
+    {label:'Carbon Intensity',val:d.intensity,unit:'kg CO₂e/m² · A1–A5',sub:`${d.floors} floors · ${displayArea(d.gfa)}`,t:d.t,badge:d.t==='green'?(d.intensity<=200?'EXCELLENT':'LEED ELIGIBLE'):d.t==='amber'?'REVIEW NEEDED':'HIGH CARBON'},
+    {label:'Total Embodied Carbon',val:d.total.toLocaleString(),unit:'tCO₂e',sub:`${displayArea(d.gfa)} · ${d.strF.label}`,t:d.t,badge:city.zone},
+    {label:d.saving>0?'Saved vs Concrete':'Carbon vs Baseline',val:Math.abs(d.concreteI-d.intensity),unit:'kg CO₂e/m²',sub:d.saving>0?`≈ ${d.trees.toLocaleString()} trees planted`:d.str==='concrete_cast'?'This IS the baseline':'Switch to timber to save',t:d.saving>0?'blue':d.saving===0?'teal':'amber',badge:d.saving>0?'REDUCTION':d.saving===0?'BASELINE':'ABOVE BASELINE'},
+  ];
+  document.getElementById('carbon-kpis').innerHTML=kpis.map(k=>`
+    <div class="kcard k-${k.t}">
+      <div class="k-label">${k.label}</div>
+      <div class="k-val c-${k.t}">${k.val}</div>
+      <div class="k-sub">${k.unit}<br>${k.sub}</div>
+      <div class="k-badge b-${k.t==='green'?'g':k.t==='amber'?'a':k.t==='red'?'r':k.t==='blue'?'b':'t'}">${k.badge}</div>
+    </div>`).join('');
+
+  // Trees
+  document.getElementById('tree-num').textContent=d.trees>0?d.trees.toLocaleString():'—';
+  document.getElementById('tree-sub').textContent=d.saving>0?`${Math.round(d.saving).toLocaleString()} tCO₂e saved vs concrete`:d.str==='concrete_cast'?'Select a lower-carbon system to see savings':'Above concrete baseline';
+
+  // Bar chart
+  const structs=Object.entries(STRUCT).sort((a,b)=>a[1].base-b[1].base);
+  const maxBar=Math.max(...structs.map(([,s])=>Math.round(s.base*d.mod+d.uAdd)))*1.15;
+  const tPct=((300/maxBar)*100).toFixed(1);
+  document.getElementById('carbon-threshold-row').innerHTML=`<div class="threshold-line" style="left:${tPct}%"><div class="threshold-label">LEED 300</div></div>`;
+  document.getElementById('carbon-bars').innerHTML=structs.map(([k,s])=>{
+    const v=Math.round(s.base*d.mod+d.uAdd);
+    const pct=(v/maxBar*100).toFixed(1);
+    const isActive=k===d.str;
+    // All bars same brand color — selected is full opacity + label, others are dimmed
+    return `<div class="bar-row" style="cursor:pointer" onclick="document.getElementById('structure').value='${k}';recalc()">
+      <div class="bar-label" style="font-weight:${isActive?700:400};color:${isActive?'var(--text)':'var(--muted)'}">${s.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%;background:var(--cs);opacity:${isActive?1:0.22}">${isActive?v+' kg/m²':''}</div>
+        <div class="threshold-line" style="left:${tPct}%"></div>
+      </div>
+      <div class="bar-num" style="opacity:${isActive?1:0.5};font-weight:${isActive?700:400}">${v}</div>
+    </div>`;
+  }).join('');
+
+  // Compliance
+  const items=[
+    {icon:'🏗',title:'MRc1 Whole Building LCA',sub:'EN 15978 A1–A5 documentation',ok:d.intensity<=300,warn:d.intensity>250&&d.intensity<=300},
+    {icon:'♻️',title:'MRc2 Low Carbon Materials',sub:'EPD-verified low embodied carbon',ok:d.intensity<=250,warn:d.intensity<=300},
+    {icon:'📊',title:'EA Carbon Reporting',sub:'LETI/RIBA 2030 pathway alignment',ok:d.intensity<=250,warn:d.intensity<=300},
+    {icon:'🌿',title:'LETI 2030 Embodied Target',sub:'≤250 kg CO₂e/m² structure+envelope',ok:d.intensity<=250,warn:d.intensity<=300},
+    {icon:'♻',title:'MRc3 Recycled Content',sub:'Min. 20% recycled by value',ok:['timber_clt','timber_glulam'].includes(d.str),warn:false},
+    {icon:'🪟',title:'EQc7 Facade Compliance',sub:'LEED glazing performance thresholds',ok:d.glF.leed,warn:false},
+  ];
+  document.getElementById('carbon-comply').innerHTML=items.map(i=>`
+    <div class="comply-card">
+      <div class="comply-icon">${i.icon}</div>
+      <div class="comply-title">${i.title}</div>
+      <div class="comply-sub">${i.sub}</div>
+      <div class="comply-status ${i.ok?'s-ok':i.warn?'s-warn':'s-fail'}">${i.ok?'✓ On Track':i.warn?'⚠ Review':'✗ At Risk'}</div>
+    </div>`).join('');
+
+  // Scenario list
+  const scenOrder=['timber_glulam','timber_clt','steel_light','masonry','steel_composite','concrete_precast','concrete_cast'];
+  const activeI=d.intensity;
+  document.getElementById('scenario-list').innerHTML=scenOrder.map(k=>{
+    const s=STRUCT[k];
+    const v=Math.round(s.base*d.mod+d.uAdd);
+    const delta=v-activeI;
+    const isAct=k===d.str;
+    return `<div class="sc-item ${isAct?'active':''}" onclick="document.getElementById('structure').value='${k}';recalc()">
+      <div class="sc-dot" style="background:${isAct?'var(--cs)':s.color};opacity:${isAct?1:0.6}"></div>
+      <div class="sc-name">${s.label}</div>
+      <div class="sc-val">${v}</div>
+      <div class="sc-delta" style="color:${isAct?'var(--faint)':delta>0?'var(--red)':'var(--green)'}">${isAct?'current':delta>0?'+'+delta:delta}</div>
+    </div>`;
+  }).join('');
+
+  // AI insight
+  const insightEl=document.getElementById('carbon-insight');
+  const cacheKey=`carbon-${d.str}-${d.intensity}-${d.city.zone}`;
+  if(aiInsightCache[cacheKey]){insightEl.innerHTML=aiInsightCache[cacheKey];return;}
+  const ins=generateCarbonInsight(d);
+  insightEl.innerHTML=ins;
+  aiInsightCache[cacheKey]=ins;
+}
+
+function generateCarbonInsight(d){
+  const pct=Math.round((1-d.intensity/STRUCT.concrete_cast.base)*100);
+  const saving=Math.round(d.concreteI-d.intensity);
+  if(d.intensity<=200) return `<strong>Outstanding performance.</strong> At ${d.intensity} kg CO₂e/m² this scheme is in the global top 10% for embodied carbon — on track for <strong>LEED Platinum MRc1</strong>. The ${d.strF.label} system avoids ${saving} kg CO₂e/m² vs concrete — equivalent to ${d.trees.toLocaleString()} trees over the project lifetime. Document A1–A5 via EC3 for LEED submission.`;
+  if(d.intensity<=250) return `<strong>Strong performance.</strong> ${d.intensity} kg CO₂e/m² meets LETI 2030 targets and qualifies for <strong>LEED MRc1</strong>. ${saving>0?`The ${d.strF.label} system saves ${saving} kg CO₂e/m² vs concrete baseline — ${d.trees.toLocaleString()} trees equivalent.`:'Consider switching to timber to unlock MRc4 low-carbon materials credit.'} Specify EPD-verified products for MRc2 documentation.`;
+  if(d.intensity<=300) return `<strong>LEED eligible.</strong> At ${d.intensity} kg CO₂e/m² this scheme qualifies for MRc1. ${saving>0?`Switching to ${d.intensity>200?'Mass Timber CLT':'the current system'} reduces intensity by ${saving} kg/m².`:'Consider timber framing to reduce intensity and unlock additional LEED credits.'} To hit LETI 2030 targets, reduce to ≤250 kg/m² — achievable with ${d.str==='concrete_cast'?'steel light frame or mass timber':'mass timber'}.`;
+  return `<strong>Review needed.</strong> ${d.intensity} kg CO₂e/m² exceeds LEED MRc1 by ${d.intensity-300} kg/m². Switching to Mass Timber CLT reduces intensity to ~${Math.round(STRUCT.timber_clt.base*d.mod+d.uAdd)} kg/m² — saving ${Math.round((d.intensity-Math.round(STRUCT.timber_clt.base*d.mod+d.uAdd))*d.gfa/1000)} tCO₂e and unlocking LEED credits. Facade envelope contributes ~${d.facadeEC} kg CO₂e/m² — specify high-recycled-content cladding.`;
+}
+
+// ── RENDER DAYLIGHT ──
+function renderDaylight(d){
+  const {sDA,ASE,orient,wwr,glF,city}=d;
+  document.getElementById('dl-sub').textContent=`sDA and ASE · LEED EQc7 · Climate zone ${city.zone} · ${city.name} · WWR ${wwr}%`;
+  document.getElementById('heatmap-sub').textContent=`Estimated useful daylight by month · ${city.name} · WWR ${wwr}% · ${orient}-facing`;
+
+  // Update glazing display
+  document.getElementById('gl-u').textContent=glF.u+' W/m²K';
+  document.getElementById('gl-shgc').textContent=glF.shgc;
+  document.getElementById('gl-vlt').textContent=(glF.vlt*100).toFixed(0)+'%';
+
+  // Dials
+  const dials=[
+    {label:'sDA₃₀₀/₅₀%',val:sDA,max:100,color:sDA>=55?'#16a34a':'#ef4444',pass:sDA>=55,target:'≥55%'},
+    {label:'ASE₁₀₀₀/₂₅₀',val:ASE,max:30,color:ASE<=10?'#16a34a':'#ef4444',pass:ASE<=10,target:'≤10%'},
+  ];
+  const R=38;const CIRC=2*Math.PI*R;
+  document.getElementById('dl-dials').innerHTML=dials.map(dl=>{
+    const frac=Math.min(1,dl.val/dl.max);
+    const filled=frac*CIRC;
+    return `<div class="dial-wrap">
+      <div class="dial">
+        <svg viewBox="0 0 96 96" width="88" height="88" style="transform:rotate(-90deg)">
+          <circle class="dial-track" cx="48" cy="48" r="${R}"/>
+          <circle class="dial-ring" cx="48" cy="48" r="${R}" stroke="${dl.color}" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC-filled}" fill="none" stroke-width="7" stroke-linecap="round"/>
+        </svg>
+        <div class="dial-center"><div class="dial-val" style="color:${dl.color};font-size:16px">${dl.val}</div><div class="dial-unit">%</div></div>
+      </div>
+      <div class="dial-name">${dl.label}</div>
+      <div class="k-badge ${dl.pass?'b-g':'b-r'}" style="font-size:8px">${dl.target}</div>
+    </div>`;
+  }).join('');
+
+  // Heatmap
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const SOLAR_BY_ZONE={'1A':[4.8,5.2,5.8,6.1,5.9,5.4,5.3,5.5,5.2,4.9,4.5,4.4],'2A':[3.8,4.3,5.1,5.7,5.9,5.8,5.6,5.5,5.0,4.5,3.8,3.5],'2B':[5.2,5.8,6.5,7.1,7.3,7.5,7.2,7.0,6.5,5.8,5.1,4.8],'3A':[3.5,4.0,4.8,5.4,5.8,5.9,5.7,5.5,4.9,4.2,3.5,3.2],'3B':[4.8,5.4,6.2,7.0,7.5,7.8,8.0,7.6,6.8,5.8,4.8,4.4],'4A':[2.8,3.4,4.2,5.0,5.6,5.8,5.6,5.2,4.4,3.5,2.7,2.4],'4C':[1.8,2.5,3.5,4.5,5.2,5.5,5.8,5.3,4.2,3.0,1.9,1.5],'5A':[2.4,3.0,3.8,4.6,5.2,5.5,5.4,5.0,4.1,3.2,2.3,2.0],'5B':[3.8,4.5,5.4,6.2,6.8,7.2,7.0,6.5,5.8,4.8,3.7,3.4]};
+  const solar=SOLAR_BY_ZONE[city.zone]||SOLAR_BY_ZONE['4A'];
+  const rows=3;
+  let cells='';
+  for(let row=0;row<rows;row++){
+    for(let m=0;m<12;m++){
+      const rowFactor=row===0?0.7:row===1?1:0.6;
+      const val=solar[m]*rowFactor*glF.dl_mod*(wwr/40)*0.5;
+      const norm=Math.min(1,val/4.5);
+      const g=Math.round(30+norm*180);
+      cells+=`<div class="heatmap-cell" style="background:rgb(${Math.round(10+norm*20)},${g},${Math.round(10+norm*30)})"></div>`;
+    }
+  }
+  document.getElementById('heatmap').innerHTML=cells;
+  document.getElementById('heatmap-months').innerHTML=months.map(m=>`<div class="heatmap-month">${m}</div>`).join('');
+
+  // Glare dials
+  const oMap=['N','NE','E','SE','S','SW','W','NW'];
+  const oBase={N:0.18,NE:0.21,E:0.25,SE:0.28,S:0.27,SW:0.30,W:0.32,NW:0.20};
+  const sMods=[0,0.04,0.06,0.02];
+  const wwrMod=(wwr-40)*(['S','SW','SE','W'].includes(orient)?0.003:0.001);
+  const mainO=['N','E','S','W'];
+  const mainIdx=[0,2,4,6];
+  document.getElementById('glare-dials').innerHTML=mainO.map((o,i)=>{
+    const seasonDGP=sMods.map(sm=>Math.min(0.55,Math.max(0.15,(oBase[o]+sm+wwrMod)*glF.dpg_mod)));
+    const avg=seasonDGP.reduce((a,b)=>a+b,0)/4;
+    const color=avg<0.35?'#16a34a':avg<0.4?'#f59e0b':avg<0.45?'#ef4444':'#991b1b';
+    const frac=avg/0.55;
+    const filled=frac*CIRC;
+    const isAct=o===orient||orient.includes(o);
+    return `<div class="dial-wrap" style="opacity:${isAct?1:0.45};transform:${isAct?'scale(1.08)':'scale(1)'};transition:all .2s">
+      <div class="dial">
+        <svg viewBox="0 0 96 96" width="88" height="88" style="transform:rotate(-90deg)">
+          <circle class="dial-track" cx="48" cy="48" r="${R}"/>
+          <circle class="dial-ring" cx="48" cy="48" r="${R}" stroke="${color}" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC-filled}" fill="none" stroke-width="7" stroke-linecap="round"/>
+        </svg>
+        <div class="dial-center"><div class="dial-val" style="color:${color};font-size:14px">${avg.toFixed(2)}</div><div class="dial-unit">DGP</div></div>
+      </div>
+      <div class="dial-name">${o} Facade${isAct?' ◀':''}</div>
+      <div class="k-badge ${avg<0.35?'b-g':avg<0.4?'b-a':'b-r'}" style="font-size:8px">${avg<0.35?'Low':avg<0.4?'Moderate':'High'}</div>
+    </div>`;
+  }).join('');
+
+  // LEED EQc7
+  const eqcRows=[
+    {label:'sDA ≥ 55%',ok:sDA>=55,val:sDA+'%'},
+    {label:'ASE ≤ 10%',ok:ASE<=10,val:ASE+'% (target ≤10%)'},
+    {label:'LEED EQc7 Overall',ok:sDA>=55&&ASE<=10,val:sDA>=55&&ASE<=10?'ELIGIBLE':'NOT MET',bold:true},
+    {label:'Glazing: '+glF.label,ok:glF.leed,val:glF.leed?'LEED OK':'Below threshold'},
+  ];
+  document.getElementById('leed-eqc7').innerHTML=`<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">${eqcRows.map(r=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+      <div style="font-size:11px;font-weight:${r.bold?700:500};color:var(--text2)">${r.label}</div>
+      <div class="k-badge ${r.ok?'b-g':'b-r'}">${r.ok?'✓ ':r.bold?'✗ ':''}${r.val}</div>
+    </div>`).join('')}</div>`;
+
+  // Daylight insight
+  const dlIns=document.getElementById('dl-insight');
+  const key=`dl-${orient}-${wwr}-${d.glaz}-${city.zone}`;
+  if(!aiInsightCache[key]){
+    const ins=sDA>=55&&ASE<=10
+      ?`<strong>LEED EQc7 achievable.</strong> With ${wwr}% WWR, ${orient}-facing glazing, and ${glF.label}, sDA reaches <strong>${sDA}%</strong> — meeting the 55% LEED threshold. ASE of <strong>${ASE}%</strong> is within limits. The ${glF.label} system (VLT ${(glF.vlt*100).toFixed(0)}%) provides good light transmission while controlling solar gain (SHGC ${glF.shgc}).`
+      :sDA<55
+      ?`<strong>Daylight improvement needed.</strong> sDA of ${sDA}% is below the 55% LEED EQc7 threshold. Consider increasing WWR to ${Math.min(70,wwr+10)}% or switching orientation from ${orient} to South to improve daylight autonomy. ${glF.label} VLT of ${(glF.vlt*100).toFixed(0)}% ${glF.vlt<0.5?'— a higher VLT glazing would help':'is adequate'}.`
+      :`<strong>Glare risk flag.</strong> sDA of ${sDA}% meets LEED threshold but ASE of ${ASE}% exceeds the 10% limit on ${orient}-facing facades. Consider ${glF.shgc>0.3?'switching to electrochromic or triple glazed to reduce SHGC':'adding external shading devices — horizontal brise soleil most effective on '+orient+' facade'}.`;
+    aiInsightCache[key]=ins;
+    dlIns.innerHTML=ins;
+  } else dlIns.innerHTML=aiInsightCache[key];
+}
+
+// ── RENDER WIND ──
+function renderWind(d){
+  const city=d.city;
+  if(!windData){
+    const cw=EPW_WIND[currentCity]||EPW_WIND['hou'];
+    windData={avgSpeed:cw.avg,maxSpeed:cw.max,bins:cw.bins,maxBin:Math.max(...cw.bins),lat:city.lat,lon:city.lon,source:'EPW TMY3 · EnergyPlus.net'};
+  }
+  document.getElementById('wind-city').textContent=city.name;
+  document.getElementById('wind-coords').textContent=city.lat.toFixed(2)+'°N, '+Math.abs(city.lon).toFixed(2)+'°W';
+  document.getElementById('wind-station').textContent=city.name;
+  renderWindRose(windData);
+  renderWindStats(windData,city.name,d.floors);
+  renderPWC(windData,d.floors);
+  renderWindMitigations(windData);
+}
+
+function renderWindRose(wd){
+  const dirs=['N','NE','E','SE','S','SW','W','NW'];
+  const cx=80,cy=80,maxR=58;
+  const colors=['#16a34a','#22c55e','#86efac','#14b8a6','#60a5fa','#3b82f6','#818cf8','#a78bfa'];
+  let svg='';
+  [0.33,0.66,1].forEach(r=>{
+    svg+=`<circle cx="${cx}" cy="${cy}" r="${maxR*r}" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="3,3"/>`;
+  });
+  dirs.forEach((_,i)=>{
+    const a=(i/8)*2*Math.PI-Math.PI/2;
+    svg+=`<line x1="${cx}" y1="${cy}" x2="${cx+maxR*Math.cos(a)}" y2="${cy+maxR*Math.sin(a)}" stroke="var(--border)" stroke-width="1"/>`;
+  });
+  const total=wd.bins.reduce((a,b)=>a+b,0)||1;
+  dirs.forEach((dir,i)=>{
+    const a=(i/8)*2*Math.PI-Math.PI/2;
+    const r=(wd.bins[i]/wd.maxBin)*maxR;
+    if(r<2)return;
+    const spread=Math.PI/10;
+    const a1=a-spread,a2=a+spread;
+    const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+    const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+    const x3=cx+2*Math.cos(a2),y3=cy+2*Math.sin(a2);
+    const x4=cx+2*Math.cos(a1),y4=cy+2*Math.sin(a1);
+    const pct=Math.round(wd.bins[i]/total*100);
+    svg+=`<path d="M${x4},${y4} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} L${x3},${y3} Z" fill="${colors[i]}" opacity="0.85"/>`;
+    if(r>20){
+      const lx=cx+(r+10)*Math.cos(a),ly=cy+(r+10)*Math.sin(a);
+      svg+=`<text x="${lx}" y="${ly}" font-size="7" fill="var(--muted)" text-anchor="middle" dominant-baseline="middle" font-family="DM Mono">${pct}%</text>`;
+    }
+  });
+  dirs.forEach((dir,i)=>{
+    const a=(i/8)*2*Math.PI-Math.PI/2;
+    const lx=cx+(maxR+14)*Math.cos(a),ly=cy+(maxR+14)*Math.sin(a);
+    svg+=`<text x="${lx}" y="${ly}" font-size="8" font-weight="700" fill="var(--text2)" text-anchor="middle" dominant-baseline="middle" font-family="Inter">${dir}</text>`;
+  });
+  svg+=`<circle cx="${cx}" cy="${cy}" r="4" fill="var(--text)"/>`;
+  document.getElementById('wind-rose-svg').innerHTML=svg;
+}
+
+function renderWindStats(wd,cityName,floors){
+  const hF=Math.pow((floors||12)*3.2/10,0.25);
+  const ped=(wd.avgSpeed*0.6).toFixed(1);
+  const roof=(wd.avgSpeed*hF).toFixed(1);
+  document.getElementById('wind-kpis').innerHTML=[
+    {l:'Avg Wind Speed',v:wd.avgSpeed.toFixed(1),u:'m/s at 10m'},
+    {l:'Peak Gust',v:wd.maxSpeed.toFixed(1),u:'m/s 99th pct'},
+    {l:'Pedestrian Level',v:ped,u:'m/s est. 1.5m'},
+    {l:'Roof Level',v:roof,u:`m/s · ${floors||12} floors`},
+  ].map(k=>`<div class="wind-kpi"><div class="wind-kpi-label">${k.l}</div><div class="wind-kpi-val">${k.v}<span class="wind-kpi-unit"> ${k.u}</span></div></div>`).join('');
+}
+
+function renderPWC(wd,floors){
+  const hF=Math.pow((floors||12)*3.2/10,0.25);
+  const b=wd.avgSpeed;
+  const zones=[
+    {z:'Building Entry',spd:(b*0.5*hF).toFixed(1),crit:'Sitting',max:4},
+    {z:'Plaza / Podium',spd:(b*0.85).toFixed(1),crit:'Strolling',max:6},
+    {z:'Corner (Accel.)',spd:(b*1.6*hF).toFixed(1),crit:'Business Walk',max:8},
+    {z:'Side Street',spd:(b*1.0).toFixed(1),crit:'Business Walk',max:8},
+    {z:'Rooftop',spd:(b*hF*1.3).toFixed(1),crit:'Sport',max:12},
+    {z:'Downwind',spd:(b*0.6).toFixed(1),crit:'Sitting',max:4},
+  ];
+  document.getElementById('pwc-zones').innerHTML=zones.map(z=>{
+    const s=parseFloat(z.spd);
+    const ok=s<=z.max;
+    const label=s<4?'Comfortable':s<6?'Strolling':s<8?'Walking':s<10?'Uncomfortable':'Dangerous';
+    const col=ok?'var(--green)':s<z.max*1.3?'var(--amber)':'var(--red)';
+    return `<div class="pwc-zone">
+      <div class="pwc-zone-name">${z.z}</div>
+      <div class="pwc-zone-val" style="color:${col}">${z.spd}</div>
+      <div class="pwc-zone-unit">m/s · ${z.crit}</div>
+      <div class="pwc-zone-label" style="color:${col}">${ok?'✓ ':''} ${label}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderWindMitigations(wd){
+  const mitigations=[
+    {icon:'🌳',name:'Windbreak Planting',sub:'Dense tree rows reduce pedestrian wind 30–50%',rec:wd.avgSpeed>4},
+    {icon:'🏛',name:'Permeable Podium',sub:'Raised podium deflects wind above pedestrian zone',rec:wd.avgSpeed>4.5},
+    {icon:'🔷',name:'Corner Chamfering',sub:'Rounded corners reduce corner acceleration ~20%',rec:wd.avgSpeed>3.5},
+    {icon:'🧱',name:'Wind Baffles at Entry',sub:'Low walls deflect prevailing winds at grade',rec:wd.avgSpeed>5},
+  ];
+  document.getElementById('wind-mitigations').innerHTML=`<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">`+
+    mitigations.map(m=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;">
+      <div style="font-size:18px">${m.icon}</div>
+      <div style="flex:1"><div style="font-size:11px;font-weight:700">${m.name}</div><div style="font-size:9px;color:var(--faint)">${m.sub}</div></div>
+      <div class="k-badge ${m.rec?'b-a':'b-g'}">${m.rec?'Recommended':'Optional'}</div>
+    </div>`).join('')+`</div>`;
+}
+
+// ── RENDER REPORT ──
+function renderReport(){
+  const d=calcCarbon();
+  const city=d.city;
+  const name=document.getElementById('proj-name')?.value||'Untitled Project';
+  const client=document.getElementById('proj-client')?.value||'—';
+  const stage=document.getElementById('proj-stage')?.value||'RIBA Stage 1';
+  const author=document.getElementById('proj-author')?.value||'—';
+  document.getElementById('report-sub').textContent=`${name} · ${client} · ${stage} · ${new Date().toLocaleDateString()} · Prepared by ${author}`;
+  document.getElementById('report-content').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+      ${[
+        {l:'Location',v:city.name},
+        {l:'Climate Zone',v:'Zone '+city.zone},
+        {l:'GFA',v:displayArea(d.gfa)},
+        {l:'Floors',v:d.floors},
+        {l:'Structure',v:d.strF.label},
+        {l:'Building Use',v:d.use},
+        {l:'Carbon Intensity',v:d.intensity+' kg CO₂e/m²'},
+        {l:'LEED MRc1',v:d.intensity<=300?'ELIGIBLE':'AT RISK'},
+      ].map(i=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
+        <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px">${i.l}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${i.v}</div>
+      </div>`).join('')}
+    </div>`;
+  const credits=[
+    {name:'MRc1 Whole Building LCA',ok:d.intensity<=300},
+    {name:'MRc2 Low Carbon Materials',ok:d.intensity<=250},
+    {name:'MRc3 Recycled Content',ok:['timber_clt','timber_glulam'].includes(d.str)},
+    {name:'MRc4 Low Embodied Carbon',ok:d.intensity<=200},
+    {name:'EQc7 Daylight',ok:d.sDA>=55&&d.ASE<=10},
+    {name:'EAc2 Optimize Energy',ok:false},
+  ];
+  document.getElementById('report-leed').innerHTML=`<div style="display:flex;flex-direction:column;gap:5px;margin-top:10px;">`+
+    credits.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;">
+      <div style="font-size:11px;font-weight:600">${c.name}</div>
+      <div class="k-badge ${c.ok?'b-g':'b-r'}">${c.ok?'✓ On Track':'✗ At Risk'}</div>
+    </div>`).join('')+`</div>`;
+  document.getElementById('report-method').innerHTML=`
+    <strong>Embodied Carbon</strong> — Benchmark intensities from EC3 Carbon Leadership Forum, RICS WLCA 2nd Ed. 2023, and IStructE How to Calculate Embodied Carbon 2022. Values represent structure + envelope A1–A5 per m² GFA. Accuracy: ±15–20% vs full project-specific EPD LCA. For LEED submission, conduct full LCA using One Click LCA, Tally, or equivalent.<br><br>
+    <strong>Daylight & Glare</strong> — Parametric estimates based on ASHRAE 169-2020 climate data and DGP approximation. Accuracy: ±20–25% vs Radiance/Daysim simulation. Not a substitute for Evalglare or Climate Studio compliance analysis.<br><br>
+    <strong>Wind</strong> — ERA5 annual archive data via Open-Meteo (same source as EPW/TMY3 files used by Autodesk Forma, Ladybug, Climate Studio). PWC assessment uses Lawson LDDC criteria. Full CFD required for planning submission at RIBA Stage 3.<br><br>
+    <em>Carbon Scout is an early-stage parametric screening tool. All outputs are indicative only and should be verified by qualified sustainability consultants before use in planning submissions or LEED documentation.</em>`;
+}
+
+// ── FETCH WIND ──
+async function fetchWindData(lat,lon,cityName){
+  document.getElementById('wind-insight').innerHTML='<div class="insight-loading"><div class="insight-spinner"></div>Fetching ERA5 annual wind data for '+cityName+'…</div>';
+  try{
+    const url=`https://archive.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=2023-01-01&end_date=2023-12-31&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=auto`;
+    const res=await fetch(url);
+    const data=await res.json();
+    const rawS=data.hourly.wind_speed_10m;
+    const rawD=data.hourly.wind_direction_10m;
+    const bins=[0,0,0,0,0,0,0,0];
+    let allS=[];
+    for(let i=0;i<rawS.length;i++){
+      const s=rawS[i],d=rawD[i];
+      if(s==null||d==null||s<0.5)continue;
+      bins[Math.round(d/45)%8]++;
+      allS.push(s);
+    }
+    const avg=allS.length?allS.reduce((a,b)=>a+b,0)/allS.length:4;
+    const sorted=[...allS].sort((a,b)=>a-b);
+    const max99=sorted[Math.floor(sorted.length*0.99)]||avg*2;
+    windData={avgSpeed:Math.round(avg*10)/10,maxSpeed:Math.round(max99*10)/10,bins,maxBin:Math.max(...bins),lat,lon,source:'ERA5 2023 annual · '+allS.length+' obs'};
+    const floors=parseInt(document.getElementById('floors')?.value)||12;
+    renderWindRose(windData);
+    renderWindStats(windData,cityName,floors);
+    renderPWC(windData,floors);
+    renderWindMitigations(windData);
+    document.getElementById('wind-city').textContent=cityName;
+    const dirs=['N','NE','E','SE','S','SW','W','NW'];
+    const dominant=dirs[bins.indexOf(Math.max(...bins))];
+    document.getElementById('wind-insight').innerHTML=`<strong>ERA5 live data loaded.</strong> ${cityName} annual wind: avg <strong>${windData.avgSpeed} m/s</strong>, prevailing <strong>${dominant}</strong>. Data from ${allS.length.toLocaleString()} hourly ERA5 observations (2023) — same source as EPW/TMY3 files used by Autodesk Forma and Ladybug Tools.`;
+  }catch(e){
+    const cw=EPW_WIND[currentCity]||EPW_WIND['hou'];
+    windData={avgSpeed:cw.avg,maxSpeed:cw.max,bins:cw.bins,maxBin:Math.max(...cw.bins),lat,lon,source:'EPW TMY3 fallback'};
+    const floors=parseInt(document.getElementById('floors')?.value)||12;
+    renderWindRose(windData);
+    renderWindStats(windData,cityName,floors);
+    renderPWC(windData,floors);
+    renderWindMitigations(windData);
+    document.getElementById('wind-city').textContent=cityName;
+    const dirs=['N','NE','E','SE','S','SW','W','NW'];
+    const dominant=dirs[windData.bins.indexOf(Math.max(...windData.bins))];
+    document.getElementById('wind-insight').innerHTML=`Using NOAA 1991–2020 Climate Normal wind data for ${cityName} (EPW TMY3 derived). Prevailing wind: <strong>${dominant}</strong> · Avg: <strong>${cw.avg} m/s</strong>. Live ERA5 fetch unavailable — using EnergyPlus.net verified fallback data.`;
+  }
+}
+
+// ── MAIN RECALC ──
+function recalc(){
+  const d=calcCarbon();
+  renderCarbon(d);
+  renderDaylight(d);
+  renderWind(d);
+}
+
+// ── EXPORT ──
+function exportReport(){
+  const d=calcCarbon();
+  const city=d.city;
+  const name=document.getElementById('proj-name')?.value||'Untitled';
+  const lines=[
+    'CARBON SCOUT v4.1 — SUSTAINABILITY INTELLIGENCE REPORT',
+    `Project: ${name}`,
+    `Client: ${document.getElementById('proj-client')?.value||'—'}`,
+    `Stage: ${document.getElementById('proj-stage')?.value||'—'}`,
+    `Prepared by: ${document.getElementById('proj-author')?.value||'—'}`,
+    `Generated: ${new Date().toLocaleString()}`,
+    `Location: ${city.name} · Climate Zone ${city.zone} · ${city.climate}`,
+    '',
+    'BUILDING PARAMETERS',
+    `GFA: ${displayArea(d.gfa)}  |  Floors: ${d.floors}  |  Use: ${d.use}`,
+    `Structure: ${d.strF.label}  |  Glazing: ${d.glF.label}`,
+    `WWR: ${d.wwr}%  |  Orientation: ${d.orient}`,
+    '',
+    'EMBODIED CARBON (A1–A5)',
+    `Intensity: ${d.intensity} kg CO₂e/m²`,
+    `Total: ${d.total.toLocaleString()} tCO₂e`,
+    `LEED MRc1 (≤300 kg/m²): ${d.intensity<=300?'ELIGIBLE':'AT RISK'}`,
+    `LETI 2030 (≤250 kg/m²): ${d.intensity<=250?'ON TRACK':'NOT MET'}`,
+    `Trees equivalent saved: ${d.trees.toLocaleString()}`,
+    '',
+    'DAYLIGHT',
+    `sDA: ${d.sDA}% (LEED target ≥55%)`,
+    `ASE: ${d.ASE}% (LEED target ≤10%)`,
+    `LEED EQc7: ${d.sDA>=55&&d.ASE<=10?'ELIGIBLE':'NOT MET'}`,
+    '',
+    'GLAZING PERFORMANCE',
+    `System: ${d.glF.label}`,
+    `U-Value: ${d.glF.u} W/m²K  |  SHGC: ${d.glF.shgc}  |  VLT: ${d.glF.vlt}`,
+    `LEED Compliant: ${d.glF.leed?'YES':'NO'}`,
+    '',
+    'DATA SOURCES',
+    'EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023',
+    'IStructE How to Calculate Embodied Carbon 2022',
+    'ASHRAE 90.1-2022 · ASHRAE 169-2020 · LEED v4.1',
+    'Wind: ERA5 archive via Open-Meteo (same as EPW/TMY3)',
+    '',
+    '⚠ Parametric estimates for early design. Verify with Climate Studio,',
+    'Radiance, One Click LCA, or CFD before planning submission.',
+  ];
+  const a=Object.assign(document.createElement('a'),{
+    href:URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/plain'})),
+    download:`carbon-scout-${name.replace(/\s+/g,'-')}-${new Date().toISOString().slice(0,10)}.txt`
+  });
+  a.click();
+}
+
+function copyCSV(){
+  const d=calcCarbon();
+  const city=d.city;
+  navigator.clipboard.writeText(
+    `Location,Zone,GFA,Floors,Structure,Use,Glazing,WWR,Intensity_kgCO2em2,Total_tCO2e,LEED_MRc1,sDA,ASE,EQc7\n`+
+    `${city.name},${city.zone},${Math.round(d.gfa)},${d.floors},${d.strF.label},${d.use},${d.glF.label},${d.wwr},${d.intensity},${d.total},${d.intensity<=300?'ELIGIBLE':'AT RISK'},${d.sDA},${d.ASE},${d.sDA>=55&&d.ASE<=10?'ELIGIBLE':'NOT MET'}`
+  ).then(()=>{alert('CSV copied to clipboard!');});
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('city').value='hou';
+  currentCity='hou';
+  const c=CITIES['hou'];
+  document.getElementById('chip-zone').textContent='Zone '+c.zone;
+  document.getElementById('chip-climate').textContent=c.climate;
+  document.getElementById('chip-sun').textContent=c.psh+' PSH';
+  document.getElementById('wind-station').textContent=c.name;
+  document.getElementById('wind-coords').textContent=c.lat.toFixed(2)+'°N, '+Math.abs(c.lon).toFixed(2)+'°W';
+  recalc();
+  fetchWindData(c.lat,c.lon,c.name);
+});
+</script>
+</body>
+</html>
