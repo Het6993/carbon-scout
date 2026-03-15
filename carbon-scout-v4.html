@@ -301,7 +301,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
     Carbon Scout
   </div>
   <div class="topbar-sep"></div>
-  <div class="topbar-meta">AEC Sustainability Intelligence · v4.5</div>
+  <div class="topbar-meta">AEC Sustainability Intelligence · v4.6</div>
   <div class="topbar-right">
     <div class="topbar-meta" id="top-std">EN 15978 · A1–A5</div>
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
@@ -560,12 +560,12 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
           <div class="field">
             <label>Design Stage</label>
             <select id="proj-stage">
-              <option>RIBA Stage 2 — Concept Design</option>
-              <option>RIBA Stage 3 — Spatial Coordination</option>
-              <option>RIBA Stage 1 — Preparation & Briefing</option>
               <option>Schematic Design (SD)</option>
               <option>Design Development (DD)</option>
               <option>Construction Documents (CD)</option>
+              <option>Pre-Design</option>
+              <option>Bid / Permit</option>
+              <option>Construction Administration (CA)</option>
             </select>
           </div>
           <div class="field">
@@ -589,7 +589,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
         <div class="krow" id="carbon-kpis"></div>
         <div class="card card-pad">
           <div class="card-title">Structural System Carbon Comparison</div>
-          <div class="card-sub" id="carbon-chart-sub">A1–A5 embodied carbon intensity · ~300 kg/m² = US industry average · 250 kg/m² = best practice benchmark · LEED MRc1 requires 10% reduction vs project baseline</div>
+          <div class="card-sub" id="carbon-chart-sub">A1–A5 embodied carbon intensity · LEED MRc1 requires 10% reduction vs project-specific baseline</div>
           <div style="position:relative;height:22px;margin-bottom:6px;" id="carbon-threshold-row"></div>
           <div class="bar-list" id="carbon-bars"></div>
           <div class="source-note">Sources: EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023 · IStructE How to Calculate Embodied Carbon 2022 · Values = structure + envelope A1–A5 per m² GFA · Intensity (kg/m²) is independent of GFA — Total carbon (tCO₂e) scales with GFA</div>
@@ -928,11 +928,8 @@ function renderCarbon(d){
   // Bar chart
   const structs=Object.entries(STRUCT).sort((a,b)=>a[1].base-b[1].base);
   const maxBar=Math.max(...structs.map(([,s])=>Math.round(s.base*d.mod+d.uAdd)))*1.15;
-  const tPct=((300/maxBar)*100).toFixed(1);
-  const bpPct=((250/maxBar)*100).toFixed(1);
-  document.getElementById('carbon-threshold-row').innerHTML=
-    `<div class="threshold-line" style="left:${tPct}%;background:rgba(245,158,11,.5)"><div class="threshold-label" style="color:var(--amber)">~US Avg 300</div></div>
-     <div class="threshold-line" style="left:${bpPct}%;background:rgba(29,78,216,.4)"><div class="threshold-label" style="color:var(--cs)">Best Practice 250</div></div>`;
+  const tPct=0; const bpPct=0; // reference lines removed
+  document.getElementById('carbon-threshold-row').innerHTML='';
   document.getElementById('carbon-bars').innerHTML=structs.map(([k,s])=>{
     const v=Math.round(s.base*d.mod+d.uAdd);
     const pct=(v/maxBar*100).toFixed(1);
@@ -942,8 +939,7 @@ function renderCarbon(d){
       <div class="bar-label" style="font-weight:${isActive?700:400};color:${isActive?'var(--text)':'var(--muted)'}">${s.label}</div>
       <div class="bar-track">
         <div class="bar-fill" style="width:${pct}%;background:var(--cs);opacity:${isActive?1:0.22}">${isActive?v+' kg/m²':''}</div>
-        <div class="threshold-line" style="left:${tPct}%;background:rgba(245,158,11,.4)"></div>
-        <div class="threshold-line" style="left:${bpPct}%;background:rgba(29,78,216,.3)"></div>
+
       </div>
       <div class="bar-num" style="opacity:${isActive?1:0.5};font-weight:${isActive?700:400}">${v}</div>
     </div>`;
@@ -1505,10 +1501,13 @@ Rules:
         messages: [{role:'user', content: prompt}]
       })
     });
+    if(!res.ok) throw new Error('API '+res.status);
     const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
     const raw = data.content?.[0]?.text || '{}';
-    const clean = raw.replace(/```json|```/g,'').trim();
-    const parsed = JSON.parse(clean);
+    const clean = raw.replace(/```json[\s\S]*?```|```/g,'').trim();
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : clean);
 
     // Apply parsed values to form fields
     let applied = [];
@@ -1570,7 +1569,51 @@ Rules:
     quickCalc();
 
   } catch(e) {
-    document.getElementById('nl-input').placeholder = 'Parse failed — try again or fill fields manually';
+    console.error('NL parse error:', e);
+    // Graceful fallback — try simple keyword matching
+    const text = input.toLowerCase();
+    let applied = [];
+    // GFA detection
+    const gfaMatch = input.match(/(\d[\d,]+)\s*(sqft|sq\s*ft|ft²|sf)/i);
+    if(gfaMatch){
+      const v = parseInt(gfaMatch[1].replace(/,/g,''));
+      document.getElementById('q-gfa').value = v;
+      document.getElementById('gfa').value = units==='imperial'?v:Math.round(v/10.764);
+      applied.push('GFA');
+    }
+    // Structure detection
+    if(/timber|clt|wood/i.test(text)){ document.getElementById('structure').value='timber_clt'; document.getElementById('q-struct').value='timber_clt'; applied.push('Structure'); }
+    else if(/glulam/i.test(text)){ document.getElementById('structure').value='timber_glulam'; document.getElementById('q-struct').value='timber_glulam'; applied.push('Structure'); }
+    else if(/steel\s*(light|frame)/i.test(text)){ document.getElementById('structure').value='steel_light'; document.getElementById('q-struct').value='steel_light'; applied.push('Structure'); }
+    else if(/steel/i.test(text)){ document.getElementById('structure').value='steel_composite'; document.getElementById('q-struct').value='steel_composite'; applied.push('Structure'); }
+    else if(/concrete|precast/i.test(text)){ document.getElementById('structure').value=text.includes('precast')?'concrete_precast':'concrete_cast'; document.getElementById('q-struct').value=text.includes('precast')?'concrete_precast':'concrete_cast'; applied.push('Structure'); }
+    // City detection
+    if(/houston/i.test(text)){ document.getElementById('city').value='hou'; onCityChange(); applied.push('City'); }
+    else if(/new\s*york|nyc/i.test(text)){ document.getElementById('city').value='nyc'; onCityChange(); applied.push('City'); }
+    else if(/chicago/i.test(text)){ document.getElementById('city').value='chi'; onCityChange(); applied.push('City'); }
+    else if(/dallas/i.test(text)){ document.getElementById('city').value='dal'; onCityChange(); applied.push('City'); }
+    else if(/los\s*angeles|la/i.test(text)){ document.getElementById('city').value='la'; onCityChange(); applied.push('City'); }
+    else if(/boston/i.test(text)){ document.getElementById('city').value='bos'; onCityChange(); applied.push('City'); }
+    else if(/seattle/i.test(text)){ document.getElementById('city').value='sea'; onCityChange(); applied.push('City'); }
+    else if(/miami/i.test(text)){ document.getElementById('city').value='mia'; onCityChange(); applied.push('City'); }
+    else if(/denver/i.test(text)){ document.getElementById('city').value='den'; onCityChange(); applied.push('City'); }
+    else if(/phoenix/i.test(text)){ document.getElementById('city').value='phx'; onCityChange(); applied.push('City'); }
+    // Use detection
+    if(/office/i.test(text)){ document.getElementById('use').value='office'; document.getElementById('q-type').value='office'; applied.push('Use'); }
+    else if(/resid|apartment|housing/i.test(text)){ document.getElementById('use').value='residential'; document.getElementById('q-type').value='residential'; applied.push('Use'); }
+    else if(/retail/i.test(text)){ document.getElementById('use').value='retail'; document.getElementById('q-type').value='retail'; applied.push('Use'); }
+    else if(/school|education|university/i.test(text)){ document.getElementById('use').value='education'; document.getElementById('q-type').value='education'; applied.push('Use'); }
+    else if(/hospital|health/i.test(text)){ document.getElementById('use').value='healthcare'; document.getElementById('q-type').value='healthcare'; applied.push('Use'); }
+    // Floors detection
+    const flrMatch = input.match(/(\d+)\s*(floor|storey|story|fl)/i);
+    if(flrMatch){ document.getElementById('floors').value=parseInt(flrMatch[1]); applied.push('Floors'); }
+    if(applied.length > 0){
+      document.getElementById('nl-input').value='';
+      document.getElementById('nl-input').placeholder='✓ Filled: '+applied.join(', ')+' — results updated';
+      recalc(); quickCalc();
+    } else {
+      document.getElementById('nl-input').placeholder='Try: "12 storey office Houston steel 50000 sqft"';
+    }
   }
 
   btn.textContent = orig;
