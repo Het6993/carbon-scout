@@ -298,7 +298,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
     Carbon Scout
   </div>
   <div class="topbar-sep"></div>
-  <div class="topbar-meta">AEC Sustainability Intelligence · v4.8</div>
+  <div class="topbar-meta">AEC Sustainability Intelligence · v4.9</div>
   <div class="topbar-right">
     <div class="topbar-meta" id="top-std">EN 15978 · A1–A5</div>
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
@@ -622,7 +622,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
           <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleEPD()">
             <div>
               <div style="font-size:12px;font-weight:700;color:var(--text);letter-spacing:-.2px;">📄 Upload Your EPD</div>
-              <div style="font-size:10px;color:var(--faint);margin-top:2px;">Drop a product EPD PDF — AI reads the GWP value and checks LEED MRc4 eligibility</div>
+              <div style="font-size:10px;color:var(--faint);margin-top:2px;">Drop a product EPD PDF — AI reads the GWP value and checks LEED MRc4 eligibility · Values are A1–A3 GWP per declared unit (m³, tonne, or m²)</div>
             </div>
             <div id="epd-toggle-icon" style="font-size:16px;color:var(--faint);transition:transform .2s;">▼</div>
           </div>
@@ -648,22 +648,33 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
             <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:12px;align-items:end;">
               <div class="field">
                 <label>Material Category</label>
-                <select id="epd-material">
+                <select id="epd-material" onchange="updateEPDHint()">
                   <option value="concrete">Concrete / Ready-Mix</option>
-                  <option value="steel">Structural Steel</option>
-                  <option value="timber">Mass Timber / CLT</option>
-                  <option value="glazing">Glazing / Curtain Wall</option>
+                  <option value="concrete_hpc">Concrete / High-Performance</option>
+                  <option value="steel_struct">Structural Steel (BOF/EAF)</option>
+                  <option value="steel_rebar">Rebar / Reinforcing Steel</option>
+                  <option value="timber">Mass Timber / CLT / Glulam</option>
+                  <option value="glazing">Glazing Unit (IGU)</option>
+                  <option value="curtain_wall">Curtain Wall / Aluminum Facade</option>
+                  <option value="brick">Brick / Masonry</option>
+                  <option value="gypsum">Gypsum Board / Drywall</option>
                   <option value="insulation">Insulation</option>
+                  <option value="carpet">Carpet / Flooring</option>
+                  <option value="ceiling">Ceiling Tile / ACT</option>
                   <option value="other">Other</option>
                 </select>
               </div>
               <div class="field">
-                <label>GWP Value (kg CO₂e/unit)</label>
-                <input type="number" id="epd-gwp" placeholder="e.g. 245" step="0.1"/>
+                <label>A1–A3 GWP (kg CO₂e/unit)</label>
+                <input type="number" id="epd-gwp" placeholder="e.g. 320" step="0.1" oninput="updateEPDHint()"/>
               </div>
-              <button class="btn btn-primary" onclick="analyzeManualEPD()" style="height:42px;white-space:nowrap">Analyze EPD</button>
+              <button class="btn btn-primary" onclick="analyzeManualEPD()" style="height:42px;white-space:nowrap;align-self:end">Analyze EPD</button>
             </div>
 
+            <!-- Hint text -->
+            <div id="epd-hint" style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:6px;padding:4px 2px;">
+              Select a category to see typical GWP range
+            </div>
             <!-- EPD Results -->
             <div id="epd-results" style="display:none;margin-top:16px;"></div>
           </div>
@@ -822,6 +833,16 @@ let currentCity = 'hou';
 let currentMode = 'detail';
 let currentTab = 'carbon';
 let aiInsightCache = {};
+let carbonRange = 'typical';
+
+// Carbon range multipliers — EC3 percentile-based
+// Best=20th pctl, Typical=50th, Conservative=80th
+const RANGE_MULTIPLIERS = { best: 0.75, typical: 1.0, conservative: 1.22 };
+const RANGE_LABELS = {
+  best: 'EC3 20th percentile · top-performing projects',
+  typical: 'EC3 median · typical US construction',
+  conservative: 'EC3 80th percentile · industry average'
+};
 
 // ── HELPERS ──
 function getCity(){ return CITIES[document.getElementById('city')?.value||'hou']||CITIES['hou']; }
@@ -1700,6 +1721,37 @@ Rules:
 }
 
 // ── EPD UPLOAD ──
+function updateEPDHint(){
+  const mat = document.getElementById('epd-material')?.value || 'concrete';
+  const gwp = document.getElementById('epd-gwp')?.value;
+  const hintEl = document.getElementById('epd-hint');
+  if(!hintEl) return;
+  const benchmarks = {
+    concrete:     'Typical US range: 220–450 kg CO₂e/m³ · Low carbon blends: 180–280',
+    concrete_hpc: 'Typical range: 350–600 kg CO₂e/m³ for high-strength mixes',
+    steel_struct: 'BOF virgin: 1400–2200 · EAF recycled: 600–900 kg CO₂e/tonne',
+    steel_rebar:  'Typical EAF rebar: 600–1000 kg CO₂e/tonne',
+    timber:       'CLT typical: 50–250 kg CO₂e/m³ (biogenic carbon varies by methodology)',
+    glazing:      'Double pane IGU: 20–35 kg CO₂e/m² · Triple pane: 35–50',
+    curtain_wall: 'Aluminum CW: 70–130 kg CO₂e/m² depending on recycled content',
+    brick:        'Typical brick wall: 50–110 kg CO₂e/m²',
+    gypsum:       'Standard 5/8" board: 2–5 kg CO₂e/m²',
+    insulation:   'Mineral wool: 1.5–3 · EPS: 3–5 · XPS: 8–12 kg CO₂e/m²',
+    carpet:       'Broadloom carpet: 8–15 kg CO₂e/m²',
+    ceiling:      'Acoustic ceiling tile: 3–7 kg CO₂e/m²',
+    other:        'Enter the A1–A3 GWP value from your EPD document',
+  };
+  let hint = benchmarks[mat] || benchmarks.other;
+  if(gwp && parseFloat(gwp) > 0){
+    const b = {concrete:350,concrete_hpc:480,steel_struct:1800,steel_rebar:800,timber:150,glazing:28,curtain_wall:95,brick:75,gypsum:3.2,insulation:4,carpet:11,ceiling:4.5,other:100};
+    const typ = b[mat]||100;
+    const pct = Math.round((parseFloat(gwp)/typ-1)*100);
+    if(pct > 50) hint += ` · ⚠ ${pct}% above typical — double check your value`;
+    else if(pct < -30) hint += ` · ✓ ${Math.abs(pct)}% below typical — good performance`;
+  }
+  hintEl.textContent = hint;
+}
+
 function toggleEPD(){
   const drawer = document.getElementById('epd-drawer');
   const icon = document.getElementById('epd-toggle-icon');
@@ -1722,7 +1774,7 @@ function handleEPDFile(file){
   const dropzone = document.getElementById('epd-dropzone');
   dropzone.innerHTML = `<div style="font-size:28px;margin-bottom:8px">⏳</div>
     <div style="font-size:12px;font-weight:700;color:var(--text2)">Reading "${file.name}"…</div>
-    <div style="font-size:10px;color:var(--faint);margin-top:4px">AI is extracting GWP value from the EPD</div>`;
+    <div style="font-size:10px;color:var(--faint);margin-top:4px">AI is extracting GWP value — results will appear below</div>`;
 
   const reader = new FileReader();
   reader.onload = async function(e){
@@ -1766,6 +1818,12 @@ Look for: GWP, Global Warming Potential, A1-A3, Climate Change, CO2e in the EPD 
       const raw = data.content?.[0]?.text || '{}';
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+      // Update dropzone to show completion
+      dropzone.innerHTML = `<div style="font-size:24px;margin-bottom:6px">✅</div>
+        <div style="font-size:12px;font-weight:700;color:var(--green)">EPD read successfully — see results below</div>
+        <div style="font-size:10px;color:var(--faint);margin-top:3px">${file.name}</div>
+        <div style="font-size:9px;color:var(--faint);margin-top:6px;cursor:pointer;text-decoration:underline" onclick="document.getElementById('epd-file-input').click()">Upload a different EPD</div>
+        <input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>`;
       showEPDResults(parsed, file.name);
     } catch(err) {
       showEPDError('Could not read EPD: '+err.message+'. Try entering the GWP value manually below.');
@@ -1782,8 +1840,23 @@ Look for: GWP, Global Warming Potential, A1-A3, Climate Change, CO2e in the EPD 
 function analyzeManualEPD(){
   const material = document.getElementById('epd-material').value;
   const gwp = parseFloat(document.getElementById('epd-gwp').value);
-  if(!gwp || isNaN(gwp)){ showEPDError('Please enter a GWP value.'); return; }
-  showEPDResults({ material_category: material, gwp_a1a3: gwp, gwp_unit: 'kg CO₂e/unit', product_name: 'Manual Entry', manufacturer: null }, null);
+  if(!gwp || isNaN(gwp)){ showEPDError('Please enter a GWP value. Check the typical range hint below.'); return; }
+  // Map dropdown value to benchmark key
+  const matMap = {
+    concrete:'concrete', concrete_hpc:'concrete_hpc',
+    steel_struct:'steel_struct', steel_rebar:'steel_rebar',
+    timber:'timber', glazing:'glazing', curtain_wall:'curtain_wall',
+    brick:'brick', gypsum:'gypsum', insulation:'insulation',
+    carpet:'carpet', ceiling:'ceiling', other:'other'
+  };
+  showEPDResults({
+    material_category: matMap[material]||'other',
+    gwp_a1a3: gwp,
+    gwp_unit: 'kg CO₂e/unit',
+    product_name: 'Manual Entry',
+    manufacturer: null,
+    standard: 'EN 15804 / ISO 14044'
+  }, null);
 }
 
 function showEPDResults(epd, filename){
@@ -1791,13 +1864,22 @@ function showEPDResults(epd, filename){
   resEl.style.display = 'block';
 
   // Benchmark values per material (EC3 US typical, kg CO2e per functional unit)
+  // Benchmarks from EC3 US database, AISC, APA, Pilkington/Guardian EPDs
+  // All A1-A3 GWP values per declared functional unit
   const benchmarks = {
-    concrete:  { typical: 350, good: 250, unit: 'kg CO₂e/m³', label: 'Ready-mix concrete' },
-    steel:     { typical: 1800, good: 1200, unit: 'kg CO₂e/tonne', label: 'Structural steel' },
-    timber:    { typical: 150, good: 80, unit: 'kg CO₂e/m³', label: 'Mass timber' },
-    glazing:   { typical: 45, good: 25, unit: 'kg CO₂e/m²', label: 'Glazing' },
-    insulation:{ typical: 3, good: 1.5, unit: 'kg CO₂e/m²', label: 'Insulation' },
-    other:     { typical: 100, good: 60, unit: 'kg CO₂e/unit', label: 'Material' },
+    concrete:       { typical: 350,  good: 220,  unit: 'kg CO₂e/m³',     label: 'Ready-mix concrete',     hint: '250–450 typical for US mixes' },
+    concrete_hpc:   { typical: 480,  good: 320,  unit: 'kg CO₂e/m³',     label: 'High-perf concrete',     hint: '350–600 for HSC mixes' },
+    steel_struct:   { typical: 1800, good: 1000, unit: 'kg CO₂e/tonne',  label: 'Structural steel (BOF)', hint: '1400–2200 virgin; 600–900 EAF recycled' },
+    steel_rebar:    { typical: 800,  good: 500,  unit: 'kg CO₂e/tonne',  label: 'Rebar / reinforcing',    hint: '600–1000 typical for EAF rebar' },
+    timber:         { typical: 150,  good: 60,   unit: 'kg CO₂e/m³',     label: 'Mass timber / CLT',      hint: '50–250 depending on biogenic carbon' },
+    glazing:        { typical: 28,   good: 18,   unit: 'kg CO₂e/m²',     label: 'Glazing unit',           hint: '20–35 double pane; 35–50 triple' },
+    curtain_wall:   { typical: 95,   good: 60,   unit: 'kg CO₂e/m²',     label: 'Curtain wall (aluminum)',hint: '70–130 depending on recycled content' },
+    brick:          { typical: 75,   good: 45,   unit: 'kg CO₂e/m²',     label: 'Brick / masonry unit',   hint: '50–110 per m² of wall' },
+    gypsum:         { typical: 3.2,  good: 2.0,  unit: 'kg CO₂e/m²',     label: 'Gypsum board',           hint: '2–5 kg/m² for 5/8" board' },
+    insulation:     { typical: 4.0,  good: 2.0,  unit: 'kg CO₂e/m²',     label: 'Insulation (rigid)',     hint: '1.5–3 mineral wool; 3–12 foam board' },
+    carpet:         { typical: 11,   good: 7,    unit: 'kg CO₂e/m²',     label: 'Carpet',                 hint: '8–15 typical broadloom' },
+    ceiling:        { typical: 4.5,  good: 2.5,  unit: 'kg CO₂e/m²',     label: 'Ceiling tile',           hint: '3–7 acoustic tile' },
+    other:          { typical: 100,  good: 60,   unit: 'kg CO₂e/unit',   label: 'Other material',         hint: 'Enter value from your EPD' },
   };
 
   const mat = epd.material_category || 'other';
@@ -1827,6 +1909,7 @@ function showEPDResults(epd, filename){
           <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px">A1–A3 GWP</div>
           <div style="font-size:18px;font-weight:800;color:${isGood?'var(--green)':isMid?'var(--amber)':'var(--red)'}">${gwp}</div>
           <div style="font-size:9px;color:var(--muted)">${epd.gwp_unit||bench.unit}</div>
+          <div style="font-size:8px;color:var(--faint);margin-top:3px">Typical: ${bench.good}–${bench.typical}</div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
           <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px">Industry Avg</div>
@@ -1864,7 +1947,7 @@ EPD being reviewed:
 - Material category: ${mat}
 - A1-A3 GWP: ${gwp} ${epd.gwp_unit||bench.unit}
 - Industry average for this category: ${bench.typical} ${bench.unit}
-- Performance vs benchmark: ${pctVsBench>=0?pctVsBench+'% BELOW':'Math.abs(pctVsBench)+'% ABOVE'} average
+- Performance vs benchmark: ${pctVsBench>=0?pctVsBench+'% below':Math.abs(pctVsBench)+'% above'} average
 - LEED MRc4 eligibility: ${leedMrc4?'ELIGIBLE (below 50th percentile)':'NOT ELIGIBLE (above average)'}
 
 Write 2-3 sentences analyzing this EPD. Be specific:
@@ -1892,15 +1975,6 @@ function showEPDError(msg){
 }
 
 // ── CARBON RANGE ──
-// Best Practice = EC3 20th percentile, Typical = 50th, Conservative = 80th
-let carbonRange = 'typical';
-const RANGE_MULTIPLIERS = { best: 0.75, typical: 1.0, conservative: 1.22 };
-const RANGE_LABELS = {
-  best: 'EC3 20th percentile · top-performing projects',
-  typical: 'EC3 median · typical US construction',
-  conservative: 'EC3 80th percentile · industry average'
-};
-
 function setCarbonRange(range){
   carbonRange = range;
   // Update button styles
@@ -1914,13 +1988,6 @@ function setCarbonRange(range){
   document.getElementById('range-label').textContent = RANGE_LABELS[range];
   aiInsightCache = {}; // clear cache so AI regenerates with new range
   recalc();
-}
-
-// Override calcCarbon to apply range multiplier
-const _origCalcCarbon = calcCarbon;
-// Patch STRUCT lookup to use range
-function getRangedIntensity(baseIntensity) {
-  return Math.round(baseIntensity * RANGE_MULTIPLIERS[carbonRange]);
 }
 
 // ── INIT ──
