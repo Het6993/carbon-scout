@@ -65,7 +65,7 @@ body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-h
 .modebar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:44px;display:flex;align-items:center;gap:16px;}
 .mode-label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--faint);}
 .mode-toggle{display:flex;background:var(--bg);border-radius:20px;padding:3px;gap:2px;}
-.mode-btn{font-size:11px;font-weight:600;padding:4px 14px;border-radius:16px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all .18s;letter-spacing:-.1px;}
+.mode-btn{font-size:11px;font-weight:600;padding:4px 14px;border-radius:16px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all .18s;letter-spacing:-.1px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .mode-btn.active{background:var(--cs);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.1);}
 .modebar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
 .units-toggle{display:flex;background:var(--bg);border-radius:20px;padding:3px;gap:2px;}
@@ -87,7 +87,7 @@ body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);min-h
 
 /* ── NAV TABS ── */
 .nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-shrink:0;overflow-x:auto;}
-.nav-tab{padding:12px 20px 10px;font-size:12px;font-weight:500;color:var(--faint);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s;display:flex;align-items:center;gap:6px;white-space:nowrap;user-select:none;letter-spacing:-.1px;}
+.nav-tab{padding:12px 20px 10px;font-size:12px;font-weight:500;color:var(--faint);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .18s;display:flex;align-items:center;gap:6px;white-space:nowrap;user-select:none;letter-spacing:-.1px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .nav-tab:hover{color:var(--text2);}
 .nav-tab.active{color:var(--text);border-bottom-color:var(--cs);font-weight:700;}
 .nav-tab .tab-icon{font-size:13px;}
@@ -258,7 +258,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
 
 /* ── REPORT TAB ── */
 .report-actions{display:flex;gap:10px;flex-wrap:wrap;}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;border:none;font-family:'Inter',sans-serif;letter-spacing:-.1px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;border:none;font-family:'Inter',sans-serif;letter-spacing:-.1px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .btn-primary{background:var(--text);color:#fff;}
 .btn-primary:hover{background:var(--text2);}
 .btn-secondary{background:var(--surface);color:var(--text);border:1.5px solid var(--border);}
@@ -276,12 +276,88 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
 .ll-bar{height:100%;border-radius:4px;transition:width .7s ease;}
 
 /* ── RESPONSIVE ── */
+/* ── TABLET (≤900px) ── */
 @media(max-width:900px){
-  .left{width:220px;}
+  .left{width:200px;}
   .krow{grid-template-columns:1fr 1fr;}
   .twocol{grid-template-columns:1fr;}
   .quick-inputs{grid-template-columns:1fr 1fr!important;}
   .quick-results{grid-template-columns:1fr;}
+  .wind-layout{grid-template-columns:1fr;}
+  .pwc-zones{grid-template-columns:repeat(2,1fr);}
+  .comply-grid{grid-template-columns:1fr;}
+  .facade-table{font-size:9px;}
+}
+
+/* ── MOBILE (≤640px) ── */
+@media(max-width:640px){
+  /* Stack left panel below nav on mobile */
+  .main{flex-direction:column;}
+  .left{
+    width:100%;
+    max-height:none;
+    border-right:none;
+    border-bottom:1px solid var(--border);
+    flex-direction:row;
+    flex-wrap:wrap;
+    overflow-y:visible;
+  }
+  .left-inner{
+    flex-direction:row;
+    flex-wrap:wrap;
+    gap:8px;
+    padding:10px 12px;
+  }
+  .panel-section{flex-direction:row;flex-wrap:wrap;gap:7px;width:100%;}
+  .field-row{grid-template-columns:1fr 1fr;}
+  .field{min-width:120px;}
+  .scenario-list{display:none;} /* hide scenarios on mobile - too cramped */
+  .tree-card{width:100%;}
+  .pdiv{display:none;}
+
+  /* Right panel full width */
+  .right{min-height:60vh;}
+
+  /* KPIs stack to 1 col */
+  .krow{grid-template-columns:1fr;}
+  .twocol{grid-template-columns:1fr;}
+  .wind-layout{grid-template-columns:1fr;}
+  .pwc-zones{grid-template-columns:1fr 1fr;}
+  .comply-grid{grid-template-columns:1fr;}
+  .quick-inputs{grid-template-columns:1fr!important;}
+  .quick-results{grid-template-columns:1fr;}
+  .dials-row{flex-wrap:wrap;gap:12px;}
+  .wind-kpis{grid-template-columns:1fr 1fr;}
+
+  /* Nav tabs scroll */
+  .nav{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .nav-tab{font-size:11px;padding:10px 12px 8px;white-space:nowrap;}
+
+  /* Topbar compact */
+  .topbar-meta{display:none;}
+  .topbar-sep{display:none;}
+  .top-std-label{display:none;}
+
+  /* Modebar compact */
+  .modebar{padding:0 12px;gap:8px;}
+  .mode-label{display:none;}
+  .locbar{padding:0 12px;gap:8px;}
+
+  /* Content padding reduced */
+  .tab-panel{padding:12px;}
+  .card-pad{padding:14px 14px;}
+
+  /* EPD drawer */
+  #epd-drawer .quick-inputs{grid-template-columns:1fr;}
+}
+
+/* ── SMALL MOBILE (≤380px) ── */
+@media(max-width:380px){
+  .krow{grid-template-columns:1fr;}
+  .pwc-zones{grid-template-columns:1fr;}
+  .wind-kpis{grid-template-columns:1fr;}
+  .nav-tab{font-size:10px;padding:9px 10px 7px;}
+  .left-inner{padding:8px;}
 }
 
 /* ── MISC ── */
@@ -298,7 +374,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
     Carbon Scout
   </div>
   <div class="topbar-sep"></div>
-  <div class="topbar-meta">AEC Sustainability Intelligence · v4.9</div>
+  <div class="topbar-meta">AEC Sustainability Intelligence · v4.10</div>
   <div class="topbar-right">
     <div class="topbar-meta" id="top-std">EN 15978 · A1–A5</div>
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
@@ -572,7 +648,7 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
     </div>
 
     <!-- RIGHT COLUMN: nav + content -->
-    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;min-width:0;">
 
     <!-- NAV TABS -->
     <div class="nav">
