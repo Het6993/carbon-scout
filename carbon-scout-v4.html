@@ -920,6 +920,29 @@ const RANGE_LABELS = {
   conservative: 'EC3 80th percentile · industry average'
 };
 
+// ── AI GATEWAY ──
+// Single entry point for all Anthropic API calls
+// Falls back to local logic when running on GitHub Pages (CORS blocked)
+async function callAI(prompt, maxTokens=300){
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: maxTokens,
+        messages: [{role:'user', content: prompt}]
+      })
+    });
+    if(!res.ok) throw new Error('API '+res.status);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    return {ok: true, text: data.content?.[0]?.text || ''};
+  } catch(e) {
+    return {ok: false, cors: true, error: e.message};
+  }
+}
+
 // ── HELPERS ──
 function getCity(){ return CITIES[document.getElementById('city')?.value||'hou']||CITIES['hou']; }
 function getGFA(){
@@ -1218,25 +1241,10 @@ Write a 2-3 sentence AI insight for the WIND & PWC tab. Be specific.
 
   const prompt = prompts[tab] || prompts.carbon;
 
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 200,
-        messages: [{role:'user', content: prompt}]
-      })
-    });
-    const data = await res.json();
-    const text = data.content?.[0]?.text || getFallbackInsight(tab, d);
-    aiInsightCache[cacheKey] = text;
-    return text;
-  } catch(e) {
-    const fallback = getFallbackInsight(tab, d);
-    aiInsightCache[cacheKey] = fallback;
-    return fallback;
-  }
+  const result = await callAI(prompt, 200);
+  const text = result.ok ? result.text : getFallbackInsight(tab, d);
+  aiInsightCache[cacheKey] = text;
+  return text;
 }
 
 function getFallbackInsight(tab, d){
@@ -1667,23 +1675,17 @@ Rules:
 - City name detection: New York/NYC=nyc, Houston=hou, Dallas=dal, Chicago=chi, LA/Los Angeles=la, Boston=bos, Seattle=sea, Miami=mia, Denver=den, Phoenix=phx
 - If sqft given, put in gfa_sqft. If m² given, put in gfa_m2.`;
 
+  const aiResult = await callAI(prompt, 300);
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 300,
-        messages: [{role:'user', content: prompt}]
-      })
-    });
-    if(!res.ok) throw new Error('API '+res.status);
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-    const raw = data.content?.[0]?.text || '{}';
-    const clean = raw.replace(/```json[\s\S]*?```|```/g,'').trim();
-    const jsonMatch = clean.match(/\{[\s\S]*\}/);
-    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : clean);
+    let parsed = {};
+    if(aiResult.ok){
+      const raw = aiResult.text || '{}';
+      const clean = raw.replace(/```json[\s\S]*?```|```/g,'').trim();
+      const jsonMatch = clean.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : clean);
+    }
+    // If AI unavailable or failed, fall through to keyword fallback
+    if(!aiResult.ok) throw new Error('AI unavailable');
 
     // Apply parsed values to form fields
     let applied = [];
@@ -1963,20 +1965,20 @@ function handleEPDFile(file){
         'If value seems outside these ranges, double-check the unit.\n\n' +
         'EPD TEXT (first 6000 chars):\n' + pdfText.slice(0, 6000);
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 400,
-          messages: [{role:'user', content: prompt}]
-        })
-      });
-
-      if(!res.ok) throw new Error('API error ' + res.status);
-      const data = await res.json();
-      if(data.error) throw new Error(data.error.message);
-      const raw = data.content?.[0]?.text || '{}';
+      const epd_ai = await callAI(prompt, 400);
+      if(!epd_ai.ok){
+        // CORS blocked — show manual entry
+        setDropzone('\u26A0\uFE0F', 'AI unavailable on this domain',
+          'Running on GitHub Pages blocks direct AI calls. Please enter the GWP value manually below.',
+          '<input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>');
+        const fname = file.name.toLowerCase();
+        if(fname.includes('glulam')||fname.includes('timber')||fname.includes('clt')) document.getElementById('epd-material').value='timber';
+        else if(fname.includes('concrete')) document.getElementById('epd-material').value='concrete';
+        else if(fname.includes('steel')||fname.includes('rebar')) document.getElementById('epd-material').value='steel_struct';
+        updateEPDHint();
+        return;
+      }
+      const raw = epd_ai.text || '{}';
       const match = raw.match(/\{[\s\S]*\}/);
       const parsed = JSON.parse(match ? match[0] : '{}');
 
@@ -2135,17 +2137,15 @@ Write 2-3 sentences analyzing this EPD. Be specific:
 - One specific recommendation (e.g. specify this for X, or find a lower-carbon alternative)
 Use <strong> tags for key numbers. Max 3 sentences. Professional tone.`;
 
-  fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:epdPrompt}]})
-  }).then(r=>r.json()).then(data=>{
-    const text = data.content?.[0]?.text || `${isGood?'Strong EPD performance.':'Average EPD performance.'} This ${mat} product is ${Math.abs(pctVsBench)}% ${pctVsBench>=0?'below':'above'} industry average. ${leedMrc4?'LEED MRc4 eligible — specify this product and document the EPD for submission.':'Consider sourcing an alternative with lower GWP to strengthen LEED MRc4 documentation.'}`;
-    document.getElementById('epd-ai-insight').innerHTML = `<div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cs);margin-bottom:6px;">✦ EPD Analysis</div><div class="insight-text">${text}</div>`;
-  }).catch(()=>{
-    document.getElementById('epd-ai-insight').innerHTML = `<div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cs);margin-bottom:6px;">✦ EPD Analysis</div><div class="insight-text">${isGood?'<strong>Low carbon product.</strong>':'<strong>Average carbon product.</strong>'} At ${gwp} ${epd.gwp_unit||bench.unit} this is ${Math.abs(pctVsBench)}% ${pctVsBench>=0?'below':'above'} industry average. ${leedMrc4?'LEED MRc4 eligible — document this EPD for LEED submission.':'Source a lower-GWP alternative to strengthen LEED MRc4 credit.'}</div>`;
-  });
-}
+  callAI(epdPrompt, 200).then(result => {
+    const fallback = (isGood?'<strong>Low carbon product.</strong>':'<strong>Average carbon product.</strong>') +
+      ' At ' + gwp + ' ' + (epd.gwp_unit||bench.unit) + ' this is ' + Math.abs(pctVsBench) + '% ' +
+      (pctVsBench>=0?'below':'above') + ' industry average. ' +
+      (leedMrc4?'LEED MRc4 eligible.':'Source a lower-GWP alternative.');
+    const text = result.ok ? result.text : fallback;
+    const el = document.getElementById('epd-ai-insight');
+    if(el) el.innerHTML = '<div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cs);margin-bottom:6px;">❖ EPD Analysis</div><div class="insight-text">'+text+'</div>';
+  });}
 
 function showEPDError(msg){
   const resEl = document.getElementById('epd-results');
