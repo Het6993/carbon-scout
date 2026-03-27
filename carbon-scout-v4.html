@@ -1845,73 +1845,176 @@ function handleEPDDrop(e){
   else showEPDError('Please drop a PDF file.');
 }
 
+// ── EPD PDF READER ──
+// Uses PDF.js to extract text, with aggressive fallback handling
+let pdfJsLoaded = false;
+
+function loadPDFjs(){
+  return new Promise((resolve) => {
+    if(pdfJsLoaded){ resolve(true); return; }
+    // Try loading PDF.js
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
+    script.onload = () => {
+      try {
+        // Use fake worker to avoid CSP issues in iframes
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+        pdfJsLoaded = true;
+        resolve(true);
+      } catch(e){ resolve(false); }
+    };
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+  });
+}
+
+async function extractPDFText(arrayBuffer){
+  const loaded = await loadPDFjs();
+  if(!loaded) return '';
+  try {
+    // Disable worker to avoid "fake worker" issues
+    const loadingTask = pdfjsLib.getDocument({
+      data: arrayBuffer,
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true
+    });
+    const pdf = await loadingTask.promise;
+    let text = '';
+    const pages = Math.min(pdf.numPages, 8); // check more pages
+    for(let i = 1; i <= pages; i++){
+      try {
+        const page = await pdf.getPage(i);
+        const c = await page.getTextContent({
+          disableCombineTextItems: false,
+          includeMarkedContent: false
+        });
+        // Join with spaces, preserve numbers
+        const pageText = c.items.map(item => item.str || '').join(' ');
+        text += pageText + '\n';
+      } catch(pageErr){ continue; } // skip problematic pages
+    }
+    return text.trim();
+  } catch(e){
+    console.warn('PDF.js extraction error:', e.message);
+    return '';
+  }
+}
+
 function handleEPDFile(file){
   if(!file) return;
   const dropzone = document.getElementById('epd-dropzone');
-  dropzone.innerHTML = `<div style="font-size:28px;margin-bottom:8px">⏳</div>
-    <div style="font-size:12px;font-weight:700;color:var(--text2)">Reading "${file.name}"…</div>
-    <div style="font-size:10px;color:var(--faint);margin-top:4px">AI is extracting GWP value — results will appear below</div>`;
+
+  const setDropzone = (icon, title, sub, extra='') => {
+    dropzone.innerHTML = '<div style="font-size:26px;margin-bottom:7px">'+icon+'</div>' +
+      '<div style="font-size:12px;font-weight:700;color:var(--text2)">'+title+'</div>' +
+      (sub?'<div style="font-size:10px;color:var(--faint);margin-top:4px">'+sub+'</div>':'') +
+      extra;
+  };
+
+  const resetDropzone = () => setDropzone('\uD83D\uDCC4',
+    'Drop EPD PDF here or click to upload',
+    'AI extracts GWP value · Compares to benchmark · LEED MRc4 check',
+    '<input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>');
+
+  setDropzone('\u23F3', 'Reading '+JSON.stringify(file.name)+'\u2026', 'Extracting text from EPD\u2026');
 
   const reader = new FileReader();
   reader.onload = async function(e){
-    const base64 = e.target.result.split(',')[1];
     try {
+      let pdfText = await extractPDFText(e.target.result);
+
+      // Check if we got useful text
+      const hasNumbers = /\d+\.?\d*/.test(pdfText);
+      const hasGWPKeyword = /gwp|global.?warm|co2|carbon|a1.?a3|climate/i.test(pdfText);
+      const textLength = pdfText.replace(/\s/g,'').length;
+
+      console.log('PDF text length:', textLength, 'hasNumbers:', hasNumbers, 'hasGWP:', hasGWPKeyword);
+
+      if(textLength < 100 || !hasNumbers){
+        // PDF is likely scanned/image-based — show manual entry prompt
+        setDropzone('\u26A0\uFE0F',
+          'PDF appears to be image-based',
+          'Could not extract text from this EPD. This is common with scanned PDFs.',
+          '<div style="font-size:10px;color:var(--cs);margin-top:8px;font-weight:600">Please enter the GWP value manually using the fields below \u2193</div>' +
+          '<input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>');
+        // Pre-fill material if filename gives clues
+        const fname = file.name.toLowerCase();
+        if(fname.includes('glulam')||fname.includes('timber')||fname.includes('clt')) document.getElementById('epd-material').value='timber';
+        else if(fname.includes('concrete')) document.getElementById('epd-material').value='concrete';
+        else if(fname.includes('steel')) document.getElementById('epd-material').value='steel_struct';
+        updateEPDHint();
+        document.getElementById('epd-results').style.display='none';
+        return;
+      }
+
+      // We have text — send to AI
+      setDropzone('\u23F3', 'AI is analyzing the EPD\u2026', 'Identifying GWP values in the document');
+
+      const prompt = 'Extract GWP data from this EPD text. Return ONLY valid JSON:\n' +
+        '{\n  "product_name": "string or null",\n  "manufacturer": "string or null",\n' +
+        '  "material_category": "concrete|concrete_hpc|steel_struct|steel_rebar|timber|glazing|curtain_wall|brick|gypsum|insulation|carpet|ceiling|other",\n' +
+        '  "gwp_a1a3": number_or_null,\n  "gwp_unit": "string",\n' +
+        '  "declared_unit": "string",\n  "valid_until": "string or null",\n  "standard": "string"\n}\n\n' +
+        'IMPORTANT: gwp_a1a3 = A1-A3 total only. Look for a row/cell labeled A1-A3 or A1+A2+A3. ' +
+        'Do NOT use A1-A4, A1-C, or total lifecycle values. ' +
+        'Typical ranges: concrete 220-500 kg/m3, structural steel 600-2000 kg/tonne, ' +
+        'rebar 500-900 kg/tonne, timber/CLT 50-250 kg/m3, glazing 18-50 kg/m2. ' +
+        'If value seems outside these ranges, double-check the unit.\n\n' +
+        'EPD TEXT (first 6000 chars):\n' + pdfText.slice(0, 6000);
+
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 400,
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'document',
-                source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-              },
-              {
-                type: 'text',
-                text: `You are reading an Environmental Product Declaration (EPD). Extract these values and return ONLY valid JSON, nothing else:
-{
-  "product_name": "string or null",
-  "manufacturer": "string or null", 
-  "material_category": "concrete|steel|timber|glazing|insulation|other",
-  "gwp_a1a3": number (kg CO2e — the A1-A3 Global Warming Potential value),
-  "gwp_unit": "string (e.g. kg CO2e/m3, kg CO2e/tonne, kg CO2e/m2)",
-  "declared_unit": "string",
-  "valid_until": "string or null",
-  "standard": "string (e.g. ISO 14044, EN 15804)"
-}
-Look for: GWP, Global Warming Potential, A1-A3, Climate Change, CO2e in the EPD tables.`
-              }
-            ]
-          }]
+          messages: [{role:'user', content: prompt}]
         })
       });
-      if(!res.ok) throw new Error('API '+res.status);
+
+      if(!res.ok) throw new Error('API error ' + res.status);
       const data = await res.json();
       if(data.error) throw new Error(data.error.message);
       const raw = data.content?.[0]?.text || '{}';
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
-      // Update dropzone to show completion
-      dropzone.innerHTML = `<div style="font-size:24px;margin-bottom:6px">✅</div>
-        <div style="font-size:12px;font-weight:700;color:var(--green)">EPD read successfully — see results below</div>
-        <div style="font-size:10px;color:var(--faint);margin-top:3px">${file.name}</div>
-        <div style="font-size:9px;color:var(--faint);margin-top:6px;cursor:pointer;text-decoration:underline" onclick="document.getElementById('epd-file-input').click()">Upload a different EPD</div>
-        <input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>`;
+      const match = raw.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(match ? match[0] : '{}');
+
+      if(!parsed.gwp_a1a3){
+        // AI couldn't find GWP — show what it found and ask for manual input
+        setDropzone('\u26A0\uFE0F',
+          'GWP value not found automatically',
+          (parsed.product_name ? parsed.product_name + ' by ' + (parsed.manufacturer||'unknown') + ' — ' : '') +
+          'The A1-A3 GWP was not clearly identified. Please enter it manually.',
+          '<div style="font-size:10px;color:var(--cs);margin-top:8px;font-weight:600">Enter the GWP value from the EPD table below \u2193</div>' +
+          '<input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>');
+        // Pre-fill material category if found
+        if(parsed.material_category) document.getElementById('epd-material').value = parsed.material_category;
+        if(parsed.product_name){
+          const pname = document.getElementById('epd-gwp');
+          if(pname) pname.placeholder = 'Enter A1-A3 GWP from ' + parsed.product_name;
+        }
+        updateEPDHint();
+        return;
+      }
+
+      // 
+      setDropzone('\u2705',
+        'EPD read successfully \u2014 see results below',
+        file.name,
+        '<div style="font-size:9px;color:var(--faint);margin-top:6px;cursor:pointer;text-decoration:underline" onclick="document.getElementById(\'epd-file-input\').click()">Upload a different EPD</div>' +
+        '<input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>');
       showEPDResults(parsed, file.name);
-    } catch(err) {
-      showEPDError('Could not read EPD: '+err.message+'. Try entering the GWP value manually below.');
-      // Reset dropzone
-      dropzone.innerHTML = `<div style="font-size:28px;margin-bottom:8px">📄</div>
-        <div style="font-size:12px;font-weight:700;color:var(--text2)">Drop EPD PDF here or click to upload</div>
-        <div style="font-size:10px;color:var(--faint);margin-top:4px">AI extracts GWP value · Compares to benchmark · LEED MRc4 check</div>
-        <input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>`;
+
+    } catch(err){
+      console.error('EPD error:', err);
+      showEPDError(err.message || 'Could not read EPD. Please enter the GWP value manually.');
+      resetDropzone();
     }
   };
-  reader.readAsDataURL(file);
+  reader.readAsArrayBuffer(file);
 }
+
 
 function analyzeManualEPD(){
   const material = document.getElementById('epd-material').value;
