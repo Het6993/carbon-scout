@@ -364,496 +364,8 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
 .divider{height:1px;background:var(--border);}
 .tag-mono{font-family:'DM Mono',monospace;}
 </style>
-</head>
-<body>
-
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="logo">
-    <div class="logo-pulse"></div>
-    Carbon Scout
-  </div>
-  <div class="topbar-sep"></div>
-  <div class="topbar-meta">AEC Sustainability Intelligence · v4.10</div>
-  <div class="topbar-right">
-    <div class="topbar-meta" id="top-std">EN 15978 · A1–A5</div>
-    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
-  </div>
-</div>
-
-<!-- MODE + UNITS BAR -->
-<div class="modebar">
-  <div class="mode-label">Mode</div>
-  <div class="mode-toggle">
-    <button class="mode-btn" id="mode-quick" onclick="setMode('quick')">⚡ Quick</button>
-    <button class="mode-btn active" id="mode-detail" onclick="setMode('detail')">🔬 Detailed</button>
-  </div>
-  <div class="modebar-right">
-    <div class="units-toggle">
-      <button class="units-btn" id="btn-m2" onclick="setUnits('metric')">m²</button>
-      <button class="units-btn active" id="btn-ft2" onclick="setUnits('imperial')">ft²</button>
-    </div>
-  </div>
-</div>
-
-<!-- LOCATION BAR -->
-<div class="locbar">
-  <div class="loc-label">Location</div>
-  <select class="loc-select" id="city" onchange="onCityChange()">
-    <option value="nyc">New York, NY</option>
-    <option value="hou" selected>Houston, TX</option>
-    <option value="dal">Dallas, TX</option>
-    <option value="chi">Chicago, IL</option>
-    <option value="la">Los Angeles, CA</option>
-    <option value="bos">Boston, MA</option>
-    <option value="sea">Seattle, WA</option>
-    <option value="mia">Miami, FL</option>
-    <option value="den">Denver, CO</option>
-    <option value="phx">Phoenix, AZ</option>
-  </select>
-  <div class="loc-chips">
-    <span class="chip chip-g" id="chip-zone">Zone 2A</span>
-    <span class="chip chip-a" id="chip-climate">Hot-Humid</span>
-    <span class="chip chip-b" id="chip-sun">5.2 PSH</span>
-  </div>
-</div>
-
-<!-- QUICK MODE -->
-<div id="quick-mode" style="display:none;flex:1;overflow-y:auto;background:var(--bg);">
-  <div class="quick-panel">
-    <div class="quick-hero">
-      <div class="quick-hero-title">60-Second Carbon Assessment</div>
-      <div class="quick-hero-sub">Describe your building or fill in the fields below.</div>
-    </div>
-    <div style="max-width:600px;margin:0 auto;width:100%;">
-      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:10px;transition:border-color .15s;box-shadow:var(--sh);" id="nl-wrap" onfocusin="this.style.borderColor='var(--cs-accent)'" onfocusout="this.style.borderColor='var(--border)'">
-        <div style="font-size:16px">💬</div>
-        <input type="text" id="nl-input" placeholder="e.g. 12 storey office in Houston, concrete frame, 50,000 sqft" style="flex:1;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);outline:none;" onkeydown="if(event.key==='Enter')parseNLInput()"/>
-        <button onclick="parseNLInput()" style="background:var(--cs);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">Parse ↵</button>
-      </div>
-      <div style="font-size:9px;color:var(--faint);padding:4px 4px 0;font-family:'DM Mono',monospace;">AI reads your description and fills in the fields automatically</div>
-    </div>
-    <div class="quick-inputs" style="grid-template-columns:repeat(4,1fr)">
-      <div class="quick-field">
-        <label id="q-gfa-label">GFA (ft²)</label>
-        <input type="number" id="q-gfa" value="50000" oninput="quickCalc()"/>
-      </div>
-      <div class="quick-field">
-        <label>Floors</label>
-        <input type="number" id="q-floors" value="12" min="1" max="100" oninput="document.getElementById('floors').value=this.value;quickCalc()"/>
-      </div>
-      <div class="quick-field">
-        <label>Building Type</label>
-        <select id="q-type" onchange="quickCalc()">
-          <option value="office">Office</option>
-          <option value="residential">Residential</option>
-          <option value="mixed">Mixed-Use</option>
-          <option value="retail">Retail</option>
-          <option value="education">Education</option>
-          <option value="healthcare">Healthcare</option>
-        </select>
-      </div>
-      <div class="quick-field">
-        <label>Structural System</label>
-        <select id="q-struct" onchange="quickCalc()">
-          <option value="concrete_cast">Concrete CIP</option>
-          <option value="concrete_precast">Concrete Precast</option>
-          <option value="steel_composite" selected>Steel Composite</option>
-          <option value="steel_light">Steel Light Frame</option>
-          <option value="timber_clt">Mass Timber CLT</option>
-          <option value="timber_glulam">Mass Timber Glulam</option>
-          <option value="masonry">Masonry</option>
-        </select>
-      </div>
-    </div>
-    <div class="quick-results" id="quick-results"></div>
-    <div class="card card-pad" id="quick-insight-card" style="max-width:800px;margin:0 auto;width:100%;">
-      <div class="insight-tag">✦ AI Insight</div>
-      <div class="insight-text" id="quick-insight-text">Adjust inputs above to see your assessment.</div>
-    </div>
-  </div>
-</div>
-
-<!-- DETAIL MODE -->
-<div id="detail-mode" style="display:flex;flex:1;overflow:hidden;flex-direction:column;min-height:0;">
-
-  <!-- MAIN CONTENT -->
-  <div class="main">
-
-    <!-- LEFT PANEL -->
-    <div class="left">
-      <div class="left-inner" id="left-carbon">
-        <div class="panel-section">
-          <div class="panel-title">Building</div>
-          <div class="field-row">
-            <div class="field">
-              <label id="gfa-label">GFA (ft²)</label>
-              <input type="number" id="gfa" value="53820" oninput="recalc()"/>
-            </div>
-            <div class="field">
-              <label>Floors</label>
-              <input type="number" id="floors" value="12" min="1" max="100" oninput="document.getElementById('q-floors').value=this.value;recalc()"/>
-            </div>
-          </div>
-          <div class="field">
-            <label>Structural System</label>
-            <select id="structure" onchange="recalc()">
-              <option value="concrete_cast">Concrete (Cast-in-place)</option>
-              <option value="concrete_precast">Concrete (Precast)</option>
-              <option value="steel_composite" selected>Steel (Composite)</option>
-              <option value="steel_light">Steel (Light Frame)</option>
-              <option value="timber_clt">Mass Timber — CLT</option>
-              <option value="timber_glulam">Mass Timber — Glulam</option>
-              <option value="masonry">Masonry</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Building Use</label>
-            <select id="use" onchange="recalc()">
-              <option value="office" selected>Office</option>
-              <option value="residential">Residential</option>
-              <option value="mixed">Mixed-Use</option>
-              <option value="retail">Retail</option>
-              <option value="education">Education</option>
-              <option value="healthcare">Healthcare</option>
-            </select>
-          </div>
-        </div>
-        <div class="pdiv"></div>
-        <div class="panel-section">
-          <div class="panel-title">Scenarios</div>
-          <div class="scenario-list" id="scenario-list"></div>
-        </div>
-        <div class="pdiv"></div>
-        <div class="tree-card">
-          <div class="tree-num" id="tree-num">—</div>
-          <div class="tree-label">🌳 trees equivalent saved</div>
-          <div class="tree-sub" id="tree-sub">vs concrete baseline</div>
-        </div>
-      </div>
-
-      <div class="left-inner" id="left-daylight" style="display:none;">
-        <div class="panel-section">
-          <div class="panel-title">Facade</div>
-          <div class="field-row">
-            <div class="field">
-              <label>WWR (%)</label>
-              <input type="number" id="wwr" value="40" min="10" max="90" oninput="recalc()"/>
-            </div>
-            <div class="field">
-              <label>Orientation</label>
-              <select id="orient" onchange="recalc()">
-                <option value="N">North</option>
-                <option value="NE">North-East</option>
-                <option value="E">East</option>
-                <option value="SE">South-East</option>
-                <option value="S" selected>South</option>
-                <option value="SW">South-West</option>
-                <option value="W">West</option>
-                <option value="NW">North-West</option>
-              </select>
-            </div>
-          </div>
-          <div class="field">
-            <label>Glazing System</label>
-            <select id="glazing" onchange="recalc()">
-              <option value="std_dbl">Standard Double</option>
-              <option value="hp_dbl" selected>High-Perf Double</option>
-              <option value="triple">Triple Glazed</option>
-              <option value="electro">Electrochromic (Dynamic)</option>
-              <option value="bipv">BIPV (Solar Glass)</option>
-              <option value="fritted">Fritted / Ceramic</option>
-            </select>
-          </div>
-        </div>
-        <div class="pdiv"></div>
-        <div class="panel-section">
-          <div class="panel-title">Glazing Performance</div>
-          <div class="field-row">
-            <div class="field">
-              <label>U-Value</label>
-              <div id="gl-u" style="font-size:13px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
-            </div>
-            <div class="field">
-              <label>SHGC</label>
-              <div id="gl-shgc" style="font-size:13px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
-            </div>
-          </div>
-          <div class="field">
-            <label>VLT</label>
-            <div id="gl-vlt" style="font-size:13px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="left-inner" id="left-wind" style="display:none;">
-        <div class="panel-section">
-          <div class="panel-title">Climate Data</div>
-          <div class="field" style="pointer-events:none;">
-            <label>Station</label>
-            <div id="wind-station" style="font-size:12px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
-          </div>
-          <div class="field" style="pointer-events:none;">
-            <label>Coordinates</label>
-            <div id="wind-coords" style="font-size:11px;font-weight:600;color:var(--text2);padding-top:2px;font-family:'DM Mono',monospace;">—</div>
-          </div>
-          <div class="field" style="pointer-events:none;">
-            <label>Data Source</label>
-            <div style="font-size:10px;font-weight:600;color:var(--muted);padding-top:2px;font-family:'DM Mono',monospace;">ERA5 Annual Archive</div>
-          </div>
-        </div>
-        <div class="pdiv"></div>
-        <div class="panel-section">
-          <div class="panel-title">Building</div>
-          <div class="field">
-            <label>Floors</label>
-            <input type="number" id="wind-floors" value="12" min="1" oninput="recalc()"/>
-          </div>
-        </div>
-      </div>
-
-      <div class="left-inner" id="left-report" style="display:none;">
-        <div class="panel-section">
-          <div class="panel-title">Project Info</div>
-          <div class="field">
-            <label>Project Name</label>
-            <input type="text" id="proj-name" value="Untitled Project" style="font-size:13px;font-weight:600;"/>
-          </div>
-          <div class="field">
-            <label>Client</label>
-            <input type="text" id="proj-client" value="" placeholder="Client name"/>
-          </div>
-          <div class="field">
-            <label>Design Stage</label>
-            <select id="proj-stage">
-              <option>Schematic Design (SD)</option>
-              <option>Design Development (DD)</option>
-              <option>Construction Documents (CD)</option>
-              <option>Pre-Design</option>
-              <option>Bid / Permit</option>
-              <option>Construction Administration (CA)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Prepared By</label>
-            <input type="text" id="proj-author" value="Het Patel, LEED AP"/>
-          </div>
-        </div>
-        <div class="pdiv"></div>
-        <div class="report-actions" style="flex-direction:column;">
-          <button class="btn btn-green" onclick="exportReport()">↓ Export PDF Report</button>
-          <button class="btn btn-secondary" onclick="copyCSV()">⎘ Copy CSV Data</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT COLUMN: nav + content -->
-    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;min-width:0;">
-
-    <!-- NAV TABS -->
-    <div class="nav">
-      <div class="nav-tab active" data-tab="carbon" onclick="switchTab('carbon')"><span class="tab-icon">🌿</span>Embodied Carbon</div>
-      <div class="nav-tab" data-tab="daylight" onclick="switchTab('daylight')"><span class="tab-icon">☀️</span>Daylight & Glare</div>
-      <div class="nav-tab" data-tab="wind" onclick="switchTab('wind')"><span class="tab-icon">🌬</span>Climate & Wind</div>
-      <div class="nav-tab" data-tab="report" onclick="switchTab('report')"><span class="tab-icon">📋</span>Report</div>
-    </div>
-
-    <!-- RIGHT PANEL -->
-    <div class="right">
-
-      <!-- CARBON TAB -->
-      <div class="tab-panel active" id="tab-carbon">
-        <div class="krow" id="carbon-kpis"></div>
-        <!-- Carbon range toggle -->
-        <div style="display:flex;align-items:center;gap:10px;padding:4px 0;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--faint);">Carbon Range</div>
-          <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px;gap:2px;">
-            <button class="range-btn" id="range-best" onclick="setCarbonRange('best')" style="font-size:10px;font-weight:600;padding:3px 12px;border-radius:14px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all .18s;">Best Practice</button>
-            <button class="range-btn active" id="range-typical" onclick="setCarbonRange('typical')" style="font-size:10px;font-weight:600;padding:3px 12px;border-radius:14px;border:none;background:var(--cs);color:#fff;cursor:pointer;font-family:'Inter',sans-serif;transition:all .18s;">Typical</button>
-            <button class="range-btn" id="range-conservative" onclick="setCarbonRange('conservative')" style="font-size:10px;font-weight:600;padding:3px 12px;border-radius:14px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all .18s;">Conservative</button>
-          </div>
-          <div style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;" id="range-label">EC3 median · typical US construction</div>
-        </div>
-        <div class="card card-pad">
-          <div class="card-title">Structural System Carbon Comparison</div>
-          <div class="card-sub" id="carbon-chart-sub">A1–A5 embodied carbon intensity · LEED MRc1 requires 10% reduction vs project-specific baseline</div>
-          <div style="position:relative;height:22px;margin-bottom:6px;" id="carbon-threshold-row"></div>
-          <div class="bar-list" id="carbon-bars"></div>
-          <div class="source-note">Sources: EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023 · IStructE How to Calculate Embodied Carbon 2022 · Values = structure + envelope A1–A5 per m² GFA · Intensity (kg/m²) is independent of GFA — Total carbon (tCO₂e) scales with GFA</div>
-        </div>
-        <div class="twocol">
-          <div class="card card-pad">
-            <div class="card-title">Sustainability Compliance</div>
-            <div class="card-sub">LEED v4.1 credit tracking</div>
-            <div class="comply-grid" id="carbon-comply"></div>
-          </div>
-          <div class="insight">
-            <div class="insight-tag">✦ AI Insight</div>
-            <div class="insight-text" id="carbon-insight">Calculating…</div>
-          </div>
-        </div>
-
-        <!-- EPD UPLOAD DRAWER -->
-        <div class="card">
-          <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleEPD()">
-            <div>
-              <div style="font-size:12px;font-weight:700;color:var(--text);letter-spacing:-.2px;">📄 Upload Your EPD</div>
-              <div style="font-size:10px;color:var(--faint);margin-top:2px;">Drop a product EPD PDF — AI reads the GWP value and checks LEED MRc4 eligibility · Values are A1–A3 GWP per declared unit (m³, tonne, or m²)</div>
-            </div>
-            <div id="epd-toggle-icon" style="font-size:16px;color:var(--faint);transition:transform .2s;">▼</div>
-          </div>
-          <div id="epd-drawer" style="display:none;border-top:1px solid var(--border);padding:18px 20px;">
-            <!-- Drop Zone -->
-            <div id="epd-dropzone" style="border:2px dashed var(--border);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);"
-              ondragover="event.preventDefault();this.style.borderColor='var(--cs-accent)';this.style.background='var(--cs-l)'"
-              ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'"
-              ondrop="handleEPDDrop(event)"
-              onclick="document.getElementById('epd-file-input').click()">
-              <div style="font-size:28px;margin-bottom:8px;">📄</div>
-              <div style="font-size:12px;font-weight:700;color:var(--text2)">Drop EPD PDF here or click to upload</div>
-              <div style="font-size:10px;color:var(--faint);margin-top:4px;">AI extracts GWP value · Compares to benchmark · LEED MRc4 check</div>
-              <input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>
-            </div>
-
-            <!-- Or paste GWP manually -->
-            <div style="display:flex;align-items:center;gap:10px;margin-top:14px;">
-              <div style="flex:1;height:1px;background:var(--border)"></div>
-              <div style="font-size:10px;color:var(--faint);white-space:nowrap">or enter GWP manually</div>
-              <div style="flex:1;height:1px;background:var(--border)"></div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:12px;align-items:end;">
-              <div class="field">
-                <label>Material Category</label>
-                <select id="epd-material" onchange="updateEPDHint()">
-                  <option value="concrete">Concrete / Ready-Mix</option>
-                  <option value="concrete_hpc">Concrete / High-Performance</option>
-                  <option value="steel_struct">Structural Steel (BOF/EAF)</option>
-                  <option value="steel_rebar">Rebar / Reinforcing Steel</option>
-                  <option value="timber">Mass Timber / CLT / Glulam</option>
-                  <option value="glazing">Glazing Unit (IGU)</option>
-                  <option value="curtain_wall">Curtain Wall / Aluminum Facade</option>
-                  <option value="brick">Brick / Masonry</option>
-                  <option value="gypsum">Gypsum Board / Drywall</option>
-                  <option value="insulation">Insulation</option>
-                  <option value="carpet">Carpet / Flooring</option>
-                  <option value="ceiling">Ceiling Tile / ACT</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>A1–A3 GWP (kg CO₂e/unit)</label>
-                <input type="number" id="epd-gwp" placeholder="e.g. 320" step="0.1" oninput="updateEPDHint()"/>
-              </div>
-              <button class="btn btn-primary" onclick="analyzeManualEPD()" style="height:42px;white-space:nowrap;align-self:end">Analyze EPD</button>
-            </div>
-
-            <!-- Hint text -->
-            <div id="epd-hint" style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:6px;padding:4px 2px;">
-              Select a category to see typical GWP range
-            </div>
-            <!-- EPD Results -->
-            <div id="epd-results" style="display:none;margin-top:16px;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- DAYLIGHT & GLARE TAB -->
-      <div class="tab-panel" id="tab-daylight">
-        <div class="card card-pad">
-          <div class="card-title">Daylight Autonomy</div>
-          <div class="card-sub" id="dl-sub">Spatial Daylight Autonomy (sDA) · Annual Sunlight Exposure (ASE) · LEED EQc7</div>
-          <div class="dials-row" id="dl-dials"></div>
-          <div class="source-note">ASHRAE 169-2020 climate data · Parametric estimate — verify with Climate Studio or Radiance for compliance submission</div>
-        </div>
-        <div class="card card-pad">
-          <div class="card-title">Annual Daylight Availability Heatmap</div>
-          <div class="card-sub" id="heatmap-sub">Estimated useful daylight illuminance (UDI 100–2000 lux) by month · Based on location solar data</div>
-          <div class="heatmap-grid" id="heatmap"></div>
-          <div class="heatmap-months" id="heatmap-months"></div>
-          <div class="heatmap-legend">
-            <div class="heatmap-l">Low</div>
-            <div class="heatmap-bar"></div>
-            <div class="heatmap-l">High UDI</div>
-          </div>
-        </div>
-        <div class="twocol">
-          <div class="card card-pad">
-            <div class="card-title">Glare Risk by Orientation</div>
-            <div class="card-sub">Daylight Glare Probability (DGP) — EN 17037 categories</div>
-            <div class="dials-row" id="glare-dials"></div>
-            <div class="source-note">Parametric DGP estimate · Glazing SHGC applied · Verify with Evalglare for detailed analysis</div>
-          </div>
-          <div class="insight">
-            <div class="insight-tag">✦ Daylight Insight</div>
-            <div class="insight-text" id="dl-insight">Calculating…</div>
-          </div>
-        </div>
-        <div class="card card-pad">
-          <div class="card-title">LEED EQc7 Compliance</div>
-          <div class="card-sub">Required: sDA₃₀₀/₅₀% ≥ 55% · ASE₁₀₀₀/₂₅₀ ≤ 10%</div>
-          <div id="leed-eqc7"></div>
-        </div>
-      </div>
-
-      <!-- WIND TAB -->
-      <div class="tab-panel" id="tab-wind">
-        <div class="card card-pad">
-          <div class="card-title">Wind Rose & Annual Climate</div>
-          <div class="card-sub" id="wind-title-sub">ERA5 annual wind frequency · Open-Meteo archive · Same source as EPW/TMY3 files used by Autodesk Forma</div>
-          <div class="wind-layout">
-            <div class="wind-rose-wrap">
-              <svg id="wind-rose-svg" viewBox="0 0 160 160" width="160" height="160"></svg>
-              <div style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;" id="wind-city">—</div>
-            </div>
-            <div>
-              <div class="wind-kpis" id="wind-kpis"></div>
-            </div>
-          </div>
-        </div>
-        <div class="card card-pad">
-          <div class="card-title">PWC Zone Assessment</div>
-          <div class="card-sub">Pedestrian Wind Comfort — Lawson LDDC criteria</div>
-          <div class="pwc-zones" id="pwc-zones"></div>
-          <div class="source-note">Wind data: ERA5 annual archive (Open-Meteo) · Heights extrapolated using power law α=0.25 · Full CFD recommended at RIBA Stage 3</div>
-        </div>
-        <div class="twocol">
-          <div class="card card-pad">
-            <div class="card-title">Mitigation Recommendations</div>
-            <div class="card-sub">Based on prevailing wind and building height</div>
-            <div id="wind-mitigations"></div>
-          </div>
-          <div class="insight">
-            <div class="insight-tag">✦ Wind Insight</div>
-            <div class="insight-text" id="wind-insight">Fetching climate data…</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- REPORT TAB -->
-      <div class="tab-panel" id="tab-report">
-        <div class="card card-pad">
-          <div class="card-title">Sustainability Performance Summary</div>
-          <div class="card-sub" id="report-sub">—</div>
-          <div id="report-content" style="margin-top:12px;"></div>
-        </div>
-        <div class="card card-pad">
-          <div class="card-title">LEED Credit Summary</div>
-          <div class="card-sub">LEED v4.1 BD+C — credit status based on current inputs</div>
-          <div id="report-leed"></div>
-        </div>
-        <div class="card card-pad">
-          <div class="card-title">Methodology & Disclaimers</div>
-          <div class="card-sub">Data sources and accuracy levels</div>
-          <div style="font-size:11px;color:var(--text2);line-height:1.7;" id="report-method"></div>
-        </div>
-      </div>
-
-    </div><!-- /right -->
-    </div><!-- /right-column -->
-  </div><!-- /main -->
-</div><!-- /detail-mode -->
-
 <script>
+
 // ═══════════════════════════════════════════════════
 // DATA CONSTANTS — all verified sources preserved
 // ═══════════════════════════════════════════════════
@@ -910,14 +422,80 @@ let currentMode = 'detail';
 let currentTab = 'carbon';
 let aiInsightCache = {};
 let carbonRange = 'typical';
+let opFuel = 'elec_gas';   // fuel type for operational carbon
+let opLifetime = 60;        // building lifetime in years
+
+// ── OPERATIONAL CARBON DATA ──
+// EUI: EPA Energy Star / CBECS 2018, site EUI kBtu/ft²/yr (median)
+// Source: portfoliomanager.energystar.gov/pdf/reference/US National Median Table.pdf (Aug 2024)
+const EUI_MEDIAN = {
+  office:      52.9,
+  residential: 59.6,
+  retail:      51.4,
+  education:   48.5,
+  healthcare: 234.3,
+  mixed:       40.1,
+};
+
+// Performance level multipliers vs CBECS 2018 median
+const PERF_MULT = {
+  baseline:  1.30,  // ASHRAE 90.1 code minimum (~30% above median)
+  median:    1.00,  // CBECS 2018 national median
+  leed_cert: 0.75,  // LEED Certified (~25% below median)
+  leed_gold: 0.60,  // LEED Gold (~40% below median)
+  leed_plat: 0.35,  // LEED Platinum / Net Zero Ready
+};
+
+// Climate zone EUI modifiers — ASHRAE 169-2020 heating+cooling adjustment
+const ZONE_EUI_MOD = {
+  '1A': 1.20,  // Miami — extreme cooling
+  '2A': 1.15,  // Houston — hot humid
+  '2B': 1.12,  // Phoenix — hot dry
+  '3A': 1.05,  // Dallas/Atlanta — mixed hot
+  '3B': 0.85,  // LA — mild
+  '3C': 0.80,  // San Francisco — very mild
+  '4A': 1.00,  // NYC/DC — reference
+  '4C': 0.90,  // Seattle — mild oceanic
+  '5A': 1.08,  // Chicago/Boston — cold
+  '5B': 1.05,  // Denver — semi-arid
+  '6A': 1.15,  // Minneapolis — very cold
+};
+
+// EPA eGRID 2022 — grid carbon intensity kg CO2e/kWh
+// Source: EPA eGRID 2022 Summary Tables (published Jan 2024)
+// Converted from lb/MWh: divide by 2204.6
+const EGRID = {
+  hou: { factor: 0.3497, subregion: 'ERCT', label: 'ERCOT Texas' },
+  nyc: { factor: 0.4015, subregion: 'NYCW', label: 'NPCC NYC/Westchester' },
+  chi: { factor: 0.4539, subregion: 'RFCW', label: 'RFC West' },
+  la:  { factor: 0.2256, subregion: 'CAMX', label: 'WECC California' },
+  bos: { factor: 0.2433, subregion: 'NEWE', label: 'NPCC New England' },
+  sea: { factor: 0.2731, subregion: 'NWPP', label: 'WECC Northwest' },
+  mia: { factor: 0.3692, subregion: 'FRCC', label: 'FRCC Florida' },
+  den: { factor: 0.5103, subregion: 'RMPA', label: 'WECC Rockies' },
+  phx: { factor: 0.3520, subregion: 'AZNM', label: 'WECC Southwest' },
+  dal: { factor: 0.3497, subregion: 'ERCT', label: 'ERCOT Texas' },
+};
+
+// Natural gas emission factor — EPA GHG Reporting Program
+// 0.05306 kg CO2e/kBtu = 0.1817 kg CO2e/kWh thermal
+const GAS_FACTOR = 0.1817; // kg CO2e per kWh thermal
+
+// Fuel mix: [elec fraction, gas fraction]
+const FUEL_MIX = {
+  all_elec:  [1.00, 0.00],  // All-electric
+  elec_gas:  [0.70, 0.30],  // Gas + Electric (typical US commercial)
+  hi_eff:    [0.60, 0.40],  // High-efficiency gas + heat pumps
+  district:  [0.85, 0.15],  // District energy (approx)
+};
 
 // Carbon range multipliers — EC3 percentile-based
 // Best=20th pctl, Typical=50th, Conservative=80th
 const RANGE_MULTIPLIERS = { best: 0.75, typical: 1.0, conservative: 1.22 };
 const RANGE_LABELS = {
-  best: 'EC3 20th percentile · top-performing projects',
-  typical: 'EC3 median · typical US construction',
-  conservative: 'EC3 80th percentile · industry average'
+  best: 'EC3 20th pctl · best-performing projects (–25% vs median)',
+  typical: 'EC3 50th pctl · CBECS median · typical US construction',
+  conservative: 'EC3 80th pctl · higher-carbon projects (+22% vs median)'
 };
 
 // ── AI GATEWAY ──
@@ -967,10 +545,12 @@ function calcCarbon(){
   const mod=floorMod(floors);
   const city=getCity();
   const zoneBase={'1A':45,'2A':42,'2B':48,'3A':40,'3B':52,'4A':38,'4C':32,'5A':35,'5B':44}[city.zone]||38;
-  const intensity=Math.round(strF.base*mod+uAdd);
-  const facadeEC=Math.round(glF.ec*(wwr/40));
+  // Apply carbon range multiplier to structure (not to use_add which is constant fit-out)
+  const rangeMult = RANGE_MULTIPLIERS[carbonRange] || 1.0;
+  const intensity=Math.round(strF.base*mod*rangeMult+uAdd);
+  const facadeEC=Math.round(glF.ec*(wwr/40)*rangeMult);
   const total=Math.round(intensity*gfa/1000);
-  const concreteI=Math.round(STRUCT.concrete_cast.base*mod+uAdd);
+  const concreteI=Math.round(STRUCT.concrete_cast.base*mod*rangeMult+uAdd);
   const saving=(concreteI-intensity)*gfa/1000;
   const trees=Math.max(0,Math.round(saving/0.022));
   const orientMod={S:1.12,N:0.82,E:0.96,W:0.98,NE:0.89,SE:1.04,SW:1.08,NW:0.85}[orient]||1.0;
@@ -979,6 +559,106 @@ function calcCarbon(){
   const ASE=Math.max(1,Math.round(wwr*aseOrientMod*(1/(glF.shgc+0.1))*0.8));
   const t=intensity<=200?'green':intensity<=300?'amber':'red';
   return {gfa,floors,str,use,wwr,orient,glaz,mod,intensity,facadeEC,total,saving,trees,concreteI,strF,glF,uAdd,sDA,ASE,t,city,zoneBase,orientMod};
+}
+
+// ── OPERATIONAL CARBON CALC ──
+function calcOperational(d){
+  const city = d.city;
+  const use = d.use;
+  const gfa = d.gfa; // m²
+
+  // 1. Base EUI from CBECS 2018 median (kBtu/ft²/yr)
+  const baseEUI = EUI_MEDIAN[use] || EUI_MEDIAN.office;
+
+  // 2. Apply performance level
+  const perfKey = document.getElementById('op-perf')?.value || 'median';
+  const perfMult = PERF_MULT[perfKey] || 1.0;
+
+  // 3. Apply climate zone modifier
+  const zoneMod = ZONE_EUI_MOD[city.zone] || 1.0;
+
+  // 4. WWR impact on EUI: higher glazing ratio increases heating/cooling load
+  // Each 10% increase in WWR above 30% baseline adds ~2% to EUI (ASHRAE data)
+  const wwr = parseInt(document.getElementById('wwr')?.value) || 40;
+  const wwrMod = 1 + Math.max(0, (wwr - 30) / 10) * 0.02;
+
+  // 4b. Rooftop solar offset (if selected)
+  const hasSolar = document.getElementById('op-solar')?.checked || false;
+  // Typical rooftop solar: 15 kWh/m²/yr for US commercial (NREL)
+  const solarOffset = hasSolar ? 15 : 0; // kWh/m²/yr
+
+  // 4. Adjusted EUI (kBtu/ft²/yr)
+  const adjEUI_kbtu = baseEUI * perfMult * zoneMod * wwrMod;
+
+  // 5. Convert to kWh/m²/yr and subtract solar offset
+  // kBtu/ft² × 3.154 = kWh/m²
+  const euiKwh = Math.max(0, adjEUI_kbtu * 3.154 - solarOffset);
+
+  // 6. Fuel mix
+  const fuelKey = document.getElementById('op-fuel')?.value || 'elec_gas';
+  const [elecFrac, gasFrac] = FUEL_MIX[fuelKey] || [0.70, 0.30];
+
+  // 7. Grid carbon intensity for city
+  // Use current city dropdown value to look up eGRID subregion
+  const cityKey = document.getElementById('city')?.value || 'hou';
+  const egrid = EGRID[cityKey] || EGRID.hou;
+  const gridFactor = egrid.factor; // kg CO2e/kWh electric
+
+  // 8. Annual operational carbon (kg CO2e/m²/yr)
+  const elecCarbon = euiKwh * elecFrac * gridFactor;
+  const gasCarbon  = euiKwh * gasFrac  * GAS_FACTOR;
+  const annualIntensity = Math.round(elecCarbon + gasCarbon); // kg CO2e/m²/yr
+
+  // 9. Lifetime
+  const lifetime = opLifetime;
+
+  // 10. Total lifetime operational carbon
+  const lifetimeIntensity = annualIntensity * lifetime; // kg CO2e/m²
+  const lifetimeTotal = Math.round(lifetimeIntensity * gfa / 1000); // tCO2e
+
+  // 11. Annual total
+  const annualTotal = Math.round(annualIntensity * gfa / 1000); // tCO2e/yr
+
+  // 12. Whole life carbon
+  const embodiedIntensity = d.intensity; // kg CO2e/m²
+  const wlcIntensity = embodiedIntensity + lifetimeIntensity;
+  const wlcTotal = Math.round(wlcIntensity * gfa / 1000);
+
+  // 13. Trees
+  // Embodied: one-time, tree equivalents planted
+  const treesEmbodied = Math.max(0, d.trees); // already calc'd vs concrete
+  // Operational: vs ASHRAE 90.1 baseline (what the building could have used)
+  const baselineCarbon = Math.round(EUI_MEDIAN[use] * 1.30 * zoneMod * 3.154 * 
+    (elecFrac * gridFactor + gasFrac * GAS_FACTOR));
+  const opSaving = Math.max(0, (baselineCarbon - annualIntensity)); // kg/m²/yr saved
+  const treesOp = Math.round(opSaving * gfa * lifetime / (0.022 * 1000)); // trees over lifetime
+  const treesTotal = treesEmbodied + treesOp;
+
+  return {
+    adjEUI_kbtu: Math.round(adjEUI_kbtu * 10) / 10,
+    euiKwh: Math.round(euiKwh * 10) / 10,
+    wwrMod: Math.round(wwrMod * 100) / 100,
+    hasSolar,
+    solarOffset,
+    annualIntensity,
+    lifetimeIntensity: Math.round(lifetimeIntensity),
+    annualTotal,
+    lifetimeTotal,
+    wlcIntensity: Math.round(wlcIntensity),
+    wlcTotal,
+    embodiedIntensity,
+    gridFactor,
+    egrid,
+    perfKey,
+    fuelKey,
+    elecFrac,
+    gasFrac,
+    lifetime,
+    treesEmbodied,
+    treesOp,
+    treesTotal,
+    opSavingPct: Math.round((1 - annualIntensity/baselineCarbon) * 100),
+  };
 }
 
 // ── MODE ──
@@ -1102,6 +782,115 @@ function quickCalc(){
   getAIInsight('carbon', qD).then(text => { qInsEl.innerHTML = text; });
 }
 
+// ── RENDER OP PANEL ──
+function renderOpPanel(el, d, op){
+  const wlcPct = Math.round(op.embodiedIntensity / op.wlcIntensity * 100);
+  const opPct  = 100 - wlcPct;
+  const gcol = op.gridFactor < 0.30 ? 'var(--green)' : op.gridFactor < 0.40 ? 'var(--amber)' : 'var(--red)';
+  const PERF_LABELS = {baseline:'ASHRAE 90.1 Code Min',median:'CBECS Median',leed_cert:'LEED Certified',leed_gold:'LEED Gold',leed_plat:'LEED Platinum / NZR'};
+  const FUEL_LABELS = {all_elec:'All-Electric',elec_gas:'Gas + Electric',hi_eff:'High-Eff Gas + HP',district:'District Energy'};
+
+  let html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">';
+  html += '<div>';
+  html += '<div style="font-size:13px;font-weight:700;color:var(--text)">⚡ Operational Carbon</div>';
+  html += '<div style="font-size:10px;color:var(--faint);margin-top:2px;">CBECS 2018 · ' + PERF_LABELS[op.perfKey] + ' · ' + FUEL_LABELS[op.fuelKey] + ' · ' + op.adjEUI_kbtu + ' kBtu/ft²/yr</div>';
+  html += '</div>';
+  html += '<div style="font-size:9px;color:var(--faint);text-align:right;">' + op.egrid.subregion + ' eGRID 2022<br/>';
+  html += '<span style="font-weight:700;color:var(--text)">' + op.gridFactor.toFixed(4) + '</span> kg CO₂e/kWh</div>';
+  html += '</div>';
+
+  // 3 KPIs
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">';
+  html += '<div class="kcard" style="padding:12px 14px;">';
+  html += '<div class="k-label">Annual Intensity</div>';
+  html += '<div class="k-val" style="color:var(--cs-dark);font-size:22px;">' + op.annualIntensity + '</div>';
+  html += '<div class="k-sub">kg CO₂e/m²/yr<br/>' + op.annualTotal.toLocaleString() + ' tCO₂e/yr</div>';
+  html += '</div>';
+  html += '<div class="kcard" style="padding:12px 14px;">';
+  html += '<div class="k-label">Operational (' + op.lifetime + ' yr)</div>';
+  html += '<div class="k-val" style="color:#3b82f6;font-size:22px;">' + op.lifetimeIntensity.toLocaleString() + '</div>';
+  html += '<div class="k-sub">kg CO₂e/m² operational only<br/>' + op.lifetimeTotal.toLocaleString() + ' tCO₂e total</div>';
+  html += '</div>';
+  html += '<div class="kcard" style="padding:12px 14px;">';
+  html += '<div class="k-label">Grid Intensity</div>';
+  html += '<div class="k-val" style="color:' + gcol + ';font-size:22px;">' + op.gridFactor.toFixed(3) + '</div>';
+  html += '<div class="k-sub">kg CO₂e/kWh<br/>' + op.egrid.label + '</div>';
+  html += '</div>';
+  // Add WLC as 4th KPI — makes the math transparent
+  html += '<div class="kcard" style="padding:12px 14px;border:1px solid var(--cs);background:var(--cs-l);">';
+  html += '<div class="k-label" style="color:var(--cs)">Whole Life Total</div>';
+  html += '<div class="k-val" style="color:var(--cs-dark);font-size:22px;">' + op.wlcIntensity.toLocaleString() + '</div>';
+  html += '<div class="k-sub">kg CO₂e/m² embodied + op<br/>' + op.wlcTotal.toLocaleString() + ' tCO₂e total</div>';
+  html += '</div>';
+  html += '</div>';
+
+  // Whole life stacked bar
+  html += '<div style="margin-bottom:14px;">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+  html += '<div style="font-size:11px;font-weight:700;">Whole Life Carbon — Embodied + Operational</div>';
+  html += '<div style="font-size:13px;font-weight:800;color:var(--cs-dark)">' + op.wlcIntensity.toLocaleString() + ' <span style=\"font-size:10px;font-weight:500;color:var(--muted)\">kg CO₂e/m²</span></div>';
+  html += '</div>';
+  html += '<div style="height:38px;border-radius:8px;overflow:hidden;display:flex;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);">';
+  html += '<div style="width:' + wlcPct + '%;background:var(--cs);display:flex;align-items:center;justify-content:center;transition:width .4s;">';
+  html += (wlcPct >= 15 ? '<span style=\"font-size:10px;font-weight:700;color:#fff\">' + wlcPct + '% Embodied</span>' : '') + '</div>';
+  html += '<div style="flex:1;background:#60a5fa;display:flex;align-items:center;justify-content:center;">';
+  html += (opPct >= 15 ? '<span style=\"font-size:10px;font-weight:700;color:#fff\">' + opPct + '% Operational</span>' : '') + '</div>';
+  html += '</div>';
+  html += '<div style="display:flex;gap:16px;margin-top:8px;">';
+  html += '<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);"><div style=\"width:10px;height:10px;border-radius:2px;background:var(--cs);\"></div>Embodied ' + op.embodiedIntensity + ' kg/m² (upfront)</div>';
+  html += '<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);"><div style=\"width:10px;height:10px;border-radius:2px;background:#60a5fa;\"></div>Operational ' + op.lifetimeIntensity.toLocaleString() + ' kg/m² (' + op.lifetime + ' yr)</div>';
+  html += '</div></div>';
+
+  // Solar tag
+  if(op.hasSolar){
+    html += '<div style="display:inline-flex;align-items:center;gap:5px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:20px;padding:4px 10px;font-size:9px;font-weight:700;color:#065f46;margin-bottom:10px;">☀️ Rooftop solar offset applied — –' + op.solarOffset + ' kWh/m²/yr · NREL avg</div>';
+  }
+  if(op.wwrMod > 1.02){
+    html += '<div style="display:inline-flex;align-items:center;gap:5px;background:#fff7ed;border:1px solid #fed7aa;border-radius:20px;padding:4px 10px;font-size:9px;font-weight:700;color:#92400e;margin-bottom:10px;margin-left:6px;">🪟 WWR ' + Math.round((op.wwrMod-1)*100) + '% EUI penalty from glazing ratio</div>';
+  }
+  // Disclaimer
+  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:9px;color:var(--faint);line-height:1.5;">';
+  html += '<strong style=\"color:var(--text2)\">Data sources:</strong> EUI from EPA Energy Star / CBECS 2018 median · Grid: EPA eGRID 2022 (' + op.egrid.subregion + ') · Climate modifier: ASHRAE 169-2020 · WWR impact: ASHRAE 90.1. ';
+  html += (op.hasSolar ? 'Solar offset: NREL US avg 15 kWh/m²/yr. ' : '');
+  html += '<strong style=\"color:var(--amber)\">Accuracy: ±25–30%</strong> vs full energy model. Conduct EnergyPlus or IES VE for LEED EAc2.';
+  html += '</div>';
+
+  // AI insight div (populated after innerHTML set)
+  html += '<div class="insight" style="margin-top:12px;">';
+  html += '<div class="insight-tag">✦ AI Insight — Operational Carbon</div>';
+  html += '<div class="insight-text" id="op-ai-insight">Analyzing…</div>';
+  html += '</div>';
+
+  el.innerHTML = html;
+
+  // AI insight for operational carbon
+  const opInsightEl = document.getElementById('op-ai-insight');
+  if(opInsightEl){
+    opInsightEl.innerHTML = '<div class="insight-loading"><div class="insight-spinner"></div>Analyzing operational carbon…</div>';
+    const perfLabels = {baseline:'ASHRAE 90.1 Baseline (code min, ~30% above median)',median:'CBECS Median (typical US)',leed_cert:'LEED Certified (~25% below median)',leed_gold:'LEED Gold (~40% below median)',leed_plat:'LEED Platinum / Net Zero Ready (~65% below median)'};
+  const fuelLabels = {all_elec:'All-Electric (VRF/heat pump, zero gas)',elec_gas:'Gas + Electric (70/30, typical US)',hi_eff:'High-Efficiency Gas + Heat Pumps (60/40 hybrid)',district:'District Energy (85/15 approx)'};
+  const opPrompt = 'You are an AEC sustainability AI. Write a 2-3 sentence operational carbon insight. Be specific — mention exact numbers and how the current settings affect carbon. If changing to a different performance level or energy system would help significantly, say so explicitly.\n\n' +
+    'Building: ' + d.floors + ' floor ' + d.use + ', ' + Math.round(d.gfa).toLocaleString() + ' m² GFA\n' +
+    'Location: ' + d.city.name + ', Climate Zone ' + d.city.zone + ' — eGRID ' + op.egrid.subregion + ' at ' + op.gridFactor.toFixed(4) + ' kg CO₂e/kWh\n' +
+    'Performance level: ' + (perfLabels[op.perfKey]||op.perfKey) + '\n' +
+    'Energy system: ' + (fuelLabels[op.fuelKey]||op.fuelKey) + (op.hasSolar?' + rooftop solar (–'+op.solarOffset+' kWh/m²/yr)':'') + '\n' +
+    'Adjusted EUI: ' + op.adjEUI_kbtu + ' kBtu/ft²/yr (' + op.euiKwh + ' kWh/m²/yr net)\n' +
+    'Annual operational carbon: ' + op.annualIntensity + ' kg CO₂e/m²/yr = ' + op.annualTotal.toLocaleString() + ' tCO₂e/yr\n' +
+    op.lifetime + '-year operational total: ' + op.lifetimeIntensity.toLocaleString() + ' kg CO₂e/m² (' + op.lifetimeTotal.toLocaleString() + ' tCO₂e)\n' +
+    'Embodied carbon: ' + op.embodiedIntensity + ' kg CO₂e/m² (upfront, one-time)\n' +
+    'Whole life carbon: ' + op.wlcIntensity.toLocaleString() + ' kg CO₂e/m² total (' + Math.round(op.embodiedIntensity/op.wlcIntensity*100) + '% embodied / ' + Math.round(op.lifetimeIntensity/op.wlcIntensity*100) + '% operational)\n' +
+    (op.opSavingPct > 0 ? 'Saving ' + op.opSavingPct + '% vs ASHRAE 90.1 baseline.\n' : 'At or above ASHRAE 90.1 baseline — no operational savings vs code.\n') +
+    '\nFocus on: (1) what specifically drives the intensity at this performance level and energy system, (2) how switching performance level or energy system would change the result, (3) one specific action. Use <strong> for key numbers. Max 3 sentences.';
+  callAI(opPrompt, 180).then(result => {
+      const fallback = '<strong>' + op.annualIntensity + ' kg CO₂e/m²/yr</strong> operational intensity using ' + op.egrid.subregion + ' grid (' + op.gridFactor.toFixed(3) + ' kg CO₂e/kWh). ' +
+        'Over ' + op.lifetime + ' years, operational carbon (' + op.lifetimeIntensity.toLocaleString() + ' kg/m²) ' +
+        (op.lifetimeIntensity > op.embodiedIntensity ? 'exceeds' : 'is below') + ' embodied carbon (' + op.embodiedIntensity + ' kg/m²). ' +
+        (op.fuelKey === 'all_elec' ? 'All-electric system positions this building well as the grid decarbonizes.' : 'Switching to all-electric would reduce operational carbon as the grid gets cleaner.');
+      if(opInsightEl) opInsightEl.innerHTML = result.ok ? result.text : fallback;
+    });
+  }
+}
+
 // ── RENDER CARBON ──
 function renderCarbon(d){
   const city=d.city;
@@ -1119,18 +908,16 @@ function renderCarbon(d){
       <div class="k-badge b-${k.t==='green'?'g':k.t==='amber'?'a':k.t==='red'?'r':k.t==='blue'?'b':'t'}">${k.badge}</div>
     </div>`).join('');
 
-  // Trees
-  document.getElementById('tree-num').textContent=d.trees>0?d.trees.toLocaleString():'—';
-  document.getElementById('tree-sub').textContent=d.saving>0?`${Math.round(d.saving).toLocaleString()} tCO₂e saved vs concrete`:d.str==='concrete_cast'?'Select a lower-carbon system to see savings':'Above concrete baseline';
+  // Trees — handled by operational carbon section below (3-part card)
 
   // Bar chart
   const structs=Object.entries(STRUCT).sort((a,b)=>a[1].base-b[1].base);
   const rangeMult=RANGE_MULTIPLIERS[carbonRange]||1.0;
   const maxBar=Math.max(...structs.map(([,s])=>Math.round(s.base*d.mod*rangeMult+d.uAdd)))*1.15;
-  const tPct=0; const bpPct=0; // reference lines removed
+  const tPct=0; const bpPct=0;
   document.getElementById('carbon-threshold-row').innerHTML='';
   document.getElementById('carbon-bars').innerHTML=structs.map(([k,s])=>{
-    const v=Math.round(s.base*d.mod*(RANGE_MULTIPLIERS[carbonRange]||1)+d.uAdd);
+    const v=Math.round(s.base*d.mod*rangeMult+d.uAdd);
     const pct=(v/maxBar*100).toFixed(1);
     const isActive=k===d.str;
     // All bars same brand color — selected is full opacity + label, others are dimmed
@@ -1166,7 +953,7 @@ function renderCarbon(d){
   const activeI=d.intensity;
   document.getElementById('scenario-list').innerHTML=scenOrder.map(k=>{
     const s=STRUCT[k];
-    const v=Math.round(s.base*d.mod*(RANGE_MULTIPLIERS[carbonRange]||1)+d.uAdd);
+    const v=Math.round(s.base*d.mod*rangeMult+d.uAdd);
     const delta=v-activeI;
     const isAct=k===d.str;
     return `<div class="sc-item ${isAct?'active':''}" onclick="document.getElementById('structure').value='${k}';recalc()">
@@ -1177,7 +964,29 @@ function renderCarbon(d){
     </div>`;
   }).join('');
 
+  // ── OPERATIONAL CARBON SECTION ──
+  const op = calcOperational(d);
+
+  // Update 3-part tree card
+  const teEl = document.getElementById('trees-embodied');
+  const toEl = document.getElementById('trees-op');
+  const ttEl = document.getElementById('trees-total');
+  if(teEl) teEl.textContent = d.trees > 0 ? d.trees.toLocaleString() : '—';
+  if(toEl) toEl.textContent = op.treesOp > 0 ? op.treesOp.toLocaleString() : '—';
+  if(ttEl) ttEl.textContent = op.treesTotal > 0 ? op.treesTotal.toLocaleString() : '—';
+  const teSub = document.getElementById('trees-embodied-sub');
+  const toSub = document.getElementById('trees-op-sub');
+  const ttSub = document.getElementById('trees-total-sub');
+  if(teSub) teSub.textContent = d.saving > 0 ? Math.round(d.saving).toLocaleString() + ' tCO₂e saved vs concrete' : 'Select lower-carbon structure';
+  if(toSub) toSub.textContent = op.opSavingPct > 0 ? op.opSavingPct + '% below ASHRAE 90.1 baseline · ' + op.lifetime + ' yr lifetime' : 'At or above code baseline';
+  if(ttSub) ttSub.textContent = 'Embodied + operational · ' + op.lifetime + ' year building life';
+
+  // Render operational carbon panel
+  const opEl = document.getElementById('op-carbon-panel');
+  if(opEl) renderOpPanel(opEl, d, op);
+
   // AI insight — live Anthropic API call
+    // AI insight — live Anthropic API call
   const insightEl=document.getElementById('carbon-insight');
   insightEl.innerHTML='<div class="insight-loading"><div class="insight-spinner"></div>Analyzing carbon performance…</div>';
   getAIInsight('carbon', d).then(text=>{insightEl.innerHTML=text;});
@@ -1189,7 +998,10 @@ function renderCarbon(d){
 
 async function getAIInsight(tab, d){
   const city = d.city;
-  const cacheKey = `${tab}-${d.str}-${d.intensity}-${d.orient}-${d.wwr}-${d.glaz}-${city.zone}-${d.floors}`;
+  const perfKey = document.getElementById('op-perf')?.value || 'median';
+  const fuelKey = document.getElementById('op-fuel')?.value || 'elec_gas';
+  const hasSolar = document.getElementById('op-solar')?.checked || false;
+  const cacheKey = `${tab}-${d.str}-${d.intensity}-${d.orient}-${d.wwr}-${d.glaz}-${city.zone}-${d.floors}-${carbonRange}-${perfKey}-${fuelKey}-${hasSolar}-${opLifetime}`;
   if(aiInsightCache[cacheKey]) return aiInsightCache[cacheKey];
 
   const context = `You are Carbon Scout's AI sustainability advisor — an expert AEC sustainability consultant.
@@ -1205,7 +1017,10 @@ You are analyzing a building project with these parameters:
 - WWR: ${d.wwr}%, Orientation: ${d.orient}-facing
 - Glazing: ${d.glF.label} (U=${d.glF.u} W/m²K, SHGC=${d.glF.shgc}, VLT=${d.glF.vlt})
 - sDA: ${d.sDA}% (LEED target ≥55%), ASE: ${d.ASE}% (LEED target ≤10%)
-- LEED MRc1: ${d.intensity<=300?'ELIGIBLE':'AT RISK'}`;
+- LEED MRc1: ${d.intensity<=300?'ELIGIBLE':'AT RISK'}
+- Op Performance: ${document.getElementById('op-perf')?.value||'median'}
+- Energy System: ${document.getElementById('op-fuel')?.value||'elec_gas'}${document.getElementById('op-solar')?.checked?' + rooftop solar':''}
+- Building Lifetime: ${opLifetime} years`;
 
   const prompts = {
     carbon: `${context}
@@ -2182,6 +1997,573 @@ document.addEventListener('DOMContentLoaded',function(){
   recalc();
   fetchWindData(c.lat,c.lon,c.name);
 });
+
 </script>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-pulse"></div>
+    Carbon Scout
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-meta">AEC Sustainability Intelligence · v4.12</div>
+  <div class="topbar-right">
+    <div class="topbar-meta" id="top-std">EN 15978 · A1–A5</div>
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+  </div>
+</div>
+
+<!-- MODE + UNITS BAR -->
+<div class="modebar">
+  <div class="mode-label">Mode</div>
+  <div class="mode-toggle">
+    <button class="mode-btn" id="mode-quick" onclick="setMode('quick')">⚡ Quick</button>
+    <button class="mode-btn active" id="mode-detail" onclick="setMode('detail')">🔬 Detailed</button>
+  </div>
+  <div class="modebar-right">
+    <div class="units-toggle">
+      <button class="units-btn" id="btn-m2" onclick="setUnits('metric')">m²</button>
+      <button class="units-btn active" id="btn-ft2" onclick="setUnits('imperial')">ft²</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOCATION BAR -->
+<div class="locbar">
+  <div class="loc-label">Location</div>
+  <select class="loc-select" id="city" onchange="onCityChange()">
+    <option value="nyc">New York, NY</option>
+    <option value="hou" selected>Houston, TX</option>
+    <option value="dal">Dallas, TX</option>
+    <option value="chi">Chicago, IL</option>
+    <option value="la">Los Angeles, CA</option>
+    <option value="bos">Boston, MA</option>
+    <option value="sea">Seattle, WA</option>
+    <option value="mia">Miami, FL</option>
+    <option value="den">Denver, CO</option>
+    <option value="phx">Phoenix, AZ</option>
+  </select>
+  <div class="loc-chips">
+    <span class="chip chip-g" id="chip-zone">Zone 2A</span>
+    <span class="chip chip-a" id="chip-climate">Hot-Humid</span>
+    <span class="chip chip-b" id="chip-sun">5.2 PSH</span>
+  </div>
+</div>
+
+<!-- QUICK MODE -->
+<div id="quick-mode" style="display:none;flex:1;overflow-y:auto;background:var(--bg);">
+  <div class="quick-panel">
+    <div class="quick-hero">
+      <div class="quick-hero-title">60-Second Carbon Assessment</div>
+      <div class="quick-hero-sub">Describe your building or fill in the fields below.</div>
+    </div>
+    <div style="max-width:600px;margin:0 auto;width:100%;">
+      <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:10px;transition:border-color .15s;box-shadow:var(--sh);" id="nl-wrap" onfocusin="this.style.borderColor='var(--cs-accent)'" onfocusout="this.style.borderColor='var(--border)'">
+        <div style="font-size:16px">💬</div>
+        <input type="text" id="nl-input" placeholder="e.g. 12 storey office in Houston, concrete frame, 50,000 sqft" style="flex:1;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);outline:none;" onkeydown="if(event.key==='Enter')parseNLInput()"/>
+        <button onclick="parseNLInput()" style="background:var(--cs);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">Parse ↵</button>
+      </div>
+      <div style="font-size:9px;color:var(--faint);padding:4px 4px 0;font-family:'DM Mono',monospace;">AI reads your description and fills in the fields automatically</div>
+    </div>
+    <div class="quick-inputs" style="grid-template-columns:repeat(4,1fr)">
+      <div class="quick-field">
+        <label id="q-gfa-label">GFA (ft²)</label>
+        <input type="number" id="q-gfa" value="50000" oninput="quickCalc()"/>
+      </div>
+      <div class="quick-field">
+        <label>Floors</label>
+        <input type="number" id="q-floors" value="12" min="1" max="100" oninput="document.getElementById('floors').value=this.value;quickCalc()"/>
+      </div>
+      <div class="quick-field">
+        <label>Building Type</label>
+        <select id="q-type" onchange="quickCalc()">
+          <option value="office">Office</option>
+          <option value="residential">Residential</option>
+          <option value="mixed">Mixed-Use</option>
+          <option value="retail">Retail</option>
+          <option value="education">Education</option>
+          <option value="healthcare">Healthcare</option>
+        </select>
+      </div>
+      <div class="quick-field">
+        <label>Structural System</label>
+        <select id="q-struct" onchange="quickCalc()">
+          <option value="concrete_cast">Concrete CIP</option>
+          <option value="concrete_precast">Concrete Precast</option>
+          <option value="steel_composite" selected>Steel Composite</option>
+          <option value="steel_light">Steel Light Frame</option>
+          <option value="timber_clt">Mass Timber CLT</option>
+          <option value="timber_glulam">Mass Timber Glulam</option>
+          <option value="masonry">Masonry</option>
+        </select>
+      </div>
+    </div>
+    <div class="quick-results" id="quick-results"></div>
+    <div class="card card-pad" id="quick-insight-card" style="max-width:800px;margin:0 auto;width:100%;">
+      <div class="insight-tag">✦ AI Insight</div>
+      <div class="insight-text" id="quick-insight-text">Adjust inputs above to see your assessment.</div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODE -->
+<div id="detail-mode" style="display:flex;flex:1;overflow:hidden;flex-direction:column;min-height:0;">
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- LEFT PANEL -->
+    <div class="left">
+      <div class="left-inner" id="left-carbon">
+        <div class="panel-section">
+          <div class="panel-title">Building</div>
+          <div class="field-row">
+            <div class="field">
+              <label id="gfa-label">GFA (ft²)</label>
+              <input type="number" id="gfa" value="53820" oninput="recalc()"/>
+            </div>
+            <div class="field">
+              <label>Floors</label>
+              <input type="number" id="floors" value="12" min="1" max="100" oninput="document.getElementById('q-floors').value=this.value;recalc()"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Structural System</label>
+            <select id="structure" onchange="recalc()">
+              <option value="concrete_cast">Concrete (Cast-in-place)</option>
+              <option value="concrete_precast">Concrete (Precast)</option>
+              <option value="steel_composite" selected>Steel (Composite)</option>
+              <option value="steel_light">Steel (Light Frame)</option>
+              <option value="timber_clt">Mass Timber — CLT</option>
+              <option value="timber_glulam">Mass Timber — Glulam</option>
+              <option value="masonry">Masonry</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Building Use</label>
+            <select id="use" onchange="recalc()">
+              <option value="office" selected>Office</option>
+              <option value="residential">Residential</option>
+              <option value="mixed">Mixed-Use</option>
+              <option value="retail">Retail</option>
+              <option value="education">Education</option>
+              <option value="healthcare">Healthcare</option>
+            </select>
+          </div>
+        </div>
+        <div class="pdiv"></div>
+        <div class="panel-section">
+          <div class="panel-title">Scenarios</div>
+          <div class="scenario-list" id="scenario-list"></div>
+        </div>
+
+        <!-- OPERATIONAL CARBON INPUTS -->
+        <div class="panel-section" style="border-top:1px solid var(--border);padding-top:14px;margin-top:2px;">
+          <div class="panel-title" style="display:flex;align-items:center;gap:6px;">
+            ⚡ Operational Carbon
+            <span style="font-size:8px;font-weight:500;color:var(--faint);letter-spacing:0;text-transform:none;">CBECS 2018 · eGRID 2022</span>
+          </div>
+          <div class="field">
+            <label>Performance Level</label>
+            <select id="op-perf" onchange="recalc()">
+              <option value="baseline">ASHRAE 90.1 Baseline (Code Min)</option>
+              <option value="median" selected>CBECS Median (Typical)</option>
+              <option value="leed_cert">LEED Certified (~25% better)</option>
+              <option value="leed_gold">LEED Gold (~40% better)</option>
+              <option value="leed_plat">LEED Platinum / Net Zero Ready</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Energy System</label>
+            <select id="op-fuel" onchange="recalc()">
+              <option value="all_elec">All-Electric (VRF / Heat Pump)</option>
+              <option value="elec_gas" selected>Gas + Electric (Typical US)</option>
+              <option value="hi_eff">High-Eff Gas + Heat Pumps (Hybrid)</option>
+              <option value="district">District Energy / Chilled Water</option>
+            </select>
+          </div>
+          <div class="field" style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="document.getElementById('op-solar').click()">
+            <input type="checkbox" id="op-solar" onchange="recalc()" style="accent-color:var(--cs);width:14px;height:14px;cursor:pointer;flex-shrink:0;"/>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text);">☀️ Rooftop Solar (PV)</div>
+              <div style="font-size:9px;color:var(--faint);">–15 kWh/m²/yr offset · NREL avg</div>
+            </div>
+          </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;justify-content:space-between;">
+              Building Lifetime
+              <span style="font-size:9px;color:var(--cs);font-weight:700;" id="lifetime-display">60 yrs</span>
+            </label>
+            <input type="range" id="op-lifetime" min="20" max="100" value="60" step="5"
+              style="width:100%;accent-color:var(--cs);cursor:pointer;margin-top:4px;"
+              oninput="opLifetime=parseInt(this.value);document.getElementById('lifetime-display').textContent=this.value+' yrs';recalc()"/>
+            <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--faint);margin-top:2px;">
+              <span>20</span><span>60 yrs · EN 15978</span><span>100</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pdiv"></div>
+        <!-- THREE-PART TREE CARD -->
+        <div class="tree-card" style="padding:0;overflow:hidden;">
+          <!-- Embodied row -->
+          <div style="padding:10px 14px;border-bottom:1px solid var(--border);">
+            <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px;">🏗 Embodied Carbon</div>
+            <div style="display:flex;align-items:baseline;gap:6px;">
+              <div style="font-size:22px;font-weight:800;color:var(--cs);" id="trees-embodied">—</div>
+              <div style="font-size:10px;color:var(--muted);">trees saved vs concrete</div>
+            </div>
+            <div style="font-size:9px;color:var(--faint);margin-top:2px;" id="trees-embodied-sub"></div>
+          </div>
+          <!-- Operational row -->
+          <div style="padding:10px 14px;border-bottom:1px solid var(--border);">
+            <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);margin-bottom:4px;">⚡ Operational Carbon</div>
+            <div style="display:flex;align-items:baseline;gap:6px;">
+              <div style="font-size:22px;font-weight:800;color:var(--green);" id="trees-op">—</div>
+              <div style="font-size:10px;color:var(--muted);">trees saved vs baseline</div>
+            </div>
+            <div style="font-size:9px;color:var(--faint);margin-top:2px;" id="trees-op-sub"></div>
+          </div>
+          <!-- Total row -->
+          <div style="padding:10px 14px;background:linear-gradient(135deg,var(--cs-l),#dbeafe);">
+            <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--cs);margin-bottom:4px;">🌳 Total — Whole Life</div>
+            <div style="display:flex;align-items:baseline;gap:6px;">
+              <div style="font-size:26px;font-weight:800;color:var(--cs-dark);" id="trees-total">—</div>
+              <div style="font-size:10px;color:var(--cs);">trees equivalent</div>
+            </div>
+            <div style="font-size:9px;color:var(--cs);opacity:.7;margin-top:2px;" id="trees-total-sub">over building lifetime</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="left-inner" id="left-daylight" style="display:none;">
+        <div class="panel-section">
+          <div class="panel-title">Facade</div>
+          <div class="field-row">
+            <div class="field">
+              <label>WWR (%)</label>
+              <input type="number" id="wwr" value="40" min="10" max="90" oninput="recalc()"/>
+            </div>
+            <div class="field">
+              <label>Orientation</label>
+              <select id="orient" onchange="recalc()">
+                <option value="N">North</option>
+                <option value="NE">North-East</option>
+                <option value="E">East</option>
+                <option value="SE">South-East</option>
+                <option value="S" selected>South</option>
+                <option value="SW">South-West</option>
+                <option value="W">West</option>
+                <option value="NW">North-West</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Glazing System</label>
+            <select id="glazing" onchange="recalc()">
+              <option value="std_dbl">Standard Double</option>
+              <option value="hp_dbl" selected>High-Perf Double</option>
+              <option value="triple">Triple Glazed</option>
+              <option value="electro">Electrochromic (Dynamic)</option>
+              <option value="bipv">BIPV (Solar Glass)</option>
+              <option value="fritted">Fritted / Ceramic</option>
+            </select>
+          </div>
+        </div>
+        <div class="pdiv"></div>
+        <div class="panel-section">
+          <div class="panel-title">Glazing Performance</div>
+          <div class="field-row">
+            <div class="field">
+              <label>U-Value</label>
+              <div id="gl-u" style="font-size:13px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
+            </div>
+            <div class="field">
+              <label>SHGC</label>
+              <div id="gl-shgc" style="font-size:13px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>VLT</label>
+            <div id="gl-vlt" style="font-size:13px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="left-inner" id="left-wind" style="display:none;">
+        <div class="panel-section">
+          <div class="panel-title">Climate Data</div>
+          <div class="field" style="pointer-events:none;">
+            <label>Station</label>
+            <div id="wind-station" style="font-size:12px;font-weight:700;color:var(--text);padding-top:2px;">—</div>
+          </div>
+          <div class="field" style="pointer-events:none;">
+            <label>Coordinates</label>
+            <div id="wind-coords" style="font-size:11px;font-weight:600;color:var(--text2);padding-top:2px;font-family:'DM Mono',monospace;">—</div>
+          </div>
+          <div class="field" style="pointer-events:none;">
+            <label>Data Source</label>
+            <div style="font-size:10px;font-weight:600;color:var(--muted);padding-top:2px;font-family:'DM Mono',monospace;">ERA5 Annual Archive</div>
+          </div>
+        </div>
+        <div class="pdiv"></div>
+        <div class="panel-section">
+          <div class="panel-title">Building</div>
+          <div class="field">
+            <label>Floors</label>
+            <input type="number" id="wind-floors" value="12" min="1" oninput="recalc()"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="left-inner" id="left-report" style="display:none;">
+        <div class="panel-section">
+          <div class="panel-title">Project Info</div>
+          <div class="field">
+            <label>Project Name</label>
+            <input type="text" id="proj-name" value="Untitled Project" style="font-size:13px;font-weight:600;"/>
+          </div>
+          <div class="field">
+            <label>Client</label>
+            <input type="text" id="proj-client" value="" placeholder="Client name"/>
+          </div>
+          <div class="field">
+            <label>Design Stage</label>
+            <select id="proj-stage">
+              <option>Schematic Design (SD)</option>
+              <option>Design Development (DD)</option>
+              <option>Construction Documents (CD)</option>
+              <option>Pre-Design</option>
+              <option>Bid / Permit</option>
+              <option>Construction Administration (CA)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Prepared By</label>
+            <input type="text" id="proj-author" value="Het Patel, LEED AP"/>
+          </div>
+        </div>
+        <div class="pdiv"></div>
+        <div class="report-actions" style="flex-direction:column;">
+          <button class="btn btn-green" onclick="exportReport()">↓ Export PDF Report</button>
+          <button class="btn btn-secondary" onclick="copyCSV()">⎘ Copy CSV Data</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: nav + content -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;min-width:0;">
+
+    <!-- NAV TABS -->
+    <div class="nav">
+      <div class="nav-tab active" data-tab="carbon" onclick="switchTab('carbon')"><span class="tab-icon">🌿</span>Embodied Carbon</div>
+      <div class="nav-tab" data-tab="daylight" onclick="switchTab('daylight')"><span class="tab-icon">☀️</span>Daylight & Glare</div>
+      <div class="nav-tab" data-tab="wind" onclick="switchTab('wind')"><span class="tab-icon">🌬</span>Climate & Wind</div>
+      <div class="nav-tab" data-tab="report" onclick="switchTab('report')"><span class="tab-icon">📋</span>Report</div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right">
+
+      <!-- CARBON TAB -->
+      <div class="tab-panel active" id="tab-carbon">
+        <div class="krow" id="carbon-kpis"></div>
+        <!-- Carbon range toggle -->
+        <div style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--faint);">Carbon Range</div>
+          <div style="display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px;gap:2px;">
+            <button class="range-btn" id="range-best" onclick="setCarbonRange('best')" style="font-size:10px;font-weight:600;padding:3px 12px;border-radius:14px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all .18s;">Best Practice</button>
+            <button class="range-btn active" id="range-typical" onclick="setCarbonRange('typical')" style="font-size:10px;font-weight:600;padding:3px 12px;border-radius:14px;border:none;background:var(--cs);color:#fff;cursor:pointer;font-family:'Inter',sans-serif;transition:all .18s;">Typical</button>
+            <button class="range-btn" id="range-conservative" onclick="setCarbonRange('conservative')" style="font-size:10px;font-weight:600;padding:3px 12px;border-radius:14px;border:none;background:transparent;cursor:pointer;color:var(--muted);font-family:'Inter',sans-serif;transition:all .18s;">Conservative</button>
+          </div>
+          <div style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;" id="range-label">EC3 median · typical US construction</div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">Structural System Carbon Comparison</div>
+          <div class="card-sub" id="carbon-chart-sub">A1–A5 embodied carbon intensity · LEED MRc1 requires 10% reduction vs project-specific baseline</div>
+          <div style="position:relative;height:22px;margin-bottom:6px;" id="carbon-threshold-row"></div>
+          <div class="bar-list" id="carbon-bars"></div>
+          <div class="source-note">Sources: EC3 Carbon Leadership Forum · RICS WLCA 2nd Ed. 2023 · IStructE How to Calculate Embodied Carbon 2022 · Values = structure + envelope A1–A5 per m² GFA · Intensity (kg/m²) is independent of GFA — Total carbon (tCO₂e) scales with GFA</div>
+        </div>
+        <!-- AI INSIGHT — sits directly below bar chart -->
+        <div class="insight">
+          <div class="insight-tag">✦ AI Insight</div>
+          <div class="insight-text" id="carbon-insight">Calculating…</div>
+        </div>
+
+        <!-- OPERATIONAL CARBON PANEL -->
+        <div class="card card-pad" id="op-carbon-panel" style="border-top:3px solid var(--cs);">
+          <div class="insight-loading"><div class="insight-spinner"></div>Calculating operational carbon…</div>
+        </div>
+
+        <!-- SUSTAINABILITY COMPLIANCE — moved below operational -->
+        <div class="card card-pad">
+          <div class="card-title">Sustainability Compliance</div>
+          <div class="card-sub">LEED v4.1 credit tracking</div>
+          <div class="comply-grid" id="carbon-comply"></div>
+        </div>
+
+        <!-- EPD UPLOAD DRAWER -->
+        <div class="card">
+          <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleEPD()">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--text);letter-spacing:-.2px;">📄 Upload Your EPD</div>
+              <div style="font-size:10px;color:var(--faint);margin-top:2px;">Drop a product EPD PDF — AI reads the GWP value and checks LEED MRc4 eligibility · Values are A1–A3 GWP per declared unit (m³, tonne, or m²)</div>
+            </div>
+            <div id="epd-toggle-icon" style="font-size:16px;color:var(--faint);transition:transform .2s;">▼</div>
+          </div>
+          <div id="epd-drawer" style="display:none;border-top:1px solid var(--border);padding:18px 20px;">
+            <!-- Drop Zone -->
+            <div id="epd-dropzone" style="border:2px dashed var(--border);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);"
+              ondragover="event.preventDefault();this.style.borderColor='var(--cs-accent)';this.style.background='var(--cs-l)'"
+              ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'"
+              ondrop="handleEPDDrop(event)"
+              onclick="document.getElementById('epd-file-input').click()">
+              <div style="font-size:28px;margin-bottom:8px;">📄</div>
+              <div style="font-size:12px;font-weight:700;color:var(--text2)">Drop EPD PDF here or click to upload</div>
+              <div style="font-size:10px;color:var(--faint);margin-top:4px;">AI extracts GWP value · Compares to benchmark · LEED MRc4 check</div>
+              <input type="file" id="epd-file-input" accept=".pdf" style="display:none" onchange="handleEPDFile(this.files[0])"/>
+            </div>
+
+            <!-- Or paste GWP manually -->
+            <div style="display:flex;align-items:center;gap:10px;margin-top:14px;">
+              <div style="flex:1;height:1px;background:var(--border)"></div>
+              <div style="font-size:10px;color:var(--faint);white-space:nowrap">or enter GWP manually</div>
+              <div style="flex:1;height:1px;background:var(--border)"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:12px;align-items:end;">
+              <div class="field">
+                <label>Material Category</label>
+                <select id="epd-material" onchange="updateEPDHint()">
+                  <option value="concrete">Concrete / Ready-Mix</option>
+                  <option value="concrete_hpc">Concrete / High-Performance</option>
+                  <option value="steel_struct">Structural Steel (BOF/EAF)</option>
+                  <option value="steel_rebar">Rebar / Reinforcing Steel</option>
+                  <option value="timber">Mass Timber / CLT / Glulam</option>
+                  <option value="glazing">Glazing Unit (IGU)</option>
+                  <option value="curtain_wall">Curtain Wall / Aluminum Facade</option>
+                  <option value="brick">Brick / Masonry</option>
+                  <option value="gypsum">Gypsum Board / Drywall</option>
+                  <option value="insulation">Insulation</option>
+                  <option value="carpet">Carpet / Flooring</option>
+                  <option value="ceiling">Ceiling Tile / ACT</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>A1–A3 GWP (kg CO₂e/unit)</label>
+                <input type="number" id="epd-gwp" placeholder="e.g. 320" step="0.1" oninput="updateEPDHint()"/>
+              </div>
+              <button class="btn btn-primary" onclick="analyzeManualEPD()" style="height:42px;white-space:nowrap;align-self:end">Analyze EPD</button>
+            </div>
+
+            <!-- Hint text -->
+            <div id="epd-hint" style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:6px;padding:4px 2px;">
+              Select a category to see typical GWP range
+            </div>
+            <!-- EPD Results -->
+            <div id="epd-results" style="display:none;margin-top:16px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAYLIGHT & GLARE TAB -->
+      <div class="tab-panel" id="tab-daylight">
+        <div class="card card-pad">
+          <div class="card-title">Daylight Autonomy</div>
+          <div class="card-sub" id="dl-sub">Spatial Daylight Autonomy (sDA) · Annual Sunlight Exposure (ASE) · LEED EQc7</div>
+          <div class="dials-row" id="dl-dials"></div>
+          <div class="source-note">ASHRAE 169-2020 climate data · Parametric estimate — verify with Climate Studio or Radiance for compliance submission</div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">Annual Daylight Availability Heatmap</div>
+          <div class="card-sub" id="heatmap-sub">Estimated useful daylight illuminance (UDI 100–2000 lux) by month · Based on location solar data</div>
+          <div class="heatmap-grid" id="heatmap"></div>
+          <div class="heatmap-months" id="heatmap-months"></div>
+          <div class="heatmap-legend">
+            <div class="heatmap-l">Low</div>
+            <div class="heatmap-bar"></div>
+            <div class="heatmap-l">High UDI</div>
+          </div>
+        </div>
+        <div class="twocol">
+          <div class="card card-pad">
+            <div class="card-title">Glare Risk by Orientation</div>
+            <div class="card-sub">Daylight Glare Probability (DGP) — EN 17037 categories</div>
+            <div class="dials-row" id="glare-dials"></div>
+            <div class="source-note">Parametric DGP estimate · Glazing SHGC applied · Verify with Evalglare for detailed analysis</div>
+          </div>
+          <div class="insight">
+            <div class="insight-tag">✦ Daylight Insight</div>
+            <div class="insight-text" id="dl-insight">Calculating…</div>
+          </div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">LEED EQc7 Compliance</div>
+          <div class="card-sub">Required: sDA₃₀₀/₅₀% ≥ 55% · ASE₁₀₀₀/₂₅₀ ≤ 10%</div>
+          <div id="leed-eqc7"></div>
+        </div>
+      </div>
+
+      <!-- WIND TAB -->
+      <div class="tab-panel" id="tab-wind">
+        <div class="card card-pad">
+          <div class="card-title">Wind Rose & Annual Climate</div>
+          <div class="card-sub" id="wind-title-sub">ERA5 annual wind frequency · Open-Meteo archive · Same source as EPW/TMY3 files used by Autodesk Forma</div>
+          <div class="wind-layout">
+            <div class="wind-rose-wrap">
+              <svg id="wind-rose-svg" viewBox="0 0 160 160" width="160" height="160"></svg>
+              <div style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;" id="wind-city">—</div>
+            </div>
+            <div>
+              <div class="wind-kpis" id="wind-kpis"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">PWC Zone Assessment</div>
+          <div class="card-sub">Pedestrian Wind Comfort — Lawson LDDC criteria</div>
+          <div class="pwc-zones" id="pwc-zones"></div>
+          <div class="source-note">Wind data: ERA5 annual archive (Open-Meteo) · Heights extrapolated using power law α=0.25 · Full CFD recommended at RIBA Stage 3</div>
+        </div>
+        <div class="twocol">
+          <div class="card card-pad">
+            <div class="card-title">Mitigation Recommendations</div>
+            <div class="card-sub">Based on prevailing wind and building height</div>
+            <div id="wind-mitigations"></div>
+          </div>
+          <div class="insight">
+            <div class="insight-tag">✦ Wind Insight</div>
+            <div class="insight-text" id="wind-insight">Fetching climate data…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORT TAB -->
+      <div class="tab-panel" id="tab-report">
+        <div class="card card-pad">
+          <div class="card-title">Sustainability Performance Summary</div>
+          <div class="card-sub" id="report-sub">—</div>
+          <div id="report-content" style="margin-top:12px;"></div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">LEED Credit Summary</div>
+          <div class="card-sub">LEED v4.1 BD+C — credit status based on current inputs</div>
+          <div id="report-leed"></div>
+        </div>
+        <div class="card card-pad">
+          <div class="card-title">Methodology & Disclaimers</div>
+          <div class="card-sub">Data sources and accuracy levels</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.7;" id="report-method"></div>
+        </div>
+      </div>
+
+    </div><!-- /right -->
+    </div><!-- /right-col
+
+
 </body>
 </html>
