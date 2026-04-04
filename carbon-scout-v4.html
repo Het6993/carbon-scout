@@ -275,6 +275,11 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
 .ll-bar-wrap{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
 .ll-bar{height:100%;border-radius:4px;transition:width .7s ease;}
 
+/* ── ACCORDION ──*/
+.accordion-section { background: var(--surface); }
+.accordion-header:hover { background: var(--surface2); }
+.accordion-header:active { background: var(--surface2); }
+
 /* ── RESPONSIVE ── */
 /* ── TABLET (≤900px) ── */
 @media(max-width:900px){
@@ -519,6 +524,16 @@ async function callAI(prompt, maxTokens=300){
   } catch(e) {
     return {ok: false, cors: true, error: e.message};
   }
+}
+
+// ── ACCORDION ──
+function toggleAccordion(id){
+  const body = document.getElementById('acc-'+id+'-body');
+  const icon = document.getElementById('acc-'+id+'-icon');
+  if(!body || !icon) return;
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  icon.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
 }
 
 // ── HELPERS ──
@@ -951,6 +966,9 @@ function renderCarbon(d){
   // Scenario list
   const scenOrder=['timber_glulam','timber_clt','steel_light','masonry','steel_composite','concrete_precast','concrete_cast'];
   const activeI=d.intensity;
+  // Update accordion badge
+  const scBadge = document.getElementById('acc-scenarios-badge');
+  if(scBadge) scBadge.textContent = d.strF.label + ' · ' + d.intensity + ' kg/m²';
   document.getElementById('scenario-list').innerHTML=scenOrder.map(k=>{
     const s=STRUCT[k];
     const v=Math.round(s.base*d.mod*rangeMult+d.uAdd);
@@ -981,6 +999,12 @@ function renderCarbon(d){
   if(toSub) toSub.textContent = op.opSavingPct > 0 ? op.opSavingPct + '% below ASHRAE 90.1 baseline · ' + op.lifetime + ' yr lifetime' : 'At or above code baseline';
   if(ttSub) ttSub.textContent = 'Embodied + operational · ' + op.lifetime + ' year building life';
 
+  // Update op accordion badge
+  const opBadge = document.getElementById('acc-opcarbon-badge');
+  if(opBadge){
+    const perfShort = {baseline:'Baseline',median:'Median',leed_cert:'LEED Cert',leed_gold:'LEED Gold',leed_plat:'NZR'};
+    opBadge.textContent = (perfShort[op.perfKey]||op.perfKey) + ' · ' + op.annualIntensity + ' kg/m²/yr';
+  }
   // Render operational carbon panel
   const opEl = document.getElementById('op-carbon-panel');
   if(opEl) renderOpPanel(opEl, d, op);
@@ -2009,7 +2033,7 @@ document.addEventListener('DOMContentLoaded',function(){
     Carbon Scout
   </div>
   <div class="topbar-sep"></div>
-  <div class="topbar-meta">AEC Sustainability Intelligence · v4.12</div>
+  <div class="topbar-meta">AEC Sustainability Intelligence · v4.13</div>
   <div class="topbar-right">
     <div class="topbar-meta" id="top-std">EN 15978 · A1–A5</div>
     <div class="live-badge"><div class="live-dot"></div>LIVE</div>
@@ -2155,53 +2179,71 @@ document.addEventListener('DOMContentLoaded',function(){
           </div>
         </div>
         <div class="pdiv"></div>
-        <div class="panel-section">
-          <div class="panel-title">Scenarios</div>
-          <div class="scenario-list" id="scenario-list"></div>
+        <!-- SCENARIOS ACCORDION -->
+        <div class="accordion-section" id="acc-scenarios">
+          <div class="accordion-header" onclick="toggleAccordion('scenarios')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;border-top:1px solid var(--border);user-select:none;-webkit-tap-highlight-color:transparent;">
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);">Scenarios</span>
+              <span style="font-size:9px;color:var(--faint);" id="acc-scenarios-badge"></span>
+            </div>
+            <svg id="acc-scenarios-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" style="transition:transform .2s;transform:rotate(0deg);flex-shrink:0;">
+              <path d="M2 4l4 4 4-4" stroke="var(--faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div id="acc-scenarios-body" style="display:none;padding:0 14px 12px;">
+            <div class="scenario-list" id="scenario-list"></div>
+          </div>
         </div>
 
-        <!-- OPERATIONAL CARBON INPUTS -->
-        <div class="panel-section" style="border-top:1px solid var(--border);padding-top:14px;margin-top:2px;">
-          <div class="panel-title" style="display:flex;align-items:center;gap:6px;">
-            ⚡ Operational Carbon
-            <span style="font-size:8px;font-weight:500;color:var(--faint);letter-spacing:0;text-transform:none;">CBECS 2018 · eGRID 2022</span>
-          </div>
-          <div class="field">
-            <label>Performance Level</label>
-            <select id="op-perf" onchange="recalc()">
-              <option value="baseline">ASHRAE 90.1 Baseline (Code Min)</option>
-              <option value="median" selected>CBECS Median (Typical)</option>
-              <option value="leed_cert">LEED Certified (~25% better)</option>
-              <option value="leed_gold">LEED Gold (~40% better)</option>
-              <option value="leed_plat">LEED Platinum / Net Zero Ready</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Energy System</label>
-            <select id="op-fuel" onchange="recalc()">
-              <option value="all_elec">All-Electric (VRF / Heat Pump)</option>
-              <option value="elec_gas" selected>Gas + Electric (Typical US)</option>
-              <option value="hi_eff">High-Eff Gas + Heat Pumps (Hybrid)</option>
-              <option value="district">District Energy / Chilled Water</option>
-            </select>
-          </div>
-          <div class="field" style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="document.getElementById('op-solar').click()">
-            <input type="checkbox" id="op-solar" onchange="recalc()" style="accent-color:var(--cs);width:14px;height:14px;cursor:pointer;flex-shrink:0;"/>
-            <div>
-              <div style="font-size:11px;font-weight:600;color:var(--text);">☀️ Rooftop Solar (PV)</div>
-              <div style="font-size:9px;color:var(--faint);">–15 kWh/m²/yr offset · NREL avg</div>
+        <!-- OPERATIONAL CARBON ACCORDION -->
+        <div class="accordion-section" id="acc-opcarbon">
+          <div class="accordion-header" onclick="toggleAccordion('opcarbon')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;border-top:1px solid var(--border);user-select:none;-webkit-tap-highlight-color:transparent;">
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);">⚡ Operational Carbon</span>
+              <span style="font-size:9px;color:var(--faint);" id="acc-opcarbon-badge">CBECS · eGRID</span>
             </div>
+            <svg id="acc-opcarbon-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" style="transition:transform .2s;transform:rotate(0deg);flex-shrink:0;">
+              <path d="M2 4l4 4 4-4" stroke="var(--faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
-          <div class="field">
-            <label style="display:flex;align-items:center;justify-content:space-between;">
-              Building Lifetime
-              <span style="font-size:9px;color:var(--cs);font-weight:700;" id="lifetime-display">60 yrs</span>
-            </label>
-            <input type="range" id="op-lifetime" min="20" max="100" value="60" step="5"
-              style="width:100%;accent-color:var(--cs);cursor:pointer;margin-top:4px;"
-              oninput="opLifetime=parseInt(this.value);document.getElementById('lifetime-display').textContent=this.value+' yrs';recalc()"/>
-            <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--faint);margin-top:2px;">
-              <span>20</span><span>60 yrs · EN 15978</span><span>100</span>
+          <div id="acc-opcarbon-body" style="display:none;padding:0 14px 12px;">
+            <div class="field" style="margin-top:8px;">
+              <label>Performance Level</label>
+              <select id="op-perf" onchange="recalc()">
+                <option value="baseline">ASHRAE 90.1 Baseline (Code Min)</option>
+                <option value="median" selected>CBECS Median (Typical)</option>
+                <option value="leed_cert">LEED Certified (~25% better)</option>
+                <option value="leed_gold">LEED Gold (~40% better)</option>
+                <option value="leed_plat">LEED Platinum / Net Zero Ready</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Energy System</label>
+              <select id="op-fuel" onchange="recalc()">
+                <option value="all_elec">All-Electric (VRF / Heat Pump)</option>
+                <option value="elec_gas" selected>Gas + Electric (Typical US)</option>
+                <option value="hi_eff">High-Eff Gas + Heat Pumps (Hybrid)</option>
+                <option value="district">District Energy / Chilled Water</option>
+              </select>
+            </div>
+            <div class="field" style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="document.getElementById('op-solar').click()">
+              <input type="checkbox" id="op-solar" onchange="recalc()" style="accent-color:var(--cs);width:14px;height:14px;cursor:pointer;flex-shrink:0;"/>
+              <div>
+                <div style="font-size:11px;font-weight:600;color:var(--text);">☀️ Rooftop Solar (PV)</div>
+                <div style="font-size:9px;color:var(--faint);">–15 kWh/m²/yr offset · NREL avg</div>
+              </div>
+            </div>
+            <div class="field">
+              <label style="display:flex;align-items:center;justify-content:space-between;">
+                Building Lifetime
+                <span style="font-size:9px;color:var(--cs);font-weight:700;" id="lifetime-display">60 yrs</span>
+              </label>
+              <input type="range" id="op-lifetime" min="20" max="100" value="60" step="5"
+                style="width:100%;accent-color:var(--cs);cursor:pointer;margin-top:4px;"
+                oninput="opLifetime=parseInt(this.value);document.getElementById('lifetime-display').textContent=this.value+' yrs';recalc()"/>
+              <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--faint);margin-top:2px;">
+                <span>20</span><span>60 yrs · EN 15978</span><span>100</span>
+              </div>
             </div>
           </div>
         </div>
