@@ -530,10 +530,23 @@ async function callAI(prompt, maxTokens=300){
 function toggleAccordion(id){
   const body = document.getElementById('acc-'+id+'-body');
   const icon = document.getElementById('acc-'+id+'-icon');
+  const header = document.querySelector('#acc-'+id+' .accordion-header');
   if(!body || !icon) return;
   const open = body.style.display === 'none';
   body.style.display = open ? 'block' : 'none';
   icon.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+  // Update header to show open state
+  if(header){
+    if(id === 'opcarbon'){
+      header.style.background = open ? 'rgba(29,78,216,.12)' : 'var(--cs-l)';
+      header.style.borderColor = open ? 'var(--cs)' : 'rgba(29,78,216,.25)';
+    } else {
+      header.style.background = open ? 'var(--surface)' : 'var(--surface2)';
+      header.style.borderColor = open ? 'var(--cs)' : 'var(--border)';
+    }
+  }
+  // Hide "tap to expand" text when open
+  const hint = header?.querySelector('span:last-of-type');
 }
 
 // ── HELPERS ──
@@ -2180,33 +2193,41 @@ document.addEventListener('DOMContentLoaded',function(){
         </div>
         <div class="pdiv"></div>
         <!-- SCENARIOS ACCORDION -->
-        <div class="accordion-section" id="acc-scenarios">
-          <div class="accordion-header" onclick="toggleAccordion('scenarios')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;border-top:1px solid var(--border);user-select:none;-webkit-tap-highlight-color:transparent;">
+        <div class="accordion-section" id="acc-scenarios" style="padding:0 14px 4px;">
+          <div class="accordion-header" onclick="toggleAccordion('scenarios')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);margin:0 0 2px 0;transition:background .15s;">
             <div style="display:flex;align-items:center;gap:7px;">
-              <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);">Scenarios</span>
-              <span style="font-size:9px;color:var(--faint);" id="acc-scenarios-badge"></span>
+              <span style="font-size:10px;">📊</span>
+              <span style="font-size:10px;font-weight:700;color:var(--text2);">Scenarios</span>
+              <span style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;" id="acc-scenarios-badge"></span>
             </div>
-            <svg id="acc-scenarios-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" style="transition:transform .2s;transform:rotate(0deg);flex-shrink:0;">
-              <path d="M2 4l4 4 4-4" stroke="var(--faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <div style="display:flex;align-items:center;gap:5px;">
+              <span style="font-size:8px;color:var(--faint);">tap to expand</span>
+              <svg id="acc-scenarios-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" style="transition:transform .2s;transform:rotate(0deg);flex-shrink:0;">
+                <path d="M2 4l4 4 4-4" stroke="var(--cs)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
           </div>
-          <div id="acc-scenarios-body" style="display:none;padding:0 14px 12px;">
+          <div id="acc-scenarios-body" style="display:none;padding:8px 2px 4px;">
             <div class="scenario-list" id="scenario-list"></div>
           </div>
         </div>
 
         <!-- OPERATIONAL CARBON ACCORDION -->
-        <div class="accordion-section" id="acc-opcarbon">
-          <div class="accordion-header" onclick="toggleAccordion('opcarbon')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;border-top:1px solid var(--border);user-select:none;-webkit-tap-highlight-color:transparent;">
+        <div class="accordion-section" id="acc-opcarbon" style="padding:0 14px 4px;">
+          <div class="accordion-header" onclick="toggleAccordion('opcarbon')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;background:var(--cs-l);border:1px solid rgba(29,78,216,.25);border-radius:var(--rs);margin:0 0 2px 0;transition:background .15s;">
             <div style="display:flex;align-items:center;gap:7px;">
-              <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);">⚡ Operational Carbon</span>
-              <span style="font-size:9px;color:var(--faint);" id="acc-opcarbon-badge">CBECS · eGRID</span>
+              <span style="font-size:10px;">⚡</span>
+              <span style="font-size:10px;font-weight:700;color:var(--cs-dark);">Operational Carbon</span>
+              <span style="font-size:9px;color:var(--cs);opacity:.8;font-family:'DM Mono',monospace;" id="acc-opcarbon-badge">CBECS · eGRID</span>
             </div>
-            <svg id="acc-opcarbon-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" style="transition:transform .2s;transform:rotate(0deg);flex-shrink:0;">
-              <path d="M2 4l4 4 4-4" stroke="var(--faint)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <div style="display:flex;align-items:center;gap:5px;">
+              <span style="font-size:8px;color:var(--cs);opacity:.7;">tap to expand</span>
+              <svg id="acc-opcarbon-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" style="transition:transform .2s;transform:rotate(0deg);flex-shrink:0;">
+                <path d="M2 4l4 4 4-4" stroke="var(--cs)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
           </div>
-          <div id="acc-opcarbon-body" style="display:none;padding:0 14px 12px;">
+          <div id="acc-opcarbon-body" style="display:none;padding:8px 2px 4px;">
             <div class="field" style="margin-top:8px;">
               <label>Performance Level</label>
               <select id="op-perf" onchange="recalc()">
