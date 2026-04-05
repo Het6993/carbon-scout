@@ -612,8 +612,10 @@ function calcOperational(d){
 
   // 4b. Rooftop solar offset (if selected)
   const hasSolar = document.getElementById('op-solar')?.checked || false;
-  // Typical rooftop solar: 15 kWh/m²/yr for US commercial (NREL)
-  const solarOffset = hasSolar ? 15 : 0; // kWh/m²/yr
+  // NREL US commercial rooftop PV: ~40 kWh/m²/yr on floor area basis
+  // Assumes ~20% roof coverage, 200W/m² panels, avg 4.5 PSH adjusted for location
+  const psh = parseFloat(document.getElementById('chip-sun')?.textContent) || 4.5;
+  const solarOffset = hasSolar ? Math.round(psh * 8.5) : 0; // scales with city solar resource
 
   // 4. Adjusted EUI (kBtu/ft²/yr)
   const adjEUI_kbtu = baseEUI * perfMult * zoneMod * wwrMod;
@@ -869,13 +871,29 @@ function renderOpPanel(el, d, op){
   html += '<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);"><div style=\"width:10px;height:10px;border-radius:2px;background:#60a5fa;\"></div>Operational ' + op.lifetimeIntensity.toLocaleString() + ' kg/m² (' + op.lifetime + ' yr)</div>';
   html += '</div></div>';
 
-  // Solar tag
+  // Grid vs gas insight row
+  const gridVsGas = op.gridFactor;
+  const isGridDirty = gridVsGas > GAS_FACTOR;
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
+  // Grid cleanliness badge
+  const gridColor = gridVsGas < 0.25 ? '#065f46' : gridVsGas < 0.35 ? '#1e40af' : gridVsGas < 0.45 ? '#92400e' : '#9b1c1c';
+  const gridBg = gridVsGas < 0.25 ? '#ecfdf5' : gridVsGas < 0.35 ? '#dbeafe' : gridVsGas < 0.45 ? '#fff7ed' : '#fef2f2';
+  const gridBorder = gridVsGas < 0.25 ? '#6ee7b7' : gridVsGas < 0.35 ? '#93c5fd' : gridVsGas < 0.45 ? '#fed7aa' : '#fca5a5';
+  const gridLabel = gridVsGas < 0.25 ? '🟢 Clean grid' : gridVsGas < 0.35 ? '🔵 Moderate grid' : gridVsGas < 0.45 ? '🟡 Dirty grid' : '🔴 High-carbon grid';
+  html += '<div style="display:inline-flex;align-items:center;gap:5px;background:' + gridBg + ';border:1px solid ' + gridBorder + ';border-radius:20px;padding:4px 10px;font-size:9px;font-weight:700;color:' + gridColor + ';">' + gridLabel + ' · ' + op.gridFactor.toFixed(3) + ' kg/kWh</div>';
+  // All-electric warning if grid is dirtier than gas
+  if(isGridDirty && op.fuelKey === 'all_elec'){
+    html += '<div style="display:inline-flex;align-items:center;gap:5px;background:#fff7ed;border:1px solid #fed7aa;border-radius:20px;padding:4px 10px;font-size:9px;font-weight:700;color:#92400e;">⚠️ Grid (' + op.gridFactor.toFixed(3) + ') dirtier than gas (0.182) — all-electric adds carbon here</div>';
+  } else if(!isGridDirty && op.fuelKey !== 'all_elec'){
+    html += '<div style="display:inline-flex;align-items:center;gap:5px;background:#dbeafe;border:1px solid #93c5fd;border-radius:20px;padding:4px 10px;font-size:9px;font-weight:700;color:#1e40af;">💡 Clean grid — switching to all-electric would reduce carbon</div>';
+  }
   if(op.hasSolar){
-    html += '<div style="display:inline-flex;align-items:center;gap:5px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:20px;padding:4px 10px;font-size:9px;font-weight:700;color:#065f46;margin-bottom:10px;">☀️ Rooftop solar offset applied — –' + op.solarOffset + ' kWh/m²/yr · NREL avg</div>';
+    html += '<div style="display:inline-flex;align-items:center;gap:5px;background:#ecfdf5;border:1px solid #6ee7b7;border-radius:20px;padding:4px 10px;font-size:9px;font-weight:700;color:#065f46;">☀️ Solar –' + op.solarOffset + ' kWh/m²/yr · ' + op.egrid.label.split(' ')[0] + ' PSH-adjusted</div>';
   }
   if(op.wwrMod > 1.02){
-    html += '<div style="display:inline-flex;align-items:center;gap:5px;background:#fff7ed;border:1px solid #fed7aa;border-radius:20px;padding:4px 10px;font-size:9px;font-weight:700;color:#92400e;margin-bottom:10px;margin-left:6px;">🪟 WWR ' + Math.round((op.wwrMod-1)*100) + '% EUI penalty from glazing ratio</div>';
+    html += '<div style="display:inline-flex;align-items:center;gap:5px;background:#fff7ed;border:1px solid #fed7aa;border-radius:20px;padding:4px 10px;font-size:9px;font-weight:700;color:#92400e;">🪟 High WWR adds +' + Math.round((op.wwrMod-1)*100) + '% to EUI</div>';
   }
+  html += '</div>';
   // Disclaimer
   html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:9px;color:var(--faint);line-height:1.5;">';
   html += '<strong style=\"color:var(--text2)\">Data sources:</strong> EUI from EPA Energy Star / CBECS 2018 median · Grid: EPA eGRID 2022 (' + op.egrid.subregion + ') · Climate modifier: ASHRAE 169-2020 · WWR impact: ASHRAE 90.1. ';
@@ -908,7 +926,7 @@ function renderOpPanel(el, d, op){
     'Embodied carbon: ' + op.embodiedIntensity + ' kg CO₂e/m² (upfront, one-time)\n' +
     'Whole life carbon: ' + op.wlcIntensity.toLocaleString() + ' kg CO₂e/m² total (' + Math.round(op.embodiedIntensity/op.wlcIntensity*100) + '% embodied / ' + Math.round(op.lifetimeIntensity/op.wlcIntensity*100) + '% operational)\n' +
     (op.opSavingPct > 0 ? 'Saving ' + op.opSavingPct + '% vs ASHRAE 90.1 baseline.\n' : 'At or above ASHRAE 90.1 baseline — no operational savings vs code.\n') +
-    '\nFocus on: (1) what specifically drives the intensity at this performance level and energy system, (2) how switching performance level or energy system would change the result, (3) one specific action. Use <strong> for key numbers. Max 3 sentences.';
+    '\nFocus on: (1) what specifically drives the intensity at this performance level and energy system, (2) how switching performance level or energy system would change the result, (3) one specific action. IMPORTANT: gas factor = 0.182 kg CO2e/kWh — if grid > 0.182 all-electric WORSENS carbon, explain this. Use <strong> for key numbers. Max 3 sentences. Be direct.';
   callAI(opPrompt, 180).then(result => {
       const fallback = '<strong>' + op.annualIntensity + ' kg CO₂e/m²/yr</strong> operational intensity using ' + op.egrid.subregion + ' grid (' + op.gridFactor.toFixed(3) + ' kg CO₂e/kWh). ' +
         'Over ' + op.lifetime + ' years, operational carbon (' + op.lifetimeIntensity.toLocaleString() + ' kg/m²) ' +
@@ -2194,16 +2212,16 @@ document.addEventListener('DOMContentLoaded',function(){
         <div class="pdiv"></div>
         <!-- SCENARIOS ACCORDION -->
         <div class="accordion-section" id="acc-scenarios" style="padding:0 14px 4px;">
-          <div class="accordion-header" onclick="toggleAccordion('scenarios')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);margin:0 0 2px 0;transition:background .15s;">
+          <div class="accordion-header" onclick="toggleAccordion('scenarios')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;background:var(--surface);border:2px solid var(--border);border-radius:var(--rs);margin:0 0 2px 0;transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.06);">
             <div style="display:flex;align-items:center;gap:7px;">
-              <span style="font-size:10px;">📊</span>
-              <span style="font-size:10px;font-weight:700;color:var(--text2);">Scenarios</span>
-              <span style="font-size:9px;color:var(--faint);font-family:'DM Mono',monospace;" id="acc-scenarios-badge"></span>
+              <span style="font-size:11px;">📊</span>
+              <span style="font-size:11px;font-weight:700;color:var(--text);letter-spacing:-.2px;">Scenarios</span>
+              <span style="font-size:9px;color:var(--cs);font-family:'DM Mono',monospace;font-weight:600;" id="acc-scenarios-badge"></span>
             </div>
-            <div style="display:flex;align-items:center;gap:5px;">
-              <span style="font-size:8px;color:var(--faint);">tap to expand</span>
-              <svg id="acc-scenarios-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" style="transition:transform .2s;transform:rotate(0deg);flex-shrink:0;">
-                <path d="M2 4l4 4 4-4" stroke="var(--cs)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <div style="display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:2px 7px;">
+              <span style="font-size:9px;color:var(--text2);font-weight:600;">expand</span>
+              <svg id="acc-scenarios-icon" width="11" height="11" viewBox="0 0 12 12" fill="none" style="transition:transform .2s;transform:rotate(0deg);flex-shrink:0;">
+                <path d="M2 4l4 4 4-4" stroke="var(--cs)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
           </div>
@@ -2214,16 +2232,16 @@ document.addEventListener('DOMContentLoaded',function(){
 
         <!-- OPERATIONAL CARBON ACCORDION -->
         <div class="accordion-section" id="acc-opcarbon" style="padding:0 14px 4px;">
-          <div class="accordion-header" onclick="toggleAccordion('opcarbon')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;background:var(--cs-l);border:1px solid rgba(29,78,216,.25);border-radius:var(--rs);margin:0 0 2px 0;transition:background .15s;">
+          <div class="accordion-header" onclick="toggleAccordion('opcarbon')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;background:linear-gradient(135deg,var(--cs-l),#dbeafe);border:2px solid rgba(29,78,216,.35);border-radius:var(--rs);margin:0 0 2px 0;transition:all .15s;box-shadow:0 1px 3px rgba(29,78,216,.12);">
             <div style="display:flex;align-items:center;gap:7px;">
-              <span style="font-size:10px;">⚡</span>
-              <span style="font-size:10px;font-weight:700;color:var(--cs-dark);">Operational Carbon</span>
-              <span style="font-size:9px;color:var(--cs);opacity:.8;font-family:'DM Mono',monospace;" id="acc-opcarbon-badge">CBECS · eGRID</span>
+              <span style="font-size:11px;">⚡</span>
+              <span style="font-size:11px;font-weight:700;color:var(--cs-dark);letter-spacing:-.2px;">Operational Carbon</span>
+              <span style="font-size:9px;color:var(--cs);font-family:'DM Mono',monospace;font-weight:600;" id="acc-opcarbon-badge">CBECS · eGRID</span>
             </div>
-            <div style="display:flex;align-items:center;gap:5px;">
-              <span style="font-size:8px;color:var(--cs);opacity:.7;">tap to expand</span>
-              <svg id="acc-opcarbon-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" style="transition:transform .2s;transform:rotate(0deg);flex-shrink:0;">
-                <path d="M2 4l4 4 4-4" stroke="var(--cs)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <div style="display:flex;align-items:center;gap:4px;background:var(--cs);border-radius:10px;padding:2px 7px;">
+              <span style="font-size:9px;color:#fff;font-weight:600;">expand</span>
+              <svg id="acc-opcarbon-icon" width="11" height="11" viewBox="0 0 12 12" fill="none" style="transition:transform .2s;transform:rotate(0deg);flex-shrink:0;">
+                <path d="M2 4l4 4 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
           </div>
