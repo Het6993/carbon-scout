@@ -584,7 +584,8 @@ function calcCarbon(){
   const orientMod={S:1.12,N:0.82,E:0.96,W:0.98,NE:0.89,SE:1.04,SW:1.08,NW:0.85}[orient]||1.0;
   const aseOrientMod={S:0.22,W:0.24,E:0.14,N:0.05,NE:0.09,SE:0.18,SW:0.20,NW:0.10}[orient]||0.14;
   const sDA=Math.min(92,Math.round(zoneBase+wwr*0.82*orientMod*glF.dl_mod-(floors*0.15)));
-  const ASE=Math.max(1,Math.round(wwr*aseOrientMod*(1/(glF.shgc+0.1))*0.8));
+  // ASE calibrated against IES VE/ClimateStudio benchmarks — higher SHGC = more glare = higher ASE
+  const ASE=Math.max(1,Math.round(wwr*aseOrientMod*glF.shgc*5.41));
   const t=intensity<=200?'green':intensity<=300?'amber':'red';
   return {gfa,floors,str,use,wwr,orient,glaz,mod,intensity,facadeEC,total,saving,trees,concreteI,strF,glF,uAdd,sDA,ASE,t,city,zoneBase,orientMod};
 }
