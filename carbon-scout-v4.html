@@ -296,83 +296,94 @@ circle.dial-ring{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke
 
 /* ── MOBILE (≤640px) ── */
 @media(max-width:640px){
-  /* ── LEFT PANEL: vertical stack on mobile ── */
-  .main{flex-direction:column;}
-  .left{
-    width:100%;
-    max-height:280px;
+  /* ═══════════════════════════════════════════
+     MOBILE LAYOUT — Option C
+     Compact input strip at top + full-screen results
+     Left panel hidden, replaced by mobile input bar + drawer
+  ═══════════════════════════════════════════ */
+
+  /* Hide the desktop left panel entirely */
+  .left{ display:none !important; }
+
+  /* Main becomes single column, full width */
+  .main{ flex-direction:column; }
+  .right{ width:100%; min-height:0; flex:1; overflow-y:auto; }
+
+  /* Show the mobile input bar (hidden on desktop) */
+  #mobile-input-bar{ display:flex !important; }
+
+  /* Compact topbar */
+  .topbar{ height:44px; padding:0 14px; }
+  .topbar-meta{ display:none; }
+  .topbar-sep{ display:none; }
+  .top-std-label{ display:none; }
+
+  /* Compact bars */
+  .modebar{ padding:0 12px; height:38px; }
+  .mode-label{ display:none; }
+  .locbar{ padding:0 10px; height:36px; gap:6px; }
+
+  /* Nav tabs scroll */
+  .nav{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .nav-tab{ font-size:11px; padding:10px 14px 8px; white-space:nowrap; flex-shrink:0; }
+
+  /* Content padding */
+  .tab-panel{ padding:12px 10px; }
+  .card-pad{ padding:12px; }
+  .card{ border-radius:10px; }
+
+  /* KPIs — 2 column */
+  .krow{ grid-template-columns:1fr 1fr; }
+  .kcard{ padding:10px 12px !important; }
+  .k-val{ font-size:18px !important; }
+  .k-label{ font-size:8px; }
+  .k-sub{ font-size:8px; }
+
+  /* Other layouts */
+  .twocol{ grid-template-columns:1fr; }
+  .wind-layout{ grid-template-columns:1fr; }
+  .pwc-zones{ grid-template-columns:1fr 1fr; }
+  .comply-grid{ grid-template-columns:1fr 1fr; }
+  .quick-inputs{ grid-template-columns:1fr 1fr !important; }
+  .quick-results{ grid-template-columns:1fr 1fr; }
+  .op-kpi-grid{ grid-template-columns:1fr 1fr !important; }
+  .dials-row{ flex-wrap:wrap; gap:10px; }
+  .wind-kpis{ grid-template-columns:1fr 1fr; }
+  .bar-label{ font-size:9px; }
+
+  /* Insight box */
+  .insight{ border-radius:10px; }
+
+  /* Mobile drawer overlay */
+  #mobile-drawer{
+    display:none;
+    position:fixed;
+    bottom:0; left:0; right:0;
+    background:var(--surface);
+    border-radius:18px 18px 0 0;
+    box-shadow:0 -4px 32px rgba(0,0,0,.18);
+    z-index:1000;
+    max-height:82vh;
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
-    border-right:none;
-    border-bottom:2px solid var(--border);
-    flex-direction:column;
+    padding:0 0 40px 0;
   }
-  .left-inner{
-    flex-direction:column;
-    padding:10px 12px;
-    gap:10px;
+  #mobile-drawer.open{ display:block; }
+  #mobile-drawer-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.4);
+    z-index:999;
+    -webkit-backdrop-filter:blur(2px);
+    backdrop-filter:blur(2px);
   }
-  .panel-section{flex-direction:column;gap:8px;width:100%;}
-  .field-row{grid-template-columns:1fr 1fr;}
-  .field{min-width:0;width:100%;}
-  .field select,.field input[type=number],.field input[type=text]{
-    font-size:16px!important; /* prevents iOS zoom on focus */
-  }
-  .pdiv{display:none;}
+  #mobile-drawer-overlay.open{ display:block; }
 
-  /* ── RIGHT PANEL ── */
-  .right{min-height:0;flex:1;}
-
-  /* ── BARS + TOPBAR compact ── */
-  .topbar{height:44px;padding:0 14px;}
-  .topbar-meta{display:none;}
-  .topbar-sep{display:none;}
-  .top-std-label{display:none;}
-  .topbar-logo{font-size:13px;}
-  .modebar{padding:0 12px;height:38px;}
-  .mode-label{display:none;}
-  .locbar{padding:0 10px;height:36px;gap:6px;}
-
-  /* ── NAV TABS ── */
-  .nav{overflow-x:auto;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--border);}
-  .nav-tab{font-size:11px;padding:10px 12px 8px;white-space:nowrap;flex-shrink:0;}
-
-  /* ── CONTENT ── */
-  .tab-panel{padding:12px 10px;}
-  .card-pad{padding:12px;}
-  .krow{grid-template-columns:1fr 1fr;}
-  .kcard{padding:10px 12px!important;}
-  .k-val{font-size:20px!important;}
-  .twocol{grid-template-columns:1fr;}
-  .wind-layout{grid-template-columns:1fr;}
-  .pwc-zones{grid-template-columns:1fr 1fr;}
-  .comply-grid{grid-template-columns:1fr 1fr;}
-  .quick-inputs{grid-template-columns:1fr 1fr!important;}
-  .quick-results{grid-template-columns:1fr;}
-  .dials-row{flex-wrap:wrap;gap:10px;}
-  .wind-kpis{grid-template-columns:1fr 1fr;}
-  .bar-row{gap:6px;}
-  .bar-label{font-size:9px;}
-
-  /* ── OPERATIONAL CARBON KPI GRIDS (inline styles override) ── */
-  .op-kpi-grid{grid-template-columns:1fr 1fr!important;}
-  
-  /* ── TREE CARD ── */
-  .tree-card{border-radius:var(--r);}
-
-  /* ── QUICK MODE ── */
-  .quick-inputs{grid-template-columns:1fr 1fr!important;}
-  #quick-results{grid-template-columns:1fr 1fr!important;}
-
-  /* ── OP CARBON KPIS ── */
-  .op-kpi-grid{grid-template-columns:1fr 1fr!important;}
-
-  /* ── EPD ── */
-  #epd-drawer{padding:10px;}
-  #epd-drawer .field{width:100%;}
+  /* EPD drawer */
+  #epd-drawer{ padding:10px; }
 }
 
-/* ── SMALL MOBILE (≤380px) ── */
 @media(max-width:380px){
   .krow{grid-template-columns:1fr;}
   .comply-grid{grid-template-columns:1fr;}
@@ -544,6 +555,50 @@ async function callAI(prompt, maxTokens=300){
   } catch(e) {
     return {ok: false, cors: true, error: e.message};
   }
+}
+
+// ── MOBILE DRAWER ──
+function openMobileDrawer(){
+  document.getElementById('mobile-drawer').style.display = 'block';
+  document.getElementById('mobile-drawer-overlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  // Sync current values into drawer
+  const city = document.getElementById('city')?.value || 'hou';
+  const drawerCity = document.querySelector('#mobile-drawer select');
+  if(drawerCity) drawerCity.value = city;
+}
+
+function closeMobileDrawer(){
+  document.getElementById('mobile-drawer').style.display = 'none';
+  document.getElementById('mobile-drawer-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Sync mobile input bar → main inputs → recalc
+function syncMobileInput(field, value){
+  const el = document.getElementById(field);
+  if(el) el.value = value;
+  // Sync between m-gfa and m-gfa-2
+  const alt = document.getElementById('m-' + field + '-2') || document.getElementById('m-' + field);
+  if(alt && alt !== document.activeElement) alt.value = value;
+  // Sync floors between top bar and drawer
+  if(field === 'floors'){
+    const qf = document.getElementById('q-floors');
+    if(qf) qf.value = value;
+  }
+  recalc();
+}
+
+function syncMobileSelect(field, value){
+  const el = document.getElementById(field);
+  if(el) el.value = value;
+  // Sync between m-str and m-str-2 etc
+  const ids = ['m-'+field, 'm-'+field+'-2'];
+  ids.forEach(id => {
+    const el2 = document.getElementById(id);
+    if(el2 && el2 !== document.activeElement) el2.value = value;
+  });
+  recalc();
 }
 
 // ── ACCORDION ──
@@ -2062,6 +2117,18 @@ function setCarbonRange(range){
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded',function(){
+  // Check if mobile and show input bar
+  function checkMobile(){
+    const isMobile = window.innerWidth <= 640;
+    const bar = document.getElementById('mobile-input-bar');
+    if(bar) bar.style.display = isMobile ? 'flex' : 'none';
+  }
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+  
+  // Close drawer on back button (mobile)
+  window.addEventListener('popstate', closeMobileDrawer);
+
   document.getElementById('city').value='hou';
   currentCity='hou';
   const c=CITIES['hou'];
@@ -2184,6 +2251,152 @@ document.addEventListener('DOMContentLoaded',function(){
     </div>
   </div>
 </div>
+
+  <!-- MOBILE INPUT BAR (hidden on desktop, shown ≤640px) -->
+  <div id="mobile-input-bar" style="display:none;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;">
+    <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;">
+      <span style="font-size:9px;color:var(--faint);font-weight:700;letter-spacing:.5px;">GFA</span>
+      <input type="number" id="m-gfa" value="53820" style="width:68px;font-size:14px;font-weight:700;border:none;background:transparent;color:var(--text);font-family:'Inter',sans-serif;" oninput="syncMobileInput('gfa',this.value)"/>
+      <span style="font-size:9px;color:var(--faint);" id="m-gfa-unit">ft²</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;">
+      <span style="font-size:9px;color:var(--faint);font-weight:700;letter-spacing:.5px;">FL</span>
+      <input type="number" id="m-floors" value="12" min="1" max="100" style="width:36px;font-size:14px;font-weight:700;border:none;background:transparent;color:var(--text);font-family:'Inter',sans-serif;" oninput="syncMobileInput('floors',this.value)"/>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;">
+      <select id="m-use" style="font-size:13px;font-weight:600;border:none;background:transparent;color:var(--text);font-family:'Inter',sans-serif;cursor:pointer;" onchange="syncMobileSelect('use',this.value)">
+        <option value="office">Office</option>
+        <option value="residential">Residential</option>
+        <option value="mixed">Mixed-Use</option>
+        <option value="retail">Retail</option>
+        <option value="education">Education</option>
+        <option value="healthcare">Healthcare</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;">
+      <select id="m-str" style="font-size:13px;font-weight:600;border:none;background:transparent;color:var(--text);font-family:'Inter',sans-serif;cursor:pointer;" onchange="syncMobileSelect('structure',this.value)">
+        <option value="concrete_cast">Concrete CIP</option>
+        <option value="concrete_precast">Precast</option>
+        <option value="steel_composite" selected>Steel Composite</option>
+        <option value="steel_light">Steel Light</option>
+        <option value="timber_clt">Mass Timber CLT</option>
+        <option value="timber_glulam">Glulam</option>
+        <option value="masonry">Masonry</option>
+      </select>
+    </div>
+    <button onclick="openMobileDrawer()" style="flex-shrink:0;display:flex;align-items:center;gap:5px;background:var(--cs);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;-webkit-tap-highlight-color:transparent;touch-action:manipulation;">
+      ⚙️ All inputs
+    </button>
+  </div>
+
+  <!-- MOBILE OVERLAY -->
+  <div id="mobile-drawer-overlay" onclick="closeMobileDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);"></div>
+
+  <!-- MOBILE DRAWER -->
+  <div id="mobile-drawer" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -8px 40px rgba(0,0,0,.2);z-index:1000;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div style="display:flex;justify-content:center;padding:10px 0 6px;position:sticky;top:0;background:var(--surface);z-index:1;border-bottom:1px solid var(--border);">
+      <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin-bottom:8px;"></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 18px 12px;position:sticky;top:30px;background:var(--surface);z-index:1;">
+      <div style="font-size:15px;font-weight:800;color:var(--text);">All Inputs</div>
+      <button onclick="closeMobileDrawer()" style="background:var(--cs);color:#fff;border:none;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">Done ✓</button>
+    </div>
+    <div style="padding:4px 18px 60px;display:flex;flex-direction:column;gap:16px;">
+      <!-- Location -->
+      <div class="field"><label>Location / City</label>
+        <select style="font-size:16px;" onchange="document.getElementById('city').value=this.value;onCityChange();">
+          <option value="hou">Houston, TX — Zone 2A</option>
+          <option value="nyc">New York, NY — Zone 4A</option>
+          <option value="chi">Chicago, IL — Zone 5A</option>
+          <option value="la">Los Angeles, CA — Zone 3B</option>
+          <option value="bos">Boston, MA — Zone 5A</option>
+          <option value="sea">Seattle, WA — Zone 4C</option>
+          <option value="mia">Miami, FL — Zone 1A</option>
+          <option value="den">Denver, CO — Zone 5B</option>
+          <option value="phx">Phoenix, AZ — Zone 2B</option>
+          <option value="dal">Dallas, TX — Zone 3A</option>
+        </select>
+      </div>
+      <!-- Building -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="field"><label>GFA (ft²)</label><input type="number" id="m-gfa-2" value="53820" style="font-size:16px;" oninput="syncMobileInput('gfa',this.value)"/></div>
+        <div class="field"><label>Floors</label><input type="number" id="m-floors-2" value="12" min="1" max="100" style="font-size:16px;" oninput="syncMobileInput('floors',this.value)"/></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="field"><label>Use Type</label>
+          <select id="m-use-2" style="font-size:16px;" onchange="syncMobileSelect('use',this.value)">
+            <option value="office">Office</option><option value="residential">Residential</option>
+            <option value="mixed">Mixed-Use</option><option value="retail">Retail</option>
+            <option value="education">Education</option><option value="healthcare">Healthcare</option>
+          </select>
+        </div>
+        <div class="field"><label>Structure</label>
+          <select id="m-str-2" style="font-size:16px;" onchange="syncMobileSelect('structure',this.value)">
+            <option value="concrete_cast">Concrete CIP</option><option value="concrete_precast">Precast</option>
+            <option value="steel_composite" selected>Steel Composite</option><option value="steel_light">Steel Light</option>
+            <option value="timber_clt">Mass Timber CLT</option><option value="timber_glulam">Glulam</option>
+            <option value="masonry">Masonry</option>
+          </select>
+        </div>
+      </div>
+      <!-- Facade -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="field"><label>Orientation</label>
+          <select style="font-size:16px;" onchange="syncMobileSelect('orient',this.value)">
+            <option value="S" selected>South</option><option value="N">North</option>
+            <option value="E">East</option><option value="W">West</option>
+            <option value="SE">SE</option><option value="SW">SW</option>
+            <option value="NE">NE</option><option value="NW">NW</option>
+          </select>
+        </div>
+        <div class="field"><label>WWR (%)</label>
+          <input type="number" id="m-wwr" value="40" min="10" max="90" style="font-size:16px;" oninput="syncMobileInput('wwr',this.value)"/>
+        </div>
+      </div>
+      <div class="field"><label>Glazing Type</label>
+        <select style="font-size:16px;" onchange="syncMobileSelect('glazing',this.value)">
+          <option value="std_dbl">Standard Double Glazing</option>
+          <option value="hp_dbl" selected>High-Performance Double</option>
+          <option value="triple">Triple Glazed</option>
+          <option value="electro">Electrochromic (Dynamic)</option>
+          <option value="bipv">BIPV (Solar Glass)</option>
+          <option value="fritted">Fritted / Ceramic</option>
+        </select>
+      </div>
+      <!-- Operational -->
+      <div style="background:var(--cs-l);border:1px solid rgba(29,78,216,.2);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--cs);margin-bottom:10px;">⚡ Operational Carbon</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="field"><label>Performance Level</label>
+            <select style="font-size:16px;" onchange="document.getElementById('op-perf').value=this.value;recalc()">
+              <option value="baseline">ASHRAE 90.1 Baseline (Code Min)</option>
+              <option value="median" selected>CBECS Median (Typical)</option>
+              <option value="leed_cert">LEED Certified (~25% better)</option>
+              <option value="leed_gold">LEED Gold (~40% better)</option>
+              <option value="leed_plat">LEED Platinum / Net Zero Ready</option>
+            </select>
+          </div>
+          <div class="field"><label>Energy System</label>
+            <select style="font-size:16px;" onchange="document.getElementById('op-fuel').value=this.value;recalc()">
+              <option value="all_elec">All-Electric (VRF / Heat Pump)</option>
+              <option value="elec_gas" selected>Gas + Electric (Typical US)</option>
+              <option value="hi_eff">High-Eff Gas + Heat Pumps</option>
+              <option value="district">District Energy</option>
+            </select>
+          </div>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px;background:var(--surface);border-radius:8px;border:1px solid var(--border);">
+            <input type="checkbox" id="m-solar" style="width:18px;height:18px;accent-color:var(--cs);" onchange="document.getElementById('op-solar').checked=this.checked;recalc()"/>
+            <div><div style="font-size:13px;font-weight:600;">☀️ Rooftop Solar (PV)</div><div style="font-size:10px;color:var(--faint);">PSH-adjusted · NREL data</div></div>
+          </label>
+          <div class="field"><label style="display:flex;justify-content:space-between;">Building Lifetime <span style="color:var(--cs);font-weight:700;" id="m-lifetime-label">60 yrs</span></label>
+            <input type="range" min="20" max="100" value="60" step="5" style="width:100%;accent-color:var(--cs);" oninput="opLifetime=parseInt(this.value);document.getElementById('lifetime-display').textContent=this.value+' yrs';document.getElementById('m-lifetime-label').textContent=this.value+' yrs';recalc()"/>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 
 <!-- DETAIL MODE -->
 <div id="detail-mode" style="display:flex;flex:1;overflow:hidden;flex-direction:column;min-height:0;">
